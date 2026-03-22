@@ -30,7 +30,7 @@ export default function BasicInfo({ plan, currentAge, contactName, onChange, onC
   }, [plan.includeEPF, plan.epfBalance, plan.epfGrowthRate, plan.annualIncome, plan.incomeGrowthRate, currentAge, plan.retirementAge])
 
   const set = (key) => (e) => {
-    const val = e.target.type === 'number' || e.target.inputMode === 'numeric'
+    const val = e.target.type === 'number' || e.target.type === 'range' || e.target.inputMode === 'numeric'
       ? parseFloat(e.target.value) || 0
       : e.target.value
     onChange({ [key]: val })

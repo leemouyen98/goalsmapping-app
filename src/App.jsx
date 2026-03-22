@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import AppShell from './components/layout/AppShell'
+import ErrorBoundary from './components/ErrorBoundary'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import ContactsPage from './pages/ContactsPage'
@@ -33,8 +34,8 @@ export default function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/contacts" element={<ContactsPage />} />
         <Route path="/contacts/:id" element={<ContactDetailPage />} />
-        <Route path="/contacts/:id/retirement" element={<RetirementPlannerPage />} />
-        <Route path="/contacts/:id/protection" element={<ProtectionPlannerPage />} />
+        <Route path="/contacts/:id/retirement" element={<ErrorBoundary><RetirementPlannerPage /></ErrorBoundary>} />
+        <Route path="/contacts/:id/protection" element={<ErrorBoundary><ProtectionPlannerPage /></ErrorBoundary>} />
         <Route path="/login" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>

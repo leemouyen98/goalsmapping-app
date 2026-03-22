@@ -511,7 +511,7 @@ function CustomRecommendationModal({ form, setForm, calcFor, setCalcFor, shortfa
         <div className={`rounded-hig-sm p-4 mb-4 ${labels[calcFor].color}`}>
           <p className="text-hig-caption2 font-semibold tracking-wide">{labels[calcFor].title}</p>
           <p className="text-hig-title2 mt-1">
-            {calcFor === 'rate' ? `${solved.toFixed(2)}%` : formatRMFull(solved)}
+            {calcFor === 'rate' ? `${Number.isFinite(solved) ? solved.toFixed(2) : '0.00'}%` : formatRMFull(solved)}
           </p>
         </div>
 

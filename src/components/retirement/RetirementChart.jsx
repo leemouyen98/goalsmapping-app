@@ -17,7 +17,6 @@ const COLORS = {
 
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload || payload.length === 0) return null
-
   const dataPoint = payload[0] && payload[0].payload
   if (!dataPoint) return null
 
@@ -64,7 +63,7 @@ function formatYAxis(value) {
 }
 
 export default function RetirementChart({ data, retirementAge, targetAmount, hasRecommendations }) {
-  // ALL hooks MUST run before any early return (React Rules of Hooks)
+  // ALL hooks MUST run before any early return — React Rules of Hooks
   const safeData = data && data.length > 0 ? data : []
 
   const maxVal = useMemo(function() {
@@ -75,7 +74,7 @@ export default function RetirementChart({ data, retirementAge, targetAmount, has
       var stacked = (d.epf || 0) + (d.provisions || 0) + (d.recommendations || 0) + (d.shortfall || 0)
       if (stacked > maxFund) maxFund = stacked
     }
-    var ceiling = Math.max(targetAmount * 1.15, maxFund * 1.1, 100000)
+    var ceiling = Math.max((targetAmount || 0) * 1.15, maxFund * 1.1, 100000)
     return Math.ceil(ceiling / 100000) * 100000
   }, [safeData, targetAmount])
 
@@ -126,7 +125,7 @@ export default function RetirementChart({ data, retirementAge, targetAmount, has
             cursor={{ stroke: '#007AFF', strokeWidth: 1, strokeDasharray: '4 4' }}
           />
 
-          {/* Stacked areas: shortfall at bottom, then fund components on top */}
+          {/* Stacked areas — always render all, vary opacity instead of null */}
           <Area
             type="monotone"
             dataKey="shortfall"

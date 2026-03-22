@@ -2,9 +2,9 @@ import { X } from 'lucide-react'
 
 export default function PlanningAssumptions({ plan, currentAge, onChange, onClose }) {
   const set = (key) => (e) => {
-    const val = e.target.type === 'number' || e.target.type === 'range'
-      ? parseFloat(e.target.value) || 0
-      : e.target.value
+    const rawVal = e.target.value
+    const isNumeric = e.target.type === 'number' || e.target.type === 'range'
+    const val = isNumeric ? (rawVal === '' ? 0 : parseFloat(rawVal) || 0) : rawVal
     onChange({ [key]: val })
   }
 

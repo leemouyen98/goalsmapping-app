@@ -416,15 +416,18 @@ export function generateRetirementProjection({
     // Shortfall = how much of the ideal corpus is NOT covered by the fund
     const shortfallVal = Math.max(0, idealCorpus - totalFund)
 
+    // Guard against NaN/Infinity — Recharts crashes on non-finite SVG values
+    const safe = (v) => (Number.isFinite(v) ? Math.round(v) : 0)
+
     chartData.push({
       age,
-      epf: Math.round(epfBal),
-      provisions: Math.round(provBal),
-      recommendations: Math.round(recBal),
-      shortfall: Math.round(shortfallVal),
-      total: Math.round(totalFund),
-      totalNoRec: Math.round(totalNoRecFund),
-      idealCorpus: Math.round(idealCorpus),
+      epf: safe(epfBal),
+      provisions: safe(provBal),
+      recommendations: safe(recBal),
+      shortfall: safe(shortfallVal),
+      total: safe(totalFund),
+      totalNoRec: safe(totalNoRecFund),
+      idealCorpus: safe(idealCorpus),
     })
   }
 
@@ -438,23 +441,26 @@ export function generateRetirementProjection({
     (d) => d.age > retirementAge && d.total <= 0
   )?.age || lifeExpectancy
 
+  // Guard all numeric outputs
+  const safeNum = (v) => (Number.isFinite(v) ? v : 0)
+
   return {
-    targetAmount,
-    totalCovered,
-    shortfall: Math.max(0, shortfall),
-    surplus: shortfall < 0 ? Math.abs(shortfall) : 0,
-    coveragePercent,
-    monthlyAtRetirement,
-    epfAtRetirement,
-    provisionsAtRetirement,
-    recommendationsAtRetirement,
+    targetAmount: safeNum(targetAmount),
+    totalCovered: safeNum(totalCovered),
+    shortfall: Math.max(0, safeNum(shortfall)),
+    surplus: shortfall < 0 ? Math.abs(safeNum(shortfall)) : 0,
+    coveragePercent: safeNum(coveragePercent),
+    monthlyAtRetirement: safeNum(monthlyAtRetirement),
+    epfAtRetirement: safeNum(epfAtRetirement),
+    provisionsAtRetirement: safeNum(provisionsAtRetirement),
+    recommendationsAtRetirement: safeNum(recommendationsAtRetirement),
     provisionDetails,
-    fundsRunOutAge: Math.min(fundsRunOutAge, lifeExpectancy),
-    fundsRunOutWithRec: Math.min(fundsRunOutWithRec, lifeExpectancy),
+    fundsRunOutAge: Math.min(safeNum(fundsRunOutAge) || lifeExpectancy, lifeExpectancy),
+    fundsRunOutWithRec: Math.min(safeNum(fundsRunOutWithRec) || lifeExpectancy, lifeExpectancy),
     isFullyFunded: totalCovered >= targetAmount,
     chartData,
-    yearsToRetirement,
-    retirementDuration,
+    yearsToRetirement: safeNum(yearsToRetirement),
+    retirementDuration: safeNum(retirementDuration),
   }
 }
 
