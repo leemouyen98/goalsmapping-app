@@ -95,7 +95,7 @@ export default function RetirementChart({ data, retirementAge, targetAmount, has
   if (hasRecommendations) {
     legendPayload.push({ value: 'Recommendation', type: 'rect', color: '#007AFF' })
   }
-  legendPayload.push({ value: 'Required Amount', type: 'plainline', color: '#1C1C1E' })
+  legendPayload.push({ value: 'Required Amount', type: 'plainline', color: '#1C1C1E', payload: { strokeDasharray: '6 4', strokeWidth: 1.5 } })
 
   return (
     <div style={{ width: '100%', height: 380 }}>
