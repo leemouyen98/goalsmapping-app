@@ -1,76 +1,63 @@
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react'
+import { useAuth } from './useAuth'
 
 const ContactsContext = createContext(null)
 
-// Generate a simple unique ID
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2)
 
-// Demo contacts
-const INITIAL_CONTACTS = [
-  {
-    id: 'c1',
-    name: 'Jesey Tan',
-    dob: '1996-05-14',
-    mobile: '012-3456789',
-    employment: 'Employed',
-    reviewDate: '2026-06-01',
-    reviewFrequency: 'Annually',
-    notes: 'Interested in retirement planning',
-    tags: ['Client'],
-    interactions: [
-      { id: 'n1', type: 'note', content: 'Initial consultation — discussed retirement goals.', date: '2026-03-15' },
-      { id: 'n2', type: 'note', content: 'Sent retirement projection. Client wants to review EPF options.', date: '2026-03-18' },
-    ],
-    tasks: [
-      { id: 't1', title: 'Follow up on retirement plan review', dueDate: '2026-04-01', status: 'pending' },
-    ],
-    activities: [
-      { id: 'a1', type: 'Meeting', description: 'First consultation — goals & priorities', date: '2026-03-15' },
-      { id: 'a2', type: 'Call', description: 'Quick catch-up on EPF balance', date: '2026-03-18' },
-    ],
-    retirementPlan: null,
-    protectionPlan: null,
-  },
-  {
-    id: 'c2',
-    name: 'Ahmad Razak',
-    dob: '1988-11-22',
-    mobile: '019-8765432',
-    employment: 'Self-Employed',
-    reviewDate: '2026-07-15',
-    reviewFrequency: 'Semi-annually',
-    notes: 'Business owner, needs protection review',
-    tags: ['Prospect'],
-    interactions: [],
-    tasks: [],
-    activities: [],
-    retirementPlan: null,
-    protectionPlan: null,
-  },
-  {
-    id: 'c3',
-    name: 'Michelle Wong',
-    dob: '1992-02-08',
-    mobile: '016-5551234',
-    employment: 'Employed',
-    reviewDate: '2026-04-20',
-    reviewFrequency: 'Quarterly',
-    notes: '',
-    tags: ['Client'],
-    interactions: [],
-    tasks: [],
-    activities: [],
-    retirementPlan: null,
-    protectionPlan: null,
-  },
-]
-
 export function ContactsProvider({ children }) {
-  const [contacts, setContacts] = useState(INITIAL_CONTACTS)
+  const { token } = useAuth()
+  const [contacts, setContacts] = useState([])
+  const [contactsLoading, setContactsLoading] = useState(true)
+
+  // Auth header helper
+  const authHeaders = useCallback(() => ({
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  }), [token])
+
+  // ─── Load contacts from API on mount / token change ───────────────────────
+  useEffect(() => {
+    if (!token) {
+      setContacts([])
+      setContactsLoading(false)
+      return
+    }
+    setContactsLoading(true)
+    fetch('/api/contacts', { headers: { 'Authorization': `Bearer ${token}` } })
+      .then((r) => r.json())
+      .then((data) => { if (data.contacts) setContacts(data.contacts) })
+      .catch(() => {})
+      .finally(() => setContactsLoading(false))
+  }, [token])
+
+  // ─── Background sync: push a full contact to the API ─────────────────────
+  // Uses a ref so the sync function never needs to be in dependency arrays
+  const syncContact = useCallback((contact) => {
+    if (!token) return
+    fetch(`/api/contacts/${contact.id}`, {
+      method: 'PUT',
+      headers: authHeaders(),
+      body: JSON.stringify(contact),
+    }).catch(() => {})
+  }, [token, authHeaders])
+
+  // Helper: update one contact in state and sync it
+  const updateOne = useCallback((id, updater) => {
+    setContacts((prev) => {
+      const next = prev.map((c) => c.id === id ? updater(c) : c)
+      const updated = next.find((c) => c.id === id)
+      if (updated) syncContact(updated)
+      return next
+    })
+  }, [syncContact])
+
+  // ─── CRUD ─────────────────────────────────────────────────────────────────
 
   const addContact = useCallback((data) => {
+    const id = uid()
     const newContact = {
-      id: uid(),
+      id,
       ...data,
       tags: [],
       interactions: [],
@@ -79,101 +66,110 @@ export function ContactsProvider({ children }) {
       retirementPlan: null,
       protectionPlan: null,
     }
+    // Optimistic: show immediately
     setContacts((prev) => [newContact, ...prev])
+    // Persist in background
+    if (token) {
+      fetch('/api/contacts', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify(newContact),
+      }).catch(() => {})
+    }
     return newContact
-  }, [])
+  }, [token, authHeaders])
 
   const updateContact = useCallback((id, updates) => {
-    setContacts((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, ...updates } : c))
-    )
-  }, [])
+    updateOne(id, (c) => ({ ...c, ...updates }))
+  }, [updateOne])
 
   const deleteContacts = useCallback((ids) => {
     setContacts((prev) => prev.filter((c) => !ids.includes(c.id)))
-  }, [])
+    if (token) {
+      ids.forEach((id) => {
+        fetch(`/api/contacts/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` },
+        }).catch(() => {})
+      })
+    }
+  }, [token])
+
+  // ─── Tags ─────────────────────────────────────────────────────────────────
 
   const addTag = useCallback((ids, tag) => {
-    setContacts((prev) =>
-      prev.map((c) =>
-        ids.includes(c.id) && !c.tags.includes(tag)
-          ? { ...c, tags: [...c.tags, tag] }
-          : c
+    setContacts((prev) => {
+      const next = prev.map((c) =>
+        ids.includes(c.id) && !c.tags.includes(tag) ? { ...c, tags: [...c.tags, tag] } : c
       )
-    )
-  }, [])
+      next.filter((c) => ids.includes(c.id)).forEach(syncContact)
+      return next
+    })
+  }, [syncContact])
 
   const removeTag = useCallback((ids, tag) => {
-    setContacts((prev) =>
-      prev.map((c) =>
+    setContacts((prev) => {
+      const next = prev.map((c) =>
         ids.includes(c.id) ? { ...c, tags: c.tags.filter((t) => t !== tag) } : c
       )
-    )
-  }, [])
+      next.filter((c) => ids.includes(c.id)).forEach(syncContact)
+      return next
+    })
+  }, [syncContact])
+
+  // ─── Interactions / Tasks / Activities ────────────────────────────────────
 
   const addInteraction = useCallback((contactId, interaction) => {
-    setContacts((prev) =>
-      prev.map((c) =>
-        c.id === contactId
-          ? { ...c, interactions: [{ id: uid(), date: new Date().toISOString().split('T')[0], ...interaction }, ...c.interactions] }
-          : c
-      )
-    )
-  }, [])
+    updateOne(contactId, (c) => ({
+      ...c,
+      interactions: [
+        { id: uid(), date: new Date().toISOString().split('T')[0], ...interaction },
+        ...c.interactions,
+      ],
+    }))
+  }, [updateOne])
 
   const addTask = useCallback((contactId, task) => {
-    setContacts((prev) =>
-      prev.map((c) =>
-        c.id === contactId
-          ? { ...c, tasks: [{ id: uid(), status: 'pending', ...task }, ...c.tasks] }
-          : c
-      )
-    )
-  }, [])
+    updateOne(contactId, (c) => ({
+      ...c,
+      tasks: [{ id: uid(), status: 'pending', ...task }, ...c.tasks],
+    }))
+  }, [updateOne])
 
   const toggleTask = useCallback((contactId, taskId) => {
-    setContacts((prev) =>
-      prev.map((c) =>
-        c.id === contactId
-          ? {
-              ...c,
-              tasks: c.tasks.map((t) =>
-                t.id === taskId
-                  ? { ...t, status: t.status === 'pending' ? 'completed' : 'pending' }
-                  : t
-              ),
-            }
-          : c
-      )
-    )
-  }, [])
+    updateOne(contactId, (c) => ({
+      ...c,
+      tasks: c.tasks.map((t) =>
+        t.id === taskId ? { ...t, status: t.status === 'pending' ? 'completed' : 'pending' } : t
+      ),
+    }))
+  }, [updateOne])
 
   const addActivity = useCallback((contactId, activity) => {
-    setContacts((prev) =>
-      prev.map((c) =>
-        c.id === contactId
-          ? { ...c, activities: [{ id: uid(), date: new Date().toISOString().split('T')[0], ...activity }, ...c.activities] }
-          : c
-      )
-    )
-  }, [])
+    updateOne(contactId, (c) => ({
+      ...c,
+      activities: [
+        { id: uid(), date: new Date().toISOString().split('T')[0], ...activity },
+        ...c.activities,
+      ],
+    }))
+  }, [updateOne])
+
+  // ─── Plans ────────────────────────────────────────────────────────────────
 
   const saveRetirementPlan = useCallback((contactId, plan) => {
-    setContacts((prev) =>
-      prev.map((c) => (c.id === contactId ? { ...c, retirementPlan: plan } : c))
-    )
-  }, [])
+    updateOne(contactId, (c) => ({ ...c, retirementPlan: plan }))
+  }, [updateOne])
 
   const saveProtectionPlan = useCallback((contactId, plan) => {
-    setContacts((prev) =>
-      prev.map((c) => (c.id === contactId ? { ...c, protectionPlan: plan } : c))
-    )
-  }, [])
+    updateOne(contactId, (c) => ({ ...c, protectionPlan: plan }))
+  }, [updateOne])
 
   return (
     <ContactsContext.Provider
       value={{
         contacts,
+        contactsLoading,
         addContact,
         updateContact,
         deleteContacts,

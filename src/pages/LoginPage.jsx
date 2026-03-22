@@ -4,26 +4,16 @@ import { useAuth } from '../hooks/useAuth'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
-  const { login } = useAuth()
+  const { login, loading, error: authError } = useAuth()
   const navigate = useNavigate()
   const [agentCode, setAgentCode] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setError('')
-    setLoading(true)
-    try {
-      await login(agentCode, password)
-      navigate('/dashboard')
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+    const ok = await login(agentCode, password)
+    if (ok) navigate('/dashboard')
   }
 
   return (
@@ -79,9 +69,9 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {error && (
+          {authError && (
             <div className="bg-red-50 text-hig-red text-hig-subhead rounded-hig-sm px-4 py-3">
-              {error}
+              {authError}
             </div>
           )}
 

@@ -12,7 +12,7 @@ const TAG_COLORS = {
 }
 
 export default function ContactsPage() {
-  const { contacts, addContact, deleteContacts, addTag } = useContacts()
+  const { contacts, contactsLoading, addContact, deleteContacts, addTag } = useContacts()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -157,7 +157,11 @@ export default function ContactsPage() {
         </div>
 
         {/* Rows */}
-        {filtered.length === 0 ? (
+        {contactsLoading ? (
+          <div className="px-4 py-12 text-center text-hig-subhead text-hig-text-secondary">
+            Loading contacts…
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="px-4 py-12 text-center text-hig-subhead text-hig-text-secondary">
             {search ? 'No contacts match your search.' : 'No contacts yet. Add your first client.'}
           </div>

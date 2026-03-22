@@ -1,0 +1,18 @@
+name = "goalsmapping-app"
+compatibility_date = "2024-09-23"
+pages_build_output_dir = "dist"
+
+# ─── D1 Database binding ───────────────────────────────────────────────────────
+# Replace REPLACE_WITH_YOUR_DATABASE_ID after running:
+#   wrangler d1 create goalsmapping-db
+#
+[[d1_databases]]
+binding = "DB"
+database_name = "goalsmapping-db"
+database_id = "REPLACE_WITH_YOUR_DATABASE_ID"
+
+# ─── Local dev variables ───────────────────────────────────────────────────────
+# For production, set JWT_SECRET in Cloudflare Pages dashboard:
+# Pages > goalsmapping-app > Settings > Environment variables
+[vars]
+JWT_SECRET = "change-this-to-a-random-secret-in-production"

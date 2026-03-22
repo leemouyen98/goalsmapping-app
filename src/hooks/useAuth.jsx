@@ -2,55 +2,54 @@ import { createContext, useContext, useState, useCallback } from 'react'
 
 const AuthContext = createContext(null)
 
-// Demo agents for local dev — replace with Cloudflare Worker API in production
-const DEMO_AGENTS = [
-  {
-    id: '1',
-    agent_code: '100001',
-    password: 'demo123',
-    name: 'Henry Lee',
-    email: 'henry@goalsmapping.com',
-    role: 'admin',
-    profile_pic: null,
-  },
-  {
-    id: '2',
-    agent_code: '100002',
-    password: 'demo123',
-    name: 'Sarah Tan',
-    email: 'sarah@goalsmapping.com',
-    role: 'agent',
-    profile_pic: null,
-  },
-]
+const TOKEN_KEY = 'gm_token'
+const AGENT_KEY = 'gm_agent'
 
 export function AuthProvider({ children }) {
+  const [token, setToken] = useState(() => sessionStorage.getItem(TOKEN_KEY))
   const [agent, setAgent] = useState(() => {
-    const saved = sessionStorage.getItem('gm_agent')
-    return saved ? JSON.parse(saved) : null
+    const stored = sessionStorage.getItem(AGENT_KEY)
+    try { return stored ? JSON.parse(stored) : null } catch { return null }
   })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
-  const login = useCallback(async (agentCode, password) => {
-    // TODO: Replace with fetch('/api/auth/login', { ... }) for production
-    const found = DEMO_AGENTS.find(
-      (a) => a.agent_code === agentCode && a.password === password
-    )
-    if (!found) {
-      throw new Error('Invalid agent code or password')
+  const login = useCallback(async (code, password) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: String(code), password }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'Login failed')
+        return false
+      }
+      sessionStorage.setItem(TOKEN_KEY, data.token)
+      sessionStorage.setItem(AGENT_KEY, JSON.stringify(data.agent))
+      setToken(data.token)
+      setAgent(data.agent)
+      return true
+    } catch {
+      setError('Network error — check your connection and try again.')
+      return false
+    } finally {
+      setLoading(false)
     }
-    const { password: _, ...agentData } = found
-    setAgent(agentData)
-    sessionStorage.setItem('gm_agent', JSON.stringify(agentData))
-    return agentData
   }, [])
 
   const logout = useCallback(() => {
+    sessionStorage.removeItem(TOKEN_KEY)
+    sessionStorage.removeItem(AGENT_KEY)
+    setToken(null)
     setAgent(null)
-    sessionStorage.removeItem('gm_agent')
   }, [])
 
   return (
-    <AuthContext.Provider value={{ agent, login, logout }}>
+    <AuthContext.Provider value={{ agent, token, loading, error, login, logout }}>
       {children}
     </AuthContext.Provider>
   )
