@@ -128,56 +128,35 @@ export default function RetirementPlanner({ plan, currentAge, contactName, onCha
   const selectedRecs = (plan.recommendations || []).filter((r) => r.isSelected)
 
   return (
-    <div>
-      {/* Top Summary Bar */}
-      <div className="hig-card p-5 mb-4">
-        <div className="flex items-start justify-between">
-          <div className="flex gap-8">
-            <div>
-              <p className="text-hig-caption1 text-hig-text-secondary font-medium">Target Amount</p>
-              <p className="text-hig-title3">{formatRMFull(projection.targetAmount)}</p>
-            </div>
-            <div>
-              <p className="text-hig-caption1 text-hig-text-secondary font-medium">Covered</p>
-              <p className="text-hig-title3 text-hig-green">{formatRMFull(projection.totalCovered)}</p>
-            </div>
-            <div>
-              <p className="text-hig-caption1 text-hig-text-secondary font-medium">
-                {projection.isFullyFunded ? 'Surplus' : 'Shortfall'}
-              </p>
-              <p className={`text-hig-title3 ${projection.isFullyFunded ? 'text-hig-green' : 'text-hig-red'}`}>
-                {projection.isFullyFunded ? '+' : ''}{formatRMFull(projection.isFullyFunded ? projection.surplus : projection.shortfall)}
-              </p>
-            </div>
-          </div>
+    <>
+    <div className="flex gap-4 items-start">
+      {/* Left: Summary + Chart + Situation */}
+      <div className="flex-1 min-w-0 space-y-3">
 
-          {/* Tab selector + Progress badge stacked on right */}
-          <div className="flex flex-col items-end gap-2 shrink-0">
-            {/* Recommendations / Provisions tab bar */}
-            <div className="flex bg-hig-gray-6 rounded-hig-sm p-1">
-              <button
-                onClick={() => setActiveTab('recommendations')}
-                className={`px-3 py-1.5 text-hig-caption1 font-medium rounded-hig-sm transition-colors
-                  ${activeTab === 'recommendations' ? 'bg-white shadow-sm text-hig-text' : 'text-hig-text-secondary'}`}
-              >
-                Recommendations
-                {(plan.recommendations || []).length > 0 && (
-                  <span className="ml-1.5 text-hig-caption2 bg-hig-blue text-white px-1.5 py-0.5 rounded-full">
-                    {(plan.recommendations || []).length}
-                  </span>
-                )}
-              </button>
-              <button
-                onClick={() => setActiveTab('provisions')}
-                className={`px-3 py-1.5 text-hig-caption1 font-medium rounded-hig-sm transition-colors
-                  ${activeTab === 'provisions' ? 'bg-white shadow-sm text-hig-text' : 'text-hig-text-secondary'}`}
-              >
-                Provisions
-              </button>
+        {/* Summary card — same width as chart */}
+        <div className="hig-card p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex gap-5 flex-wrap">
+              <div>
+                <p className="text-hig-caption1 text-hig-text-secondary font-medium">Target Amount</p>
+                <p className="text-hig-title3">{formatRMFull(projection.targetAmount)}</p>
+              </div>
+              <div>
+                <p className="text-hig-caption1 text-hig-text-secondary font-medium">Covered</p>
+                <p className="text-hig-title3 text-hig-green">{formatRMFull(projection.totalCovered)}</p>
+              </div>
+              <div>
+                <p className="text-hig-caption1 text-hig-text-secondary font-medium">
+                  {projection.isFullyFunded ? 'Surplus' : 'Shortfall'}
+                </p>
+                <p className={`text-hig-title3 ${projection.isFullyFunded ? 'text-hig-green' : 'text-hig-red'}`}>
+                  {projection.isFullyFunded ? '+' : ''}{formatRMFull(projection.isFullyFunded ? projection.surplus : projection.shortfall)}
+                </p>
+              </div>
             </div>
             {/* Progress badge */}
-            <div className="flex items-center gap-2">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-hig-subhead"
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-hig-subhead"
                 style={{ backgroundColor: projection.isFullyFunded ? '#34C759' : projection.coveragePercent >= 75 ? '#FF9500' : '#FF3B30' }}
               >
                 {projection.coveragePercent}%
@@ -187,264 +166,266 @@ export default function RetirementPlanner({ plan, currentAge, contactName, onCha
               </span>
             </div>
           </div>
+
+          <p className="text-hig-caption1 text-hig-text-secondary mt-2">
+            Expense: {formatRMFull(projection.monthlyAtRetirement)}/mth from age {plan.retirementAge} · {plan.inflationRate}% inflation · {projection.retirementDuration} yrs
+          </p>
+
+          <div className="flex items-center gap-4 mt-1.5 text-hig-caption1">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-hig-green inline-block" />
+              Existing {formatRMFull(projection.epfAtRetirement + projection.provisionsAtRetirement)}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-hig-blue inline-block" />
+              Recommended {formatRMFull(projection.recommendationsAtRetirement)}
+            </span>
+          </div>
+
+          <div className={`mt-2.5 px-3 py-2 rounded-hig-sm flex items-center gap-2 text-hig-caption1
+            ${projection.isFullyFunded ? 'bg-green-50 text-hig-green' : projection.coveragePercent >= 75 ? 'bg-orange-50 text-hig-orange' : 'bg-red-50 text-hig-red'}`}>
+            {projection.isFullyFunded ? (
+              <><CheckCircle2 size={14} /> You have more than enough to meet your goal.</>
+            ) : projection.coveragePercent >= 75 ? (
+              <><AlertTriangle size={14} /> You're almost there! A small adjustment could help.</>
+            ) : (
+              <><XCircle size={14} /> There's a significant gap. Let's explore options to bridge it.</>
+            )}
+          </div>
         </div>
 
-        <p className="text-hig-caption1 text-hig-text-secondary mt-2">
-          Retirement Expense: {formatRMFull(projection.monthlyAtRetirement)} per month from age {plan.retirementAge} at {plan.inflationRate}% for {projection.retirementDuration} years
-        </p>
-
-        <div className="flex items-center gap-4 mt-2 text-hig-caption1">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-hig-green inline-block"></span>
-            Existing {formatRMFull(projection.epfAtRetirement + projection.provisionsAtRetirement)}
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-hig-blue inline-block"></span>
-            Recommended {formatRMFull(projection.recommendationsAtRetirement)}
-          </span>
+        {/* Chart */}
+        <div className="hig-card p-4">
+          <RetirementChart
+            data={projection.chartData}
+            retirementAge={plan.retirementAge}
+            targetAmount={projection.targetAmount}
+            hasRecommendations={selectedRecs.length > 0}
+          />
         </div>
 
-        {/* Status message */}
-        <div className={`mt-3 p-3 rounded-hig-sm flex items-center gap-2 text-hig-subhead
-          ${projection.isFullyFunded ? 'bg-green-50 text-hig-green' : projection.coveragePercent >= 75 ? 'bg-orange-50 text-hig-orange' : 'bg-red-50 text-hig-red'}`}>
-          {projection.isFullyFunded ? (
-            <><CheckCircle2 size={18} /> You have more than enough to meet your goal. Consider reallocating the surplus to other financial objectives.</>
-          ) : projection.coveragePercent >= 75 ? (
-            <><AlertTriangle size={18} /> You're almost there! A small adjustment could help you reach your goal completely.</>
-          ) : (
-            <><XCircle size={18} /> There's a significant gap in your retirement plan. Let's explore options to bridge it.</>
+        {/* Current Situation / With Recommendation */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="hig-card p-4">
+            <h4 className="text-hig-subhead font-semibold mb-2">Current Situation</h4>
+            <div className="flex items-center gap-2 mb-1.5">
+              {projection.fundsRunOutAge >= plan.lifeExpectancy
+                ? <CheckCircle2 size={18} className="text-hig-green" />
+                : <AlertTriangle size={18} className="text-hig-red" />}
+              <span className={`text-hig-title3 ${projection.fundsRunOutAge >= plan.lifeExpectancy ? 'text-hig-green' : ''}`}>
+                {projection.fundsRunOutAge >= plan.lifeExpectancy ? `${plan.lifeExpectancy}+` : projection.fundsRunOutAge} yo
+              </span>
+            </div>
+            <p className="text-hig-caption1 text-hig-text-secondary">
+              {projection.fundsRunOutAge >= plan.lifeExpectancy
+                ? 'Funds should last through retirement years.'
+                : `Funds run out at age ${projection.fundsRunOutAge}. ${projection.coveragePercent}% of goal covered.`}
+            </p>
+          </div>
+
+          <div className="hig-card p-4">
+            <h4 className="text-hig-subhead font-semibold mb-2">With Recommendation</h4>
+            {selectedRecs.length === 0 ? (
+              <>
+                <div className="flex items-center gap-2 mb-1">
+                  <AlertTriangle size={18} className="text-hig-orange" />
+                  <p className="text-hig-subhead text-hig-text-secondary">None Selected</p>
+                </div>
+                <p className="text-hig-caption1 text-hig-text-secondary">Add a recommendation to see the impact.</p>
+              </>
+            ) : projection.isFullyFunded ? (
+              <>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <CheckCircle2 size={18} className="text-hig-green" />
+                  <span className="text-hig-subhead font-semibold text-hig-green">Fully Funded</span>
+                </div>
+                <p className="text-hig-caption1 text-hig-green bg-green-50 rounded-hig-sm p-2">
+                  Sufficient funds throughout retirement years.
+                </p>
+              </>
+            ) : projection.fundsRunOutWithRec >= plan.lifeExpectancy ? (
+              <>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <CheckCircle2 size={18} className="text-hig-green" />
+                  <span className="text-hig-title3 text-hig-green">{plan.lifeExpectancy}+ yo</span>
+                </div>
+                <p className="text-hig-caption1 text-hig-text-secondary">
+                  Funds last through life expectancy — {projection.coveragePercent}% covered.
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <AlertTriangle size={18} className="text-hig-orange" />
+                  <span className="text-hig-title3">{projection.fundsRunOutWithRec} yo</span>
+                </div>
+                <p className="text-hig-caption1 text-hig-text-secondary">
+                  Extends to age {projection.fundsRunOutWithRec} — {projection.coveragePercent}% covered.
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Right: Recommendations / Provisions Panel */}
+      <div className="w-72 shrink-0">
+        <div className="hig-card p-4 max-h-[calc(100vh-180px)] overflow-y-auto">
+
+          {/* Tab bar — top of right panel, above Add button */}
+          <div className="flex bg-hig-gray-6 rounded-hig-sm p-1 mb-3">
+            <button
+              onClick={() => setActiveTab('recommendations')}
+              className={`flex-1 py-1.5 text-hig-caption1 font-medium rounded-hig-sm transition-colors
+                ${activeTab === 'recommendations' ? 'bg-white shadow-sm text-hig-text' : 'text-hig-text-secondary'}`}
+            >
+              Recommendations
+              {(plan.recommendations || []).length > 0 && (
+                <span className="ml-1 text-hig-caption2 bg-hig-blue text-white px-1.5 py-0.5 rounded-full">
+                  {(plan.recommendations || []).length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('provisions')}
+              className={`flex-1 py-1.5 text-hig-caption1 font-medium rounded-hig-sm transition-colors
+                ${activeTab === 'provisions' ? 'bg-white shadow-sm text-hig-text' : 'text-hig-text-secondary'}`}
+            >
+              Provisions
+            </button>
+          </div>
+
+          {activeTab === 'recommendations' && (
+            <div className="space-y-3">
+              <button
+                onClick={() => setShowCustomForm(true)}
+                className="hig-btn-primary w-full gap-2"
+              >
+                <Plus size={16} /> Add New Recommendation
+              </button>
+
+              {shortfallAmount > 0 && (plan.recommendations || []).length === 0 && (
+                <p className="text-hig-caption1 text-hig-text-secondary">
+                  To achieve your objective, you could get on track with one of the following:
+                </p>
+              )}
+
+              {/* Preset suggestions */}
+              {shortfallAmount > 0 && (
+                <div className="space-y-2">
+                  {suggestedMonthly10 > 0 && (
+                    <button
+                      onClick={() => addPresetRecommendation(suggestedMonthly10, 10)}
+                      className="w-full text-left p-3 rounded-hig-sm border border-hig-gray-4 hover:border-hig-blue hover:bg-blue-50/30 transition-colors"
+                    >
+                      <p className="text-hig-subhead font-medium">Invest {formatRMFull(suggestedMonthly10)}/mth</p>
+                      <p className="text-hig-caption1 text-hig-text-secondary">for 10 years</p>
+                    </button>
+                  )}
+                  {suggestedMonthly20 > 0 && (
+                    <button
+                      onClick={() => addPresetRecommendation(suggestedMonthly20, 20)}
+                      className="w-full text-left p-3 rounded-hig-sm border border-hig-gray-4 hover:border-hig-blue hover:bg-blue-50/30 transition-colors"
+                    >
+                      <p className="text-hig-subhead font-medium">Invest {formatRMFull(suggestedMonthly20)}/mth</p>
+                      <p className="text-hig-caption1 text-hig-text-secondary">for 20 years</p>
+                    </button>
+                  )}
+                  {suggestedLumpSum > 0 && (
+                    <button
+                      onClick={() => addPresetRecommendation(0, plan.retirementAge - currentAge, suggestedLumpSum)}
+                      className="w-full text-left p-3 rounded-hig-sm border border-hig-gray-4 hover:border-hig-blue hover:bg-blue-50/30 transition-colors"
+                    >
+                      <p className="text-hig-subhead font-medium">Invest {formatRMFull(suggestedLumpSum)} one-time</p>
+                      <p className="text-hig-caption1 text-hig-text-secondary">today</p>
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Added recommendations */}
+              {(plan.recommendations || []).map((rec, idx) => (
+                <div key={rec.id} className="border border-hig-gray-4 rounded-hig-sm overflow-hidden">
+                  <div className="flex items-center gap-3 p-3">
+                    <button
+                      onClick={() => toggleRecommendation(rec.id)}
+                      className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-colors
+                        ${rec.isSelected ? 'border-hig-blue bg-hig-blue' : 'border-hig-gray-3'}`}
+                    >
+                      {rec.isSelected && <span className="w-2 h-2 rounded-full bg-white" />}
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-hig-subhead font-medium">Recommendation {idx + 1}</p>
+                      <p className="text-hig-caption1 text-hig-text-secondary truncate">
+                        {rec.lumpSum && !rec.monthlyAmount
+                          ? `Lump Sum ${formatRMFull(rec.lumpSum)} @ ${rec.growthRate}% for ${rec.periodYears} yrs`
+                          : `${formatRMFull(rec.monthlyAmount)}/mth for ${rec.periodYears} yrs @ ${rec.growthRate}%`}
+                      </p>
+                    </div>
+                    <button onClick={() => setExpandedRec(expandedRec === rec.id ? null : rec.id)} className="p-1 text-hig-text-secondary hover:text-hig-text">
+                      <Maximize2 size={14} />
+                    </button>
+                    <button onClick={() => removeRecommendation(rec.id)} className="p-1 text-hig-text-secondary hover:text-hig-red">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                  {expandedRec === rec.id && (
+                    <div className="border-t border-hig-gray-5 p-3 bg-hig-gray-6">
+                      <button
+                        onClick={() => setShowBreakdown(showBreakdown === rec.id ? null : rec.id)}
+                        className="hig-btn-ghost text-hig-caption1 w-full"
+                      >
+                        {showBreakdown === rec.id ? 'Hide' : 'Show'} Calculation Breakdown
+                        {showBreakdown === rec.id ? <ChevronUp size={14} className="ml-1" /> : <ChevronDown size={14} className="ml-1" />}
+                      </button>
+                      {showBreakdown === rec.id && (
+                        <div className="mt-3 overflow-x-auto">
+                          <BreakdownTable rec={rec} startAge={currentAge} />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {activeTab === 'provisions' && (
+            <ProvisionPanel
+              plan={plan}
+              currentAge={currentAge}
+              onChange={onChange}
+            />
           )}
         </div>
       </div>
-
-      {/* Main Content: Chart + Panel */}
-      <div className="flex gap-4">
-        {/* Left: Chart + Situation */}
-        <div className="flex-1 min-w-0 space-y-4">
-          {/* Chart */}
-          <div className="hig-card p-5">
-            <RetirementChart
-              data={projection.chartData}
-              retirementAge={plan.retirementAge}
-              targetAmount={projection.targetAmount}
-              hasRecommendations={selectedRecs.length > 0}
-            />
-          </div>
-
-          {/* Current Situation / With Recommendation */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="hig-card p-4">
-              <h4 className="text-hig-subhead font-semibold mb-2">Current Situation</h4>
-              <div className="flex items-center gap-2 mb-2">
-                {projection.fundsRunOutAge >= plan.lifeExpectancy
-                  ? <CheckCircle2 size={20} className="text-hig-green" />
-                  : <AlertTriangle size={20} className="text-hig-red" />}
-                <span className={`text-hig-title3 ${projection.fundsRunOutAge >= plan.lifeExpectancy ? 'text-hig-green' : ''}`}>
-                  {projection.fundsRunOutAge >= plan.lifeExpectancy ? `${plan.lifeExpectancy}+` : projection.fundsRunOutAge} yo
-                </span>
-              </div>
-              <p className="text-hig-caption1 text-hig-text-secondary">
-                {projection.fundsRunOutAge >= plan.lifeExpectancy
-                  ? 'Your funds should last through your retirement years.'
-                  : `At current levels, your funds will run out at age ${projection.fundsRunOutAge}. You are at ${projection.coveragePercent}% of your retirement goal.`}
-              </p>
-            </div>
-
-            <div className="hig-card p-4">
-              <h4 className="text-hig-subhead font-semibold mb-2">With Recommendation</h4>
-              {selectedRecs.length === 0 ? (
-                <div className="flex items-center gap-2">
-                  <AlertTriangle size={20} className="text-hig-orange" />
-                  <p className="text-hig-subhead text-hig-text-secondary">
-                    No Recommendation Selected
-                  </p>
-                </div>
-              ) : projection.isFullyFunded ? (
-                <>
-                  <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle2 size={20} className="text-hig-green" />
-                    <span className="text-hig-subhead font-semibold text-hig-green">Fully Funded</span>
-                  </div>
-                  <p className="text-hig-caption1 text-hig-green bg-green-50 rounded-hig-sm p-2">
-                    Your retirement is fully funded. You will have sufficient funds throughout your retirement years.
-                  </p>
-                </>
-              ) : projection.fundsRunOutWithRec >= plan.lifeExpectancy ? (
-                <>
-                  <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle2 size={20} className="text-hig-green" />
-                    <span className="text-hig-title3 text-hig-green">{plan.lifeExpectancy}+ yo</span>
-                  </div>
-                  <p className="text-hig-caption1 text-hig-text-secondary">
-                    With your recommendation, funds last through life expectancy — {projection.coveragePercent}% of your retirement goal covered.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <div className="flex items-center gap-2 mb-2">
-                    <AlertTriangle size={20} className="text-hig-orange" />
-                    <span className="text-hig-title3">{projection.fundsRunOutWithRec} yo</span>
-                  </div>
-                  <p className="text-hig-caption1 text-hig-text-secondary">
-                    With your recommendation, funds extend to age {projection.fundsRunOutWithRec} — {projection.coveragePercent}% of your retirement goal covered.
-                  </p>
-                </>
-              )}
-              {selectedRecs.length === 0 && (
-                <p className="text-hig-caption1 text-hig-text-secondary mt-2">
-                  Add a recommendation to see how it improves your situation.
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Right: Recommendations / Provisions Panel */}
-        <div className="w-80 shrink-0">
-          <div className="hig-card p-4 max-h-[calc(100vh-300px)] overflow-y-auto">
-            {activeTab === 'recommendations' && (
-              <div className="space-y-3">
-                <button
-                  onClick={() => setShowCustomForm(true)}
-                  className="hig-btn-primary w-full gap-2"
-                >
-                  <Plus size={16} /> Add New Recommendation
-                </button>
-
-                {shortfallAmount > 0 && (plan.recommendations || []).length === 0 && (
-                  <p className="text-hig-caption1 text-hig-text-secondary">
-                    To achieve your objective, you could get on track by creating a plan with one of the following:
-                  </p>
-                )}
-
-                {/* Preset suggestions */}
-                {shortfallAmount > 0 && (
-                  <div className="space-y-2">
-                    {suggestedMonthly10 > 0 && (
-                      <button
-                        onClick={() => addPresetRecommendation(suggestedMonthly10, 10)}
-                        className="w-full text-left p-3 rounded-hig-sm border border-hig-gray-4 hover:border-hig-blue hover:bg-blue-50/30 transition-colors"
-                      >
-                        <p className="text-hig-subhead font-medium">Invest {formatRMFull(suggestedMonthly10)}/mth</p>
-                        <p className="text-hig-caption1 text-hig-text-secondary">for 10 years</p>
-                      </button>
-                    )}
-                    {suggestedMonthly20 > 0 && (
-                      <button
-                        onClick={() => addPresetRecommendation(suggestedMonthly20, 20)}
-                        className="w-full text-left p-3 rounded-hig-sm border border-hig-gray-4 hover:border-hig-blue hover:bg-blue-50/30 transition-colors"
-                      >
-                        <p className="text-hig-subhead font-medium">Invest {formatRMFull(suggestedMonthly20)}/mth</p>
-                        <p className="text-hig-caption1 text-hig-text-secondary">for 20 years</p>
-                      </button>
-                    )}
-                    {suggestedLumpSum > 0 && (
-                      <button
-                        onClick={() => addPresetRecommendation(0, plan.retirementAge - currentAge, suggestedLumpSum)}
-                        className="w-full text-left p-3 rounded-hig-sm border border-hig-gray-4 hover:border-hig-blue hover:bg-blue-50/30 transition-colors"
-                      >
-                        <p className="text-hig-subhead font-medium">Invest {formatRMFull(suggestedLumpSum)} one-time</p>
-                        <p className="text-hig-caption1 text-hig-text-secondary">today</p>
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {/* Added recommendations */}
-                {(plan.recommendations || []).map((rec, idx) => (
-                  <div key={rec.id} className="border border-hig-gray-4 rounded-hig-sm overflow-hidden">
-                    <div className="flex items-center gap-3 p-3">
-                      {/* Selection radio */}
-                      <button
-                        onClick={() => toggleRecommendation(rec.id)}
-                        className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-colors
-                          ${rec.isSelected ? 'border-hig-blue bg-hig-blue' : 'border-hig-gray-3'}`}
-                      >
-                        {rec.isSelected && <span className="w-2 h-2 rounded-full bg-white" />}
-                      </button>
-
-                      <div className="flex-1 min-w-0">
-                        <p className="text-hig-subhead font-medium">Recommendation {idx + 1}</p>
-                        <p className="text-hig-caption1 text-hig-text-secondary truncate">
-                          {rec.lumpSum && !rec.monthlyAmount
-                            ? `Lump Sum ${formatRMFull(rec.lumpSum)} @ ${rec.growthRate}% for ${rec.periodYears} yrs`
-                            : `${formatRMFull(rec.monthlyAmount)}/mth for ${rec.periodYears} yrs @ ${rec.growthRate}%`}
-                        </p>
-                      </div>
-
-                      <button
-                        onClick={() => setExpandedRec(expandedRec === rec.id ? null : rec.id)}
-                        className="p-1 text-hig-text-secondary hover:text-hig-text"
-                      >
-                        <Maximize2 size={14} />
-                      </button>
-                      <button
-                        onClick={() => removeRecommendation(rec.id)}
-                        className="p-1 text-hig-text-secondary hover:text-hig-red"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-
-                    {/* Expanded: show breakdown */}
-                    {expandedRec === rec.id && (
-                      <div className="border-t border-hig-gray-5 p-3 bg-hig-gray-6">
-                        <button
-                          onClick={() => setShowBreakdown(showBreakdown === rec.id ? null : rec.id)}
-                          className="hig-btn-ghost text-hig-caption1 w-full"
-                        >
-                          {showBreakdown === rec.id ? 'Hide' : 'Show'} Calculation Breakdown
-                          {showBreakdown === rec.id ? <ChevronUp size={14} className="ml-1" /> : <ChevronDown size={14} className="ml-1" />}
-                        </button>
-
-                        {showBreakdown === rec.id && (
-                          <div className="mt-3 overflow-x-auto">
-                            <BreakdownTable rec={rec} startAge={currentAge} />
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {activeTab === 'provisions' && (
-              <ProvisionPanel
-                plan={plan}
-                currentAge={currentAge}
-                onChange={onChange}
-              />
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Custom Recommendation Modal (TVM Calculator) */}
-      {showCustomForm && (
-        <CustomRecommendationModal
-          form={customForm}
-          setForm={setCustomForm}
-          calcFor={customCalcFor}
-          setCalcFor={setCustomCalcFor}
-          shortfallAmount={shortfallAmount}
-          currentAge={currentAge}
-          retirementAge={plan.retirementAge}
-          onAdd={addCustomRecommendation}
-          onClose={() => setShowCustomForm(false)}
-        />
-      )}
-
-      {/* Planning Assumptions Modal */}
-      {showAssumptions && (
-        <PlanningAssumptions
-          plan={plan}
-          currentAge={currentAge}
-          onChange={onChange}
-          onClose={() => onToggleAssumptions(false)}
-        />
-      )}
     </div>
+
+    {/* Custom Recommendation Modal (TVM Calculator) */}
+    {showCustomForm && (
+      <CustomRecommendationModal
+        form={customForm}
+        setForm={setCustomForm}
+        calcFor={customCalcFor}
+        setCalcFor={setCustomCalcFor}
+        shortfallAmount={shortfallAmount}
+        currentAge={currentAge}
+        retirementAge={plan.retirementAge}
+        onAdd={addCustomRecommendation}
+        onClose={() => setShowCustomForm(false)}
+      />
+    )}
+
+    {/* Planning Assumptions Modal */}
+    {showAssumptions && (
+      <PlanningAssumptions
+        plan={plan}
+        currentAge={currentAge}
+        onChange={onChange}
+        onClose={() => onToggleAssumptions(false)}
+      />
+    )}
+  </>
   )
 }
 

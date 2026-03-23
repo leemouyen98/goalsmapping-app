@@ -63,14 +63,9 @@ export default function RetirementChart({ data, retirementAge, targetAmount, has
   // ALL hooks MUST run before any early return — React Rules of Hooks
   const rawData = data && data.length > 0 ? data : []
 
-  // Pad chart: one silent point before the first age and after the last age
   const safeData = useMemo(() => {
     if (rawData.length === 0) return []
-    const first = rawData[0]
-    const last = rawData[rawData.length - 1]
-    const pre = { ...first, age: first.age - 1 }
-    const post = { ...last, age: last.age + 1 }
-    return [pre, ...rawData, post]
+    return rawData
   }, [rawData])
 
   const maxVal = useMemo(function() {
@@ -88,7 +83,7 @@ export default function RetirementChart({ data, retirementAge, targetAmount, has
   // Early return AFTER all hooks
   if (safeData.length === 0) {
     return (
-      <div style={{ height: 380, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8E8E93' }}>
+      <div style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8E8E93' }}>
         No data to display
       </div>
     )
@@ -105,7 +100,7 @@ export default function RetirementChart({ data, retirementAge, targetAmount, has
   legendPayload.push({ value: 'Required Amount', type: 'plainline', color: '#1C1C1E', payload: { strokeDasharray: '6 4', strokeWidth: 1.5 } })
 
   return (
-    <div style={{ width: '100%', height: 380 }}>
+    <div style={{ width: '100%', height: 300 }}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={safeData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
           <defs>
