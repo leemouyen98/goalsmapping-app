@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useContacts } from '../hooks/useContacts'
 import { getAge } from '../lib/formatters'
 import { formatRMFull, protectionNeed, generateProtectionSummary } from '../lib/calculations'
-import { ArrowLeft, X, Plus, Trash2, CheckCircle2, AlertTriangle, Settings } from 'lucide-react'
+import { ArrowLeft, X, Plus, Trash2, Settings } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
@@ -600,63 +600,6 @@ function ProtectionPlanner({ plan, currentAge, contactName, updatePlan, showAssu
             </div>
           </div>
 
-          {/* Coverage visualization */}
-          <div className="hig-card p-5">
-            <h3 className="text-hig-headline mb-4">{RISK_LABELS[activeRisk]} Coverage Breakdown</h3>
-
-            <div className="space-y-5">
-              {/* Target bar */}
-              <CoverageBar
-                label="Target Coverage"
-                value={active.targetCoverage}
-                max={active.targetCoverage}
-                colour="#8E8E93"
-                showFull
-              />
-
-              {/* Existing */}
-              <CoverageBar
-                label="Existing Coverage"
-                value={active.existingCoverage}
-                max={active.targetCoverage}
-                colour="#34C759"
-              />
-
-              {/* Existing + Recommended */}
-              <CoverageBar
-                label="With Recommendations"
-                value={active.totalCovered}
-                max={active.targetCoverage}
-                colour="#007AFF"
-                segments={[
-                  { value: active.existingCoverage, colour: '#34C759' },
-                  { value: active.recommendedCoverage, colour: '#007AFF' },
-                ]}
-              />
-            </div>
-
-            {/* Status */}
-            <div className="mt-4">
-              {active.shortfall > 0 ? (
-                <div className="bg-red-50 rounded-hig-sm p-3 flex items-center gap-2 text-hig-caption1 text-hig-red">
-                  <AlertTriangle size={15} />
-                  <span>
-                    Gap of <strong>{formatRMFull(active.shortfall)}</strong> remains — add a recommendation to close it.
-                  </span>
-                </div>
-              ) : active.targetCoverage > 0 ? (
-                <div className="bg-green-50 rounded-hig-sm p-3 flex items-center gap-2 text-hig-caption1 text-hig-green">
-                  <CheckCircle2 size={15} />
-                  <span>Fully covered with <strong>{formatRMFull(active.surplus)}</strong> surplus.</span>
-                </div>
-              ) : (
-                <div className="bg-hig-gray-6 rounded-hig-sm p-3 text-hig-caption1 text-hig-text-secondary">
-                  No target set for {RISK_SHORT[activeRisk]}. Go to Step 1 to define your needs.
-                </div>
-              )}
-            </div>
-          </div>
-
           {/* Needs breakdown */}
           {(plan.needs[activeRisk]?.lumpSum > 0 || plan.needs[activeRisk]?.monthly > 0) && (
             <div className="hig-card p-4">
@@ -1065,48 +1008,3 @@ function CoverageAgeChart({ risk, currentAge, lumpSum, monthly, period, existing
   )
 }
 
-// ─── Coverage Bar ─────────────────────────────────────────────────────────────
-
-function CoverageBar({ label, value, max, colour, segments, showFull }) {
-  const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0
-
-  return (
-    <div>
-      <div className="flex justify-between text-hig-caption1 mb-1.5">
-        <span className="text-hig-text-secondary">{label}</span>
-        <span className="font-medium">{formatRMFull(value)}</span>
-      </div>
-      <div className="h-7 bg-hig-gray-6 rounded-lg overflow-hidden relative">
-        {/* Ghost stripe so empty bars don't disappear entirely */}
-        {!showFull && pct === 0 && !segments && (
-          <div className="absolute left-0 top-0 h-full w-1 rounded-l-lg opacity-30" style={{ backgroundColor: colour }} />
-        )}
-        {segments ? (
-          <div className="h-full flex">
-            {segments.map((seg, i) => {
-              const segPct = max > 0 ? Math.min(100, Math.round((seg.value / max) * 100)) : 0
-              return segPct > 0 ? (
-                <div
-                  key={i}
-                  className="h-full transition-all duration-500"
-                  style={{ width: `${segPct}%`, backgroundColor: seg.colour }}
-                />
-              ) : (
-                // Ghost stripe for zero-value segment
-                <div key={i} className="h-full w-1 opacity-20 transition-all duration-500" style={{ backgroundColor: seg.colour }} />
-              )
-            })}
-          </div>
-        ) : (
-          <div
-            className="h-full rounded-lg transition-all duration-500"
-            style={{
-              width: showFull ? '100%' : `${Math.max(pct, 0)}%`,
-              backgroundColor: colour,
-            }}
-          />
-        )}
-      </div>
-    </div>
-  )
-}
