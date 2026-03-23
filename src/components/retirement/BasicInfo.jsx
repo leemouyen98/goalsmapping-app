@@ -126,10 +126,8 @@ export default function BasicInfo({ plan, currentAge, contactName, onChange, onC
         <div className="hig-card p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-hig-headline">EPF Payout Information</h3>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <span className="text-hig-subhead text-hig-text-secondary">
-                {plan.includeEPF ? 'Included' : 'Excluded'}
-              </span>
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <span className="text-hig-subhead text-hig-text-secondary">Include EPF</span>
               <button
                 type="button"
                 onClick={() => onChange({ includeEPF: !plan.includeEPF })}
@@ -164,7 +162,13 @@ export default function BasicInfo({ plan, currentAge, contactName, onChange, onC
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-hig-text-secondary text-hig-subhead">RM</span>
                   <input type="number" value={plan.annualIncome || ''} onChange={set('annualIncome')} className="hig-input pl-10" placeholder="60,000" />
                 </div>
-                <p className="text-hig-caption1 text-hig-text-secondary mt-1">24% goes to EPF (11% employee + 13% employer)</p>
+                <p className="text-hig-caption1 text-hig-text-secondary mt-1">
+                  {(() => {
+                    const monthly = (plan.annualIncome || 0) / 12
+                    const er = monthly > 5000 ? 12 : 13
+                    return `${11 + er}% goes to EPF (11% employee + ${er}% employer${monthly > 5000 ? ', salary > RM5,000/mth' : ''})`
+                  })()}
+                </p>
               </div>
               <div>
                 <label className="hig-label">Income Growth Rate</label>
