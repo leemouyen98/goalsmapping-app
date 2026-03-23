@@ -499,7 +499,7 @@ function ProtectionPlanner({ plan, currentAge, contactName, updatePlan, showAssu
   )
 
   const active = summary.find((s) => s.risk === activeRisk) || summary[0]
-  const recs = (plan.recommendations || []).filter((r) => r.riskType === activeRisk)
+  const allRecs = plan.recommendations || []
 
   const addRecommendation = () => {
     const rec = {
@@ -718,23 +718,14 @@ function ProtectionPlanner({ plan, currentAge, contactName, updatePlan, showAssu
                   <Plus size={15} /> Add Recommendation
                 </button>
 
-                {recs.length === 0 ? (
-                  <div className="py-2">
-                    {active?.shortfall > 0 ? (
-                      <div className="bg-red-50 rounded-hig-sm p-3 text-hig-caption1 text-hig-red">
-                        <p className="font-semibold mb-0.5">Gap: {formatRMFull(active.shortfall)}</p>
-                        <p className="text-hig-text-secondary">Add a recommendation to address this shortfall.</p>
-                      </div>
-                    ) : (
-                      <p className="text-hig-subhead text-hig-text-secondary text-center py-2">
-                        No recommendations for {RISK_SHORT[activeRisk]}.
-                      </p>
-                    )}
-                  </div>
+                {allRecs.length === 0 ? (
+                  <p className="text-hig-subhead text-hig-text-secondary text-center py-3">
+                    No recommendations yet. Add one to start filling gaps.
+                  </p>
                 ) : (
-                  recs.map((rec) => (
-                    <div key={rec.id} className="border border-hig-gray-4 rounded-hig-sm p-3 space-y-2">
-                      {/* Header row */}
+                  allRecs.map((rec) => (
+                    <div key={rec.id} className="border border-hig-gray-4 rounded-hig-sm p-3 space-y-2.5">
+                      {/* Header row: select toggle + delete */}
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => toggleRec(rec.id)}
@@ -751,6 +742,27 @@ function ProtectionPlanner({ plan, currentAge, contactName, updatePlan, showAssu
                         </button>
                       </div>
 
+                      {/* Risk type pills */}
+                      <div>
+                        <label className="text-hig-caption1 text-hig-text-secondary block mb-1.5">Risk Type</label>
+                        <div className="flex gap-1 flex-wrap">
+                          {RISKS.map((r) => (
+                            <button
+                              key={r}
+                              onClick={() => updateRec(rec.id, { riskType: r })}
+                              className={`px-2.5 py-1 rounded-full text-hig-caption2 font-medium transition-colors border
+                                ${rec.riskType === r
+                                  ? 'text-white border-transparent'
+                                  : 'text-hig-text-secondary border-hig-gray-4 hover:border-hig-gray-3'
+                                }`}
+                              style={rec.riskType === r ? { backgroundColor: RISK_COLOUR[r] } : {}}
+                            >
+                              {RISK_SHORT[r]}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
                       {/* Product name */}
                       <div>
                         <label className="text-hig-caption1 text-hig-text-secondary">Product / Plan Name</label>
@@ -759,7 +771,7 @@ function ProtectionPlanner({ plan, currentAge, contactName, updatePlan, showAssu
                           value={rec.name || ''}
                           onChange={(e) => updateRec(rec.id, { name: e.target.value })}
                           className="hig-input mt-1 text-hig-subhead"
-                          placeholder={`e.g. Great Eastern A-Life Cover Plus`}
+                          placeholder="Product / plan name"
                         />
                       </div>
 
@@ -804,7 +816,7 @@ function ProtectionPlanner({ plan, currentAge, contactName, updatePlan, showAssu
                 )}
 
                 {/* Total monthly premium */}
-                {(plan.recommendations || []).filter((r) => r.isSelected).length > 0 && (
+                {allRecs.filter((r) => r.isSelected).length > 0 && (
                   <div className="border-t border-hig-gray-5 pt-3 flex justify-between text-hig-subhead">
                     <span className="text-hig-text-secondary">Total Monthly Premium</span>
                     <span className="font-semibold">{formatRMFull(totalMonthlyPremium)}</span>
