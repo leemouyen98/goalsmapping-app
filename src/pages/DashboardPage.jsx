@@ -264,7 +264,7 @@ export default function DashboardPage() {
           <StatCard
             icon={Users} label="Contacts" color="#007AFF" loading={contactsLoading}
             value={stats.total}
-            sub={stats.total === 1 ? 'client profile' : 'client profiles'}
+            sub={stats.total === 1 ? 'Client Profile' : 'Client Profiles'}
             onClick={() => navigate('/contacts')}
           />
           <StatCard

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useContacts } from '../hooks/useContacts'
 import {
   ArrowLeft, Phone, Calendar, Briefcase, Target, Shield,
-  Plus, Check, FileText, PhoneCall, Users, MessageSquare, Clock, Pencil,
+  Plus, Check, FileText, PhoneCall, Users, MessageSquare, Clock, Pencil, BarChart2,
 } from 'lucide-react'
 
 const ACTIVITY_ICONS = { Call: PhoneCall, Meeting: Users, Email: MessageSquare }
@@ -325,9 +325,15 @@ export default function ContactDetailPage() {
           {tab === 'finances' && (
             <div className="hig-card p-8 flex items-center justify-center min-h-[300px]">
               <div className="text-center">
-                <p className="text-hig-headline text-hig-text-secondary">Financial Summary</p>
-                <p className="text-hig-subhead text-hig-text-secondary mt-1">
-                  Coming in V4.0 — Assets, Investments, Liabilities, Income, Insurances, Expenses
+                <div className="w-14 h-14 rounded-2xl bg-hig-gray-6 flex items-center justify-center mx-auto mb-4">
+                  <BarChart2 size={26} className="text-hig-text-secondary" />
+                </div>
+                <p className="text-hig-headline text-hig-text font-semibold mb-1">Financial Summary</p>
+                <p className="text-hig-subhead text-hig-text-secondary">
+                  Coming in V4.0
+                </p>
+                <p className="text-hig-caption1 text-hig-text-secondary mt-1">
+                  Assets · Investments · Liabilities · Income · Insurances · Expenses
                 </p>
               </div>
             </div>

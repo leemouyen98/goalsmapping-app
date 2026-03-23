@@ -133,22 +133,24 @@ function ProtectionBasicInfo({ plan, updatePlan, setNeed, onContinue }) {
         <p className="text-hig-subhead text-hig-text-secondary mb-4">
           Adjust these settings to match your protection plan.
         </p>
-        <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-hig-sm mb-4 text-hig-caption1 text-hig-blue">
-          <Info size={14} className="shrink-0 mt-0.5" />
-          Inflation rate helps estimate how much your financial needs may increase over time, so your coverage remains sufficient when the need arises.
-        </div>
-        <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-hig-sm mb-4 text-hig-caption1 text-hig-blue">
-          <Info size={14} className="shrink-0 mt-0.5" />
-          Investment return rate represents the rate at which your insurance payout is assumed to grow after it is received, supporting future expenses.
-        </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="hig-label">Inflation Rate (%)</label>
+            <div className="flex items-center gap-1 mb-1">
+              <label className="hig-label mb-0">Inflation Rate (%)</label>
+              <span title="Estimates how much your financial needs increase over time, ensuring coverage remains sufficient." className="text-hig-text-secondary cursor-help">
+                <Info size={12} />
+              </span>
+            </div>
             <input type="number" step="0.5" min={0} max={10} value={plan.inflationRate}
               onChange={(e) => updatePlan({ inflationRate: parseFloat(e.target.value) || 0 })} className="hig-input" />
           </div>
           <div>
-            <label className="hig-label">Investment Return Rate (%)</label>
+            <div className="flex items-center gap-1 mb-1">
+              <label className="hig-label mb-0">Investment Return Rate (%)</label>
+              <span title="Rate at which the insurance payout is assumed to grow after it is received, supporting future expenses." className="text-hig-text-secondary cursor-help">
+                <Info size={12} />
+              </span>
+            </div>
             <input type="number" step="0.5" min={0} max={10} value={plan.returnRate}
               onChange={(e) => updatePlan({ returnRate: parseFloat(e.target.value) || 0 })} className="hig-input" />
           </div>

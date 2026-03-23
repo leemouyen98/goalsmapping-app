@@ -145,7 +145,7 @@ export default function RetirementPlanner({ plan, currentAge, contactName, onCha
                 {projection.isFullyFunded ? 'Surplus' : 'Shortfall'}
               </p>
               <p className={`text-hig-title3 ${projection.isFullyFunded ? 'text-hig-green' : 'text-hig-red'}`}>
-                {projection.isFullyFunded ? '+' : '-'}{formatRMFull(projection.isFullyFunded ? projection.surplus : projection.shortfall)}
+                {projection.isFullyFunded ? '+' : ''}{formatRMFull(projection.isFullyFunded ? projection.surplus : projection.shortfall)}
               </p>
             </div>
           </div>
@@ -248,7 +248,7 @@ export default function RetirementPlanner({ plan, currentAge, contactName, onCha
                     <span className="text-hig-title3">{projection.fundsRunOutWithRec} yo</span>
                   </div>
                   <p className="text-hig-caption1 text-hig-text-secondary">
-                    At current levels, your funds will run out at age {projection.fundsRunOutWithRec}. You are at {projection.coveragePercent}% of your retirement goal.
+                    With your recommendation, funds extend to age {projection.fundsRunOutWithRec} — {projection.coveragePercent}% of your retirement goal covered.
                   </p>
                 </>
               )}
@@ -351,8 +351,8 @@ export default function RetirementPlanner({ plan, currentAge, contactName, onCha
                         <p className="text-hig-subhead font-medium">Recommendation {idx + 1}</p>
                         <p className="text-hig-caption1 text-hig-text-secondary truncate">
                           {rec.lumpSum && !rec.monthlyAmount
-                            ? `Lumpsum ${formatRMFull(rec.lumpSum)} @ ${rec.growthRate}%`
-                            : `${formatRMFull(rec.monthlyAmount)}/mth for ${rec.periodYears} years @ ${rec.growthRate}%`}
+                            ? `Lump Sum ${formatRMFull(rec.lumpSum)} @ ${rec.growthRate}% for ${rec.periodYears} yrs`
+                            : `${formatRMFull(rec.monthlyAmount)}/mth for ${rec.periodYears} yrs @ ${rec.growthRate}%`}
                         </p>
                       </div>
 
