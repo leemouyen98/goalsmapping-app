@@ -38,10 +38,12 @@ export default function ExistingProvision({ plan, currentAge, onChange, onBack, 
     }))
   }, [provisions, yearsToRetirement])
 
+  // Total capital = current balances + all future contributions over the period
   const totalCapital = provisions.reduce((sum, p) => {
-    if (p.frequency === 'One-Time') return sum + (p.amount || 0)
+    const balance = p.currentBalance || 0
+    if (p.frequency === 'One-Time') return sum + balance + (p.amount || 0)
     const freqMap = { Monthly: 12, Quarterly: 4, 'Semi-annually': 2, Yearly: 1 }
-    return sum + (p.amount || 0) * (freqMap[p.frequency] || 12) * yearsToRetirement
+    return sum + balance + (p.amount || 0) * (freqMap[p.frequency] || 12) * yearsToRetirement
   }, 0)
 
   const totalProjected = projections.reduce((sum, p) => sum + p.projectedValue, 0)
@@ -178,7 +180,7 @@ export default function ExistingProvision({ plan, currentAge, onChange, onBack, 
                   <span className="font-semibold">{provisions.length} investment{provisions.length > 1 ? 's' : ''}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-hig-text-secondary">Total Capital</span>
+                  <span className="text-hig-text-secondary">Total Committed</span>
                   <span className="font-semibold">{formatRMFull(totalCapital)}</span>
                 </div>
                 <div className="flex justify-between">

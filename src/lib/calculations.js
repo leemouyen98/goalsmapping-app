@@ -286,9 +286,9 @@ export function generateRetirementProjection({
   let epfBal = epfBalance || 0
   let epfIncome = annualIncome || 0
 
-  // Provisions: start with lump-sum amounts only; recurring contributions added each year
+  // Provisions: start with currentBalance (existing savings) + any one-time top-up amounts
   let provBal = (provisions || []).reduce(
-    (sum, p) => sum + (p.frequency === 'One-Time' ? p.amount : 0), 0
+    (sum, p) => sum + (p.currentBalance || 0) + (p.frequency === 'One-Time' ? (p.amount || 0) : 0), 0
   )
 
   let recBal = 0

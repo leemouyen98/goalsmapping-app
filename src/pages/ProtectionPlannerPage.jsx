@@ -466,6 +466,7 @@ function ProtectionExistingCoverage({ plan, setExisting, onBack, onContinue }) {
 function ProtectionPlanner({ plan, currentAge, contactName, updatePlan, showAssumptions, onToggleAssumptions, onBack }) {
   const [activeRisk, setActiveRisk] = useState('death')
   const [activeTab, setActiveTab] = useState('recommendations')
+  const [showAllRecs, setShowAllRecs] = useState(false)
 
   const summary = useMemo(() =>
     generateProtectionSummary({
@@ -479,12 +480,13 @@ function ProtectionPlanner({ plan, currentAge, contactName, updatePlan, showAssu
   )
 
   const active = summary.find((s) => s.risk === activeRisk) || summary[0]
-  // Active-risk recs always float to top, preserving insertion order within each group
-  const allRecs = [...(plan.recommendations || [])].sort((a, b) => {
-    const aMatch = a.riskType === activeRisk ? 0 : 1
-    const bMatch = b.riskType === activeRisk ? 0 : 1
-    return aMatch - bMatch
-  })
+  const allRecs = plan.recommendations || []
+  const activeRiskRecs = allRecs.filter((r) => r.riskType === activeRisk)
+  const otherRecs = allRecs.filter((r) => r.riskType !== activeRisk)
+  // Displayed recs: active-risk recs first; other recs shown only when toggled
+  const displayedRecs = showAllRecs
+    ? [...activeRiskRecs, ...otherRecs]
+    : activeRiskRecs
 
   const addRecommendation = () => {
     const rec = {
@@ -532,6 +534,31 @@ function ProtectionPlanner({ plan, currentAge, contactName, updatePlan, showAssu
 
   return (
     <>
+      {/* Cross-category coverage status — quick overview across all 4 risks */}
+      <div className="flex gap-2 mb-3">
+        {summary.map((s) => {
+          const colour = s.coveragePercent >= 100 ? '#34C759' : s.coveragePercent >= 50 ? '#FF9500' : '#FF3B30'
+          const isActive = s.risk === activeRisk
+          return (
+            <button
+              key={s.risk}
+              onClick={() => setActiveRisk(s.risk)}
+              className={`flex-1 rounded-hig-sm p-2 text-center border transition-all
+                ${isActive ? 'border-transparent shadow-sm' : 'border-hig-gray-5 bg-white hover:border-hig-gray-4'}`}
+              style={isActive ? { backgroundColor: colour + '18', borderColor: colour + '60' } : {}}
+            >
+              <div className="flex items-center justify-center gap-1 mb-0.5">
+                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: RISK_COLOUR[s.risk] }} />
+                <span className="text-hig-caption2 text-hig-text-secondary font-medium">{RISK_SHORT[s.risk]}</span>
+              </div>
+              <div className="text-hig-caption1 font-bold" style={{ color: colour }}>
+                {s.coveragePercent}%
+              </div>
+            </button>
+          )
+        })}
+      </div>
+
       {/* Risk tabs */}
       <div className="flex bg-hig-gray-6 rounded-hig-sm p-1 mb-4">
         {RISKS.map((risk) => {
@@ -671,14 +698,17 @@ function ProtectionPlanner({ plan, currentAge, contactName, updatePlan, showAssu
                   <Plus size={15} /> Add Recommendation
                 </button>
 
-                {allRecs.length === 0 ? (
+                {activeRiskRecs.length === 0 && (
                   <p className="text-hig-subhead text-hig-text-secondary text-center py-3">
-                    No recommendations yet. Add one to start filling gaps.
+                    No {RISK_SHORT[activeRisk]} recommendations yet.
                   </p>
-                ) : (
-                  allRecs.map((rec) => (
+                )}
+
+                {displayedRecs.length === 0 && allRecs.length > 0 && !showAllRecs ? null : null}
+
+                {displayedRecs.map((rec) => (
                     <div key={rec.id} className="border border-hig-gray-4 rounded-hig-sm p-3 space-y-2.5">
-                      {/* Header row: select toggle + delete */}
+                      {/* Header row: select toggle + risk badge + delete */}
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => toggleRec(rec.id)}
@@ -690,6 +720,14 @@ function ProtectionPlanner({ plan, currentAge, contactName, updatePlan, showAssu
                         <span className={`text-hig-caption1 flex-1 font-medium ${rec.isSelected ? 'text-hig-blue' : 'text-hig-text-secondary'}`}>
                           {rec.isSelected ? 'Included in plan' : 'Include in plan'}
                         </span>
+                        {rec.riskType !== activeRisk && (
+                          <span
+                            className="text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                            style={{ backgroundColor: RISK_COLOUR[rec.riskType] }}
+                          >
+                            {RISK_SHORT[rec.riskType]}
+                          </span>
+                        )}
                         <button onClick={() => removeRec(rec.id)} className="text-hig-text-secondary hover:text-hig-red p-1">
                           <Trash2 size={14} />
                         </button>
@@ -765,7 +803,18 @@ function ProtectionPlanner({ plan, currentAge, contactName, updatePlan, showAssu
                         </div>
                       </div>
                     </div>
-                  ))
+                ))}
+
+                {/* Toggle: show/hide other-risk recs */}
+                {otherRecs.length > 0 && (
+                  <button
+                    onClick={() => setShowAllRecs((v) => !v)}
+                    className="text-hig-caption1 text-hig-blue hover:text-blue-700 w-full text-center py-1"
+                  >
+                    {showAllRecs
+                      ? 'Show only current category'
+                      : `Show all recommendations (${allRecs.length})`}
+                  </button>
                 )}
 
                 {/* Total monthly premium */}
@@ -905,13 +954,13 @@ function buildCoverageChartData({ lumpSum, monthly, period, inflationRate, retur
   })
 }
 
-function CoverageNeedsTooltip({ active, payload, label }) {
+function CoverageNeedsTooltip({ active, payload, label, recColour }) {
   if (!active || !payload?.length) return null
   const d = payload[0]?.payload
   if (!d) return null
   const rows = [
     { key: 'existing',    label: 'Existing Coverage',     color: '#34C759' },
-    { key: 'recommended', label: 'Recommended Coverage',  color: '#007AFF' },
+    { key: 'recommended', label: 'Recommended Coverage',  color: recColour || '#007AFF' },
     { key: 'shortfall',   label: 'Shortfall',             color: '#FF3B30' },
   ]
   return (
@@ -921,7 +970,7 @@ function CoverageNeedsTooltip({ active, payload, label }) {
       border: '1px solid #E5E5EA', padding: '10px 14px', minWidth: 200,
     }}>
       <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 7 }}>
-        Client  Age {label}
+        Client Age {label}
       </div>
       {rows.map(({ key, label: lbl, color }) =>
         d[key] > 0 ? (
@@ -948,6 +997,19 @@ function CoverageAgeChart({ risk, currentAge, lumpSum, monthly, period, existing
 
   const hasRecs = data.some((d) => d.recommended > 0)
 
+  // Detect year-1 lump sum spike: if the first bar is > 3× the second bar,
+  // cap the Y-axis so the income-replacement bars remain readable.
+  const firstBarTotal = data[0] ? data[0].existing + data[0].recommended + data[0].shortfall : 0
+  const secondBarTotal = data[1] ? data[1].existing + data[1].recommended + data[1].shortfall : firstBarTotal
+  const hasLumpSumSpike = lumpSum > 0 && data.length > 1 && firstBarTotal > secondBarTotal * 3
+  const lastBarTotal = data[data.length - 1]
+    ? data[data.length - 1].existing + data[data.length - 1].recommended + data[data.length - 1].shortfall
+    : secondBarTotal
+  // Cap at 2× the maximum non-first-year bar so they fill the chart nicely
+  const yDomainMax = hasLumpSumSpike
+    ? Math.ceil((Math.max(lastBarTotal, secondBarTotal) * 2.2) / 10000) * 10000
+    : undefined
+
   const yTickFmt = (v) =>
     v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1)}M`
     : v >= 1_000   ? `${(v / 1_000).toFixed(0)}K`
@@ -956,9 +1018,14 @@ function CoverageAgeChart({ risk, currentAge, lumpSum, monthly, period, existing
   return (
     <div className="hig-card p-5">
       <h3 className="text-hig-headline mb-1">Coverage Needs by Age</h3>
-      <p className="text-hig-caption1 text-hig-text-secondary mb-3">
+      <p className="text-hig-caption1 text-hig-text-secondary mb-1">
         Annual living expenses vs. how far your coverage pool reaches.
       </p>
+      {hasLumpSumSpike && (
+        <p className="text-hig-caption2 text-hig-orange mb-3">
+          ⚑ Age {data[0].age} includes one-off lump sum of {formatRMFull(lumpSum)} — bar is clipped. See Needs Breakdown for full value.
+        </p>
+      )}
 
       {/* Legend */}
       <div className="flex items-center gap-4 mb-3">
@@ -996,8 +1063,9 @@ function CoverageAgeChart({ risk, currentAge, lumpSum, monthly, period, existing
             tickLine={false}
             axisLine={false}
             width={42}
+            domain={yDomainMax ? [0, yDomainMax] : undefined}
           />
-          <Tooltip content={<CoverageNeedsTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
+          <Tooltip content={<CoverageNeedsTooltip recColour={recColour} />} cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
           {/* Stacked bars: existing → recommended → shortfall */}
           <Bar dataKey="existing"    stackId="a" fill="#34C759" name="Existing Coverage"    radius={[0,0,0,0]} />
           <Bar dataKey="recommended" stackId="a" fill={recColour} name="Recommended Coverage" radius={[0,0,0,0]} />

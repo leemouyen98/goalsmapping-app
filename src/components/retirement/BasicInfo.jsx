@@ -104,7 +104,7 @@ export default function BasicInfo({ plan, currentAge, contactName, onChange, onC
                 <input type="number" step="0.5" min={0} max={20} value={plan.preRetirementReturn ?? 5} onChange={set('preRetirementReturn')} className="hig-input pr-8" />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-hig-text-secondary">%</span>
               </div>
-              <p className="text-hig-caption2 text-hig-text-secondary mt-1">Used to discount the required corpus backward</p>
+              <p className="text-hig-caption2 text-hig-text-secondary mt-1">Expected portfolio return before retirement — higher return = lower corpus needed.</p>
             </div>
             <div>
               <label className="hig-label">Post-Retirement Return</label>

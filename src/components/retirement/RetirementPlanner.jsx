@@ -50,6 +50,13 @@ export default function RetirementPlanner({ plan, currentAge, contactName, onCha
     }
   }, [plan, currentAge])
 
+  // Baseline coverage % without any recommendations (for "Current Situation" card)
+  const baseCoveragePercent = projection.targetAmount > 0
+    ? Math.min(100, Math.round(
+        ((projection.epfAtRetirement + projection.provisionsAtRetirement) / projection.targetAmount) * 100
+      ))
+    : 0
+
   const statusColor = projection.isFullyFunded
     ? 'hig-green'
     : projection.coveragePercent >= 75
@@ -219,7 +226,7 @@ export default function RetirementPlanner({ plan, currentAge, contactName, onCha
             <p className="text-hig-caption1 text-hig-text-secondary">
               {projection.fundsRunOutAge >= plan.lifeExpectancy
                 ? 'Funds should last through retirement years.'
-                : `Funds run out at age ${projection.fundsRunOutAge}. ${projection.coveragePercent}% of goal covered.`}
+                : `Funds run out at age ${projection.fundsRunOutAge}. ${baseCoveragePercent}% of goal covered.`}
             </p>
           </div>
 
@@ -250,7 +257,7 @@ export default function RetirementPlanner({ plan, currentAge, contactName, onCha
                   <span className="text-hig-title3 text-hig-green">{plan.lifeExpectancy}+ yo</span>
                 </div>
                 <p className="text-hig-caption1 text-hig-text-secondary">
-                  Funds last through life expectancy — {projection.coveragePercent}% covered.
+                  Funds last through life expectancy — 100% covered.
                 </p>
               </>
             ) : (
