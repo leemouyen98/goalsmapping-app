@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useContacts } from '../hooks/useContacts'
 import { getAge } from '../lib/formatters'
 import { formatRMFull, protectionNeed, generateProtectionSummary } from '../lib/calculations'
-import { ArrowLeft, X, Plus, Trash2, CheckCircle2, AlertTriangle, Settings, Info } from 'lucide-react'
+import { ArrowLeft, X, Plus, Trash2, CheckCircle2, AlertTriangle, Settings } from 'lucide-react'
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2)
 const RISKS = ['death', 'tpd', 'aci', 'eci']
@@ -149,6 +149,7 @@ export default function ProtectionPlannerPage() {
           updatePlan={updatePlan}
           showAssumptions={showAssumptions}
           onToggleAssumptions={setShowAssumptions}
+          onBack={() => setStep(2)}
         />
       )}
     </div>
@@ -242,15 +243,7 @@ function ProtectionBasicInfo({ plan, updatePlan, setNeed, onContinue }) {
           </p>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <div className="flex items-center gap-1 mb-1">
-                <label className="hig-label mb-0">Inflation Rate (%)</label>
-                <span
-                  title="Increases the effective coverage needed over time as expenses grow."
-                  className="text-hig-text-secondary cursor-help"
-                >
-                  <Info size={12} />
-                </span>
-              </div>
+              <label className="hig-label">Inflation Rate (%)</label>
               <input
                 type="number"
                 step="0.5"
@@ -260,17 +253,10 @@ function ProtectionBasicInfo({ plan, updatePlan, setNeed, onContinue }) {
                 onChange={(e) => updatePlan({ inflationRate: parseFloat(e.target.value) || 0 })}
                 className="hig-input"
               />
+              <p className="text-hig-caption2 text-hig-text-secondary mt-1">Increases effective coverage requirement over time.</p>
             </div>
             <div>
-              <div className="flex items-center gap-1 mb-1">
-                <label className="hig-label mb-0">Investment Return Rate (%)</label>
-                <span
-                  title="Assumed return on the insurance payout, reducing the coverage amount needed."
-                  className="text-hig-text-secondary cursor-help"
-                >
-                  <Info size={12} />
-                </span>
-              </div>
+              <label className="hig-label">Investment Return Rate (%)</label>
               <input
                 type="number"
                 step="0.5"
@@ -280,6 +266,7 @@ function ProtectionBasicInfo({ plan, updatePlan, setNeed, onContinue }) {
                 onChange={(e) => updatePlan({ returnRate: parseFloat(e.target.value) || 0 })}
                 className="hig-input"
               />
+              <p className="text-hig-caption2 text-hig-text-secondary mt-1">Return on payout invested — reduces coverage needed.</p>
             </div>
           </div>
         </div>
@@ -472,7 +459,7 @@ function ProtectionExistingCoverage({ plan, setExisting, onBack, onContinue }) {
 
 // ─── Step 3: Protection Planner ───────────────────────────────────────────────
 
-function ProtectionPlanner({ plan, currentAge, contactName, updatePlan, showAssumptions, onToggleAssumptions }) {
+function ProtectionPlanner({ plan, currentAge, contactName, updatePlan, showAssumptions, onToggleAssumptions, onBack }) {
   const [activeRisk, setActiveRisk] = useState('death')
   const [activeTab, setActiveTab] = useState('recommendations')
 
@@ -488,7 +475,12 @@ function ProtectionPlanner({ plan, currentAge, contactName, updatePlan, showAssu
   )
 
   const active = summary.find((s) => s.risk === activeRisk) || summary[0]
-  const allRecs = plan.recommendations || []
+  // Active-risk recs always float to top, preserving insertion order within each group
+  const allRecs = [...(plan.recommendations || [])].sort((a, b) => {
+    const aMatch = a.riskType === activeRisk ? 0 : 1
+    const bMatch = b.riskType === activeRisk ? 0 : 1
+    return aMatch - bMatch
+  })
 
   const addRecommendation = () => {
     const rec = {
@@ -681,6 +673,13 @@ function ProtectionPlanner({ plan, currentAge, contactName, updatePlan, showAssu
               </div>
             </div>
           )}
+
+          {/* Back navigation */}
+          <div className="flex">
+            <button onClick={onBack} className="hig-btn-ghost gap-1.5">
+              <ArrowLeft size={16} /> Back to Existing Coverage
+            </button>
+          </div>
         </div>
 
         {/* Right panel */}
@@ -912,17 +911,24 @@ function CoverageBar({ label, value, max, colour, segments, showFull }) {
         <span className="text-hig-text-secondary">{label}</span>
         <span className="font-medium">{formatRMFull(value)}</span>
       </div>
-      <div className="h-7 bg-hig-gray-6 rounded-lg overflow-hidden">
+      <div className="h-7 bg-hig-gray-6 rounded-lg overflow-hidden relative">
+        {/* Ghost stripe so empty bars don't disappear entirely */}
+        {!showFull && pct === 0 && !segments && (
+          <div className="absolute left-0 top-0 h-full w-1 rounded-l-lg opacity-30" style={{ backgroundColor: colour }} />
+        )}
         {segments ? (
           <div className="h-full flex">
             {segments.map((seg, i) => {
               const segPct = max > 0 ? Math.min(100, Math.round((seg.value / max) * 100)) : 0
-              return (
+              return segPct > 0 ? (
                 <div
                   key={i}
                   className="h-full transition-all duration-500"
                   style={{ width: `${segPct}%`, backgroundColor: seg.colour }}
                 />
+              ) : (
+                // Ghost stripe for zero-value segment
+                <div key={i} className="h-full w-1 opacity-20 transition-all duration-500" style={{ backgroundColor: seg.colour }} />
               )
             })}
           </div>
@@ -930,7 +936,7 @@ function CoverageBar({ label, value, max, colour, segments, showFull }) {
           <div
             className="h-full rounded-lg transition-all duration-500"
             style={{
-              width: showFull ? '100%' : `${pct}%`,
+              width: showFull ? '100%' : `${Math.max(pct, 0)}%`,
               backgroundColor: colour,
             }}
           />
