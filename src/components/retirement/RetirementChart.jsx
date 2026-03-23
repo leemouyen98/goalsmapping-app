@@ -89,14 +89,17 @@ export default function RetirementChart({ data, retirementAge, targetAmount, has
     )
   }
 
-  const legendPayload = [
-    { value: 'EPF', type: 'rect', color: COLORS.epf },
-    { value: 'Existing Provision', type: 'rect', color: COLORS.provisions },
-  ]
-  if (hasRecommendations) {
-    legendPayload.push({ value: 'Recommendation', type: 'rect', color: COLORS.recommendations })
-  }
-  legendPayload.push({ value: 'Shortfall', type: 'rect', color: COLORS.shortfall })
+  // Only show a bucket if it has at least one non-zero value in the dataset
+  const showEPF = safeData.some((d) => d.epf > 0)
+  const showProvisions = safeData.some((d) => d.provisions > 0)
+  const showRecommendations = hasRecommendations && safeData.some((d) => d.recommendations > 0)
+  const showShortfall = safeData.some((d) => d.shortfall > 0)
+
+  const legendPayload = []
+  if (showEPF) legendPayload.push({ value: 'EPF', type: 'rect', color: COLORS.epf })
+  if (showProvisions) legendPayload.push({ value: 'Existing Provision', type: 'rect', color: COLORS.provisions })
+  if (showRecommendations) legendPayload.push({ value: 'Recommendation', type: 'rect', color: COLORS.recommendations })
+  if (showShortfall) legendPayload.push({ value: 'Shortfall', type: 'rect', color: COLORS.shortfall })
   legendPayload.push({ value: 'Required Amount', type: 'plainline', color: '#1C1C1E', payload: { strokeDasharray: '6 4', strokeWidth: 1.5 } })
 
   return (
@@ -149,49 +152,57 @@ export default function RetirementChart({ data, retirementAge, targetAmount, has
           />
 
           {/* Stacked areas — bottom to top: epf → provisions → recommendations → shortfall */}
-          <Area
-            type="monotone"
-            dataKey="epf"
-            stackId="stack"
-            fill="url(#gradEPF)"
-            stroke={COLORS.epf}
-            strokeWidth={1.5}
-            animationDuration={500}
-            name="EPF"
-          />
+          {showEPF && (
+            <Area
+              type="monotone"
+              dataKey="epf"
+              stackId="stack"
+              fill="url(#gradEPF)"
+              stroke={COLORS.epf}
+              strokeWidth={1.5}
+              animationDuration={500}
+              name="EPF"
+            />
+          )}
 
-          <Area
-            type="monotone"
-            dataKey="provisions"
-            stackId="stack"
-            fill="url(#gradProvisions)"
-            stroke={COLORS.provisions}
-            strokeWidth={1.5}
-            animationDuration={500}
-            name="Existing Provision"
-          />
+          {showProvisions && (
+            <Area
+              type="monotone"
+              dataKey="provisions"
+              stackId="stack"
+              fill="url(#gradProvisions)"
+              stroke={COLORS.provisions}
+              strokeWidth={1.5}
+              animationDuration={500}
+              name="Existing Provision"
+            />
+          )}
 
-          <Area
-            type="monotone"
-            dataKey="recommendations"
-            stackId="stack"
-            fill={hasRecommendations ? 'url(#gradRec)' : 'transparent'}
-            stroke={hasRecommendations ? COLORS.recommendations : 'none'}
-            strokeWidth={hasRecommendations ? 1.5 : 0}
-            animationDuration={500}
-            name="Recommendation"
-          />
+          {showRecommendations && (
+            <Area
+              type="monotone"
+              dataKey="recommendations"
+              stackId="stack"
+              fill="url(#gradRec)"
+              stroke={COLORS.recommendations}
+              strokeWidth={1.5}
+              animationDuration={500}
+              name="Recommendation"
+            />
+          )}
 
-          <Area
-            type="monotone"
-            dataKey="shortfall"
-            stackId="stack"
-            fill="url(#gradShortfall)"
-            stroke={COLORS.shortfall}
-            strokeWidth={1}
-            animationDuration={500}
-            name="Shortfall"
-          />
+          {showShortfall && (
+            <Area
+              type="monotone"
+              dataKey="shortfall"
+              stackId="stack"
+              fill="url(#gradShortfall)"
+              stroke={COLORS.shortfall}
+              strokeWidth={1}
+              animationDuration={500}
+              name="Shortfall"
+            />
+          )}
 
           {/* Vertical dashed line at retirement age */}
           <ReferenceLine

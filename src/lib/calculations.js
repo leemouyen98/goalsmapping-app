@@ -390,37 +390,29 @@ export function generateRetirementProjection({
       epfBalNoRec *= (1 + postRetirementReturn / 100)
       provBalNoRec *= (1 + postRetirementReturn / 100)
 
-      // Step 2: Deduct expenses proportionally across buckets
-      const totalBeforeExpense = epfBal + provBal + recBal
-      if (totalBeforeExpense > 0) {
-        const expenseRatio = Math.min(1, annualExpense / totalBeforeExpense)
-        epfBal -= epfBal * expenseRatio
-        provBal -= provBal * expenseRatio
-        recBal -= recBal * expenseRatio
-      } else {
-        // Fund exhausted
-        epfBal = 0
-        provBal = 0
-        recBal = 0
-      }
+      // Step 2: Deduct expenses sequentially — EPF first, then provisions, then recommendations
+      let toDeduct = Math.min(annualExpense, epfBal + provBal + recBal)
 
-      // No-rec scenario drawdown
-      const totalNoRec = epfBalNoRec + provBalNoRec
-      if (totalNoRec > 0) {
-        const ratioNoRec = Math.min(1, annualExpense / totalNoRec)
-        epfBalNoRec -= epfBalNoRec * ratioNoRec
-        provBalNoRec -= provBalNoRec * ratioNoRec
-      } else {
-        epfBalNoRec = 0
-        provBalNoRec = 0
-      }
+      const epfDraw = Math.min(epfBal, toDeduct)
+      epfBal = Math.max(0, epfBal - epfDraw)
+      toDeduct -= epfDraw
 
-      // Floor at zero
-      epfBal = Math.max(0, epfBal)
-      provBal = Math.max(0, provBal)
-      recBal = Math.max(0, recBal)
-      epfBalNoRec = Math.max(0, epfBalNoRec)
-      provBalNoRec = Math.max(0, provBalNoRec)
+      const provDraw = Math.min(provBal, toDeduct)
+      provBal = Math.max(0, provBal - provDraw)
+      toDeduct -= provDraw
+
+      const recDraw = Math.min(recBal, toDeduct)
+      recBal = Math.max(0, recBal - recDraw)
+
+      // No-rec scenario: EPF first, then provisions
+      let toDeductNoRec = Math.min(annualExpense, epfBalNoRec + provBalNoRec)
+
+      const epfDrawNoRec = Math.min(epfBalNoRec, toDeductNoRec)
+      epfBalNoRec = Math.max(0, epfBalNoRec - epfDrawNoRec)
+      toDeductNoRec -= epfDrawNoRec
+
+      const provDrawNoRec = Math.min(provBalNoRec, toDeductNoRec)
+      provBalNoRec = Math.max(0, provBalNoRec - provDrawNoRec)
     }
 
     const totalFund = epfBal + provBal + recBal
