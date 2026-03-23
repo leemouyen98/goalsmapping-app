@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { formatRMFull, formatPercent, retirementCorpusNeeded, projectEPF } from '../../lib/calculations'
+import { formatRMFull, formatPercent, retirementCorpusNeeded, projectEPF, getEPFRate } from '../../lib/calculations'
 import { Info } from 'lucide-react'
 
 export default function BasicInfo({ plan, currentAge, contactName, onChange, onContinue }) {
@@ -214,19 +214,36 @@ export default function BasicInfo({ plan, currentAge, contactName, onChange, onC
           </div>
 
           {/* EPF Balance */}
-          {plan.includeEPF && epfProjection && (
-            <div className="bg-green-50 rounded-hig-sm p-4">
-              <p className="text-hig-caption1 text-hig-green font-medium mb-1">
-                Estimated EPF Balance at age {plan.retirementAge}
-              </p>
-              <p className="text-hig-title3 text-hig-green">
-                {formatRMFull(epfProjection.finalBalance)}
-              </p>
-              <p className="text-hig-caption2 text-hig-text-secondary mt-1">
-                At {formatPercent(plan.epfGrowthRate)} growth rate
-              </p>
-            </div>
-          )}
+          {plan.includeEPF && epfProjection && (() => {
+            const monthlyIncome = (plan.annualIncome || 0) / 12
+            const isHighEarner = monthlyIncome > 5000
+            const empRate = 11
+            const erRate = isHighEarner ? 12 : 13
+            const totalRate = empRate + erRate
+            return (
+              <div className="bg-green-50 rounded-hig-sm p-4 space-y-2">
+                <p className="text-hig-caption1 text-hig-green font-medium">
+                  Estimated EPF Balance at age {plan.retirementAge}
+                </p>
+                <p className="text-hig-title3 text-hig-green">
+                  {formatRMFull(epfProjection.finalBalance)}
+                </p>
+                <p className="text-hig-caption2 text-hig-text-secondary">
+                  At {formatPercent(plan.epfGrowthRate)} growth rate
+                </p>
+                <div className="border-t border-green-200 pt-2 flex items-start gap-1.5 text-hig-caption2 text-hig-text-secondary">
+                  <Info size={11} className="mt-0.5 shrink-0 text-hig-green" />
+                  <span>
+                    EPF contribution: Employee {empRate}% + Employer {erRate}% = <strong>{totalRate}%</strong>
+                    {isHighEarner
+                      ? ' (salary > RM5,000/mth — employer rate is 12%)'
+                      : ' (salary ≤ RM5,000/mth — employer rate is 13%)'}
+                    . Rate adjusts dynamically as income grows.
+                  </span>
+                </div>
+              </div>
+            )
+          })()}
 
           <button onClick={onContinue} className="hig-btn-primary w-full">
             Continue

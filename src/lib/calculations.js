@@ -105,22 +105,31 @@ export function tvmSolve(params, solveFor) {
 // ─── EPF Projection ──────────────────────────────────────────────────────────
 
 /**
- * Project EPF balance year by year until retirement
- * Assumes 24% of annual income (11% employee + 13% employer)
+ * Project EPF balance year by year until retirement.
+ * Contribution rate is salary-dependent (Third Schedule, EPF Act 1991):
+ *   Monthly salary ≤ RM5,000 : Employee 11% + Employer 13% = 24% of annual income
+ *   Monthly salary > RM5,000  : Employee 11% + Employer 12% = 23% of annual income
+ * Rate is evaluated each year as income grows past the threshold.
  */
+export function getEPFRate(annualIncome) {
+  const monthlySalary = (annualIncome || 0) / 12
+  return monthlySalary > 5000 ? 0.23 : 0.24
+}
+
 export function projectEPF({ currentBalance, growthRate, annualIncome, incomeGrowthRate, currentAge, retirementAge }) {
-  const epfRate = 0.24
   const years = Math.max(0, retirementAge - currentAge)
   const yearlyData = []
   let balance = currentBalance || 0
   let income = annualIncome || 0
 
   for (let y = 0; y <= years; y++) {
+    const epfRate = getEPFRate(income)
     yearlyData.push({
       age: currentAge + y,
       year: y,
       balance: Math.round(balance),
       contribution: y === 0 ? 0 : Math.round(income * epfRate),
+      epfRate,
     })
     if (y < years) {
       const contribution = income * epfRate
@@ -132,6 +141,7 @@ export function projectEPF({ currentBalance, growthRate, annualIncome, incomeGro
   return {
     finalBalance: Math.round(balance),
     yearlyData,
+    initialRate: getEPFRate(annualIncome),
   }
 }
 
@@ -293,14 +303,18 @@ export function generateRetirementProjection({
     if (isPreRetirement) {
       // ── Accumulation Phase ──
 
-      // EPF: contributions until retirement age, then grows at EPF rate until retirement
+      // EPF: contributions until retirement age, then grows at post-retirement return.
+      // Rate: 23% if monthly salary > RM5,000 (11% employee + 12% employer),
+      //       24% if monthly salary ≤ RM5,000 (11% employee + 13% employer).
       if (includeEPF) {
         if (age < retirementAge) {
-          const contribution = epfIncome * 0.24
+          const epfRate = getEPFRate(epfIncome)
+          const contribution = epfIncome * epfRate
           epfBal = (epfBal + contribution) * (1 + (epfGrowthRate || 6) / 100)
           epfIncome *= (1 + (incomeGrowthRate || 0) / 100)
           // Mirror for no-rec scenario
-          const contribNoRec = epfIncomeNoRec * 0.24
+          const epfRateNoRec = getEPFRate(epfIncomeNoRec)
+          const contribNoRec = epfIncomeNoRec * epfRateNoRec
           epfBalNoRec = (epfBalNoRec + contribNoRec) * (1 + (epfGrowthRate || 6) / 100)
           epfIncomeNoRec *= (1 + (incomeGrowthRate || 0) / 100)
         } else {
