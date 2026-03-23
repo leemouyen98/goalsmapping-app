@@ -83,7 +83,7 @@ export default function RetirementChart({ data, retirementAge, targetAmount, has
   // Early return AFTER all hooks
   if (safeData.length === 0) {
     return (
-      <div style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8E8E93' }}>
+      <div style={{ minHeight: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8E8E93' }}>
         No data to display
       </div>
     )
@@ -100,7 +100,7 @@ export default function RetirementChart({ data, retirementAge, targetAmount, has
   legendPayload.push({ value: 'Required Amount', type: 'plainline', color: '#1C1C1E', payload: { strokeDasharray: '6 4', strokeWidth: 1.5 } })
 
   return (
-    <div style={{ width: '100%', height: 300 }}>
+    <div style={{ width: '100%', aspectRatio: '16/7', minHeight: 220, maxHeight: 380 }}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={safeData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
           <defs>

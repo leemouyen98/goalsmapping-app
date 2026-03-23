@@ -14,7 +14,9 @@ export default function AppShell({ children }) {
       <div className="flex flex-1 flex-col min-w-0">
         <TopBar onMenuToggle={() => setSidebarExpanded(!sidebarExpanded)} />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-          {children}
+          <div className="max-w-[1280px] mx-auto">
+            {children}
+          </div>
         </main>
       </div>
     </div>

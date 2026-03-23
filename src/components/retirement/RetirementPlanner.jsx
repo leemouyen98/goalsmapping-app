@@ -269,8 +269,8 @@ export default function RetirementPlanner({ plan, currentAge, contactName, onCha
       </div>
 
       {/* Right: Recommendations / Provisions Panel */}
-      <div className="w-72 shrink-0">
-        <div className="hig-card p-4 max-h-[calc(100vh-180px)] overflow-y-auto">
+      <div className="w-72 lg:w-80 shrink-0">
+        <div className="hig-card p-4 max-h-[calc(100vh-160px)] overflow-y-auto sticky top-0">
 
           {/* Tab bar — top of right panel, above Add button */}
           <div className="flex bg-hig-gray-6 rounded-hig-sm p-1 mb-3">
