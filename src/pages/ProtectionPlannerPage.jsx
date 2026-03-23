@@ -4,6 +4,10 @@ import { useContacts } from '../hooks/useContacts'
 import { getAge } from '../lib/formatters'
 import { formatRMFull, protectionNeed, generateProtectionSummary } from '../lib/calculations'
 import { ArrowLeft, X, Plus, Trash2, CheckCircle2, AlertTriangle, Settings } from 'lucide-react'
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer,
+} from 'recharts'
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2)
 const RISKS = ['death', 'tpd', 'aci', 'eci']
@@ -674,6 +678,21 @@ function ProtectionPlanner({ plan, currentAge, contactName, updatePlan, showAssu
             </div>
           )}
 
+          {/* Coverage by Age chart */}
+          {plan.needs[activeRisk]?.period > 0 && (
+            <CoverageAgeChart
+              risk={activeRisk}
+              currentAge={currentAge}
+              lumpSum={plan.needs[activeRisk]?.lumpSum || 0}
+              monthly={plan.needs[activeRisk]?.monthly || 0}
+              period={plan.needs[activeRisk]?.period || 0}
+              existing={plan.existing[activeRisk] || 0}
+              withRecs={active.totalCovered || 0}
+              inflationRate={plan.inflationRate}
+              returnRate={plan.returnRate}
+            />
+          )}
+
           {/* Back navigation */}
           <div className="flex">
             <button onClick={onBack} className="hig-btn-ghost gap-1.5">
@@ -901,6 +920,128 @@ function ProtectionPlanner({ plan, currentAge, contactName, updatePlan, showAssu
 }
 
 // ─── Sub-component: Coverage Bar ──────────────────────────────────────────────
+
+// ─── Coverage by Age Chart ────────────────────────────────────────────────────
+
+function CoverageAgeChartTooltip({ active, payload, label }) {
+  if (!active || !payload || payload.length === 0) return null
+  const d = payload[0]?.payload
+  if (!d) return null
+  return (
+    <div style={{
+      background: 'white', borderRadius: 12,
+      boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+      border: '1px solid #E5E5EA', padding: '10px 14px', minWidth: 180,
+    }}>
+      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Age {label}</div>
+      {[
+        { key: 'existing', label: 'Existing', color: '#34C759' },
+        { key: 'recommended', label: 'Recommended', color: '#007AFF' },
+        { key: 'shortfall', label: 'Shortfall', color: '#FF3B30' },
+      ].map(({ key, label: lbl, color }) =>
+        d[key] > 0 ? (
+          <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, marginBottom: 3 }}>
+            <span style={{ width: 9, height: 9, borderRadius: 3, background: color, flexShrink: 0 }} />
+            <span style={{ color: '#8E8E93', flex: 1 }}>{lbl}</span>
+            <span style={{ fontWeight: 500 }}>{formatRMFull(d[key])}</span>
+          </div>
+        ) : null
+      )}
+    </div>
+  )
+}
+
+function CoverageAgeChart({ risk, currentAge, lumpSum, monthly, period, existing, withRecs, inflationRate, returnRate }) {
+  const colour = RISK_COLOUR[risk]
+
+  const data = useMemo(() => {
+    if (!period || period <= 0) return []
+    return Array.from({ length: period + 1 }, (_, y) => {
+      const age = currentAge + y
+      const rem = Math.max(0, period - y)
+      const need = protectionNeed({ lumpSum, monthlyExpenses: monthly, period: rem, inflationRate, returnRate })
+      const cov = Math.min(need, existing)
+      const rec = Math.min(need, withRecs) - cov
+      const gap = Math.max(0, need - withRecs)
+      return { age, existing: cov, recommended: Math.max(0, rec), shortfall: gap }
+    })
+  }, [lumpSum, monthly, period, existing, withRecs, inflationRate, returnRate, currentAge])
+
+  if (data.length === 0) return null
+
+  const yTickFmt = (v) =>
+    v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1)}M`
+    : v >= 1_000 ? `${(v / 1_000).toFixed(0)}K`
+    : String(v)
+
+  const hasRecs = data.some((d) => d.recommended > 0)
+
+  return (
+    <div className="hig-card p-5">
+      <div className="flex items-baseline justify-between mb-1">
+        <h3 className="text-hig-headline">Coverage by Age</h3>
+      </div>
+      <p className="text-hig-caption1 text-hig-text-secondary mb-4">
+        Need decreases as the protection period shortens. Red area = remaining shortfall.
+      </p>
+
+      {/* Legend */}
+      <div className="flex items-center gap-4 mb-3">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-sm" style={{ background: '#34C759' }} />
+          <span className="text-hig-caption1 text-hig-text-secondary">Existing</span>
+        </div>
+        {hasRecs && (
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-sm" style={{ background: colour }} />
+            <span className="text-hig-caption1 text-hig-text-secondary">Recommended</span>
+          </div>
+        )}
+        <div className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-sm" style={{ background: '#FF3B30', opacity: 0.6 }} />
+          <span className="text-hig-caption1 text-hig-text-secondary">Shortfall</span>
+        </div>
+      </div>
+
+      <ResponsiveContainer width="100%" height={200}>
+        <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#F2F2F7" />
+          <XAxis
+            dataKey="age"
+            tick={{ fontSize: 11, fill: '#8E8E93' }}
+            tickLine={false}
+            axisLine={{ stroke: '#E5E5EA' }}
+          />
+          <YAxis
+            tickFormatter={yTickFmt}
+            tick={{ fontSize: 11, fill: '#8E8E93' }}
+            tickLine={false}
+            axisLine={false}
+            width={44}
+          />
+          <Tooltip content={<CoverageAgeChartTooltip />} />
+          <Area
+            type="monotone" dataKey="existing" stackId="1"
+            fill="#34C759" stroke="#34C759" strokeWidth={0}
+            fillOpacity={0.85} name="Existing"
+          />
+          <Area
+            type="monotone" dataKey="recommended" stackId="1"
+            fill={colour} stroke={colour} strokeWidth={0}
+            fillOpacity={0.85} name="Recommended"
+          />
+          <Area
+            type="monotone" dataKey="shortfall" stackId="1"
+            fill="#FF3B30" stroke="#FF3B30" strokeWidth={0}
+            fillOpacity={0.35} name="Shortfall"
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
+// ─── Coverage Bar ─────────────────────────────────────────────────────────────
 
 function CoverageBar({ label, value, max, colour, segments, showFull }) {
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0
