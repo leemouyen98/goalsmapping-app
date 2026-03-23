@@ -151,16 +151,41 @@ export default function RetirementPlanner({ plan, currentAge, contactName, onCha
             </div>
           </div>
 
-          {/* Progress badge */}
-          <div className="flex items-center gap-2">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-hig-subhead`}
-              style={{ backgroundColor: projection.isFullyFunded ? '#34C759' : projection.coveragePercent >= 75 ? '#FF9500' : '#FF3B30' }}
-            >
-              {projection.coveragePercent}%
+          {/* Tab selector + Progress badge stacked on right */}
+          <div className="flex flex-col items-end gap-2 shrink-0">
+            {/* Recommendations / Provisions tab bar */}
+            <div className="flex bg-hig-gray-6 rounded-hig-sm p-1">
+              <button
+                onClick={() => setActiveTab('recommendations')}
+                className={`px-3 py-1.5 text-hig-caption1 font-medium rounded-hig-sm transition-colors
+                  ${activeTab === 'recommendations' ? 'bg-white shadow-sm text-hig-text' : 'text-hig-text-secondary'}`}
+              >
+                Recommendations
+                {(plan.recommendations || []).length > 0 && (
+                  <span className="ml-1.5 text-hig-caption2 bg-hig-blue text-white px-1.5 py-0.5 rounded-full">
+                    {(plan.recommendations || []).length}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('provisions')}
+                className={`px-3 py-1.5 text-hig-caption1 font-medium rounded-hig-sm transition-colors
+                  ${activeTab === 'provisions' ? 'bg-white shadow-sm text-hig-text' : 'text-hig-text-secondary'}`}
+              >
+                Provisions
+              </button>
             </div>
-            <span className="text-hig-subhead font-medium" style={{ color: projection.isFullyFunded ? '#34C759' : projection.coveragePercent >= 75 ? '#FF9500' : '#FF3B30' }}>
-              {statusLabel}
-            </span>
+            {/* Progress badge */}
+            <div className="flex items-center gap-2">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-hig-subhead"
+                style={{ backgroundColor: projection.isFullyFunded ? '#34C759' : projection.coveragePercent >= 75 ? '#FF9500' : '#FF3B30' }}
+              >
+                {projection.coveragePercent}%
+              </div>
+              <span className="text-hig-subhead font-medium" style={{ color: projection.isFullyFunded ? '#34C759' : projection.coveragePercent >= 75 ? '#FF9500' : '#FF3B30' }}>
+                {statusLabel}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -211,8 +236,10 @@ export default function RetirementPlanner({ plan, currentAge, contactName, onCha
             <div className="hig-card p-4">
               <h4 className="text-hig-subhead font-semibold mb-2">Current Situation</h4>
               <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle size={20} className="text-hig-red" />
-                <span className="text-hig-title3">
+                {projection.fundsRunOutAge >= plan.lifeExpectancy
+                  ? <CheckCircle2 size={20} className="text-hig-green" />
+                  : <AlertTriangle size={20} className="text-hig-red" />}
+                <span className={`text-hig-title3 ${projection.fundsRunOutAge >= plan.lifeExpectancy ? 'text-hig-green' : ''}`}>
                   {projection.fundsRunOutAge >= plan.lifeExpectancy ? `${plan.lifeExpectancy}+` : projection.fundsRunOutAge} yo
                 </span>
               </div>
@@ -240,6 +267,16 @@ export default function RetirementPlanner({ plan, currentAge, contactName, onCha
                   </div>
                   <p className="text-hig-caption1 text-hig-green bg-green-50 rounded-hig-sm p-2">
                     Your retirement is fully funded. You will have sufficient funds throughout your retirement years.
+                  </p>
+                </>
+              ) : projection.fundsRunOutWithRec >= plan.lifeExpectancy ? (
+                <>
+                  <div className="flex items-center gap-2 mb-2">
+                    <CheckCircle2 size={20} className="text-hig-green" />
+                    <span className="text-hig-title3 text-hig-green">{plan.lifeExpectancy}+ yo</span>
+                  </div>
+                  <p className="text-hig-caption1 text-hig-text-secondary">
+                    With your recommendation, funds last through life expectancy — {projection.coveragePercent}% of your retirement goal covered.
                   </p>
                 </>
               ) : (

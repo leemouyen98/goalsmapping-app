@@ -162,12 +162,14 @@ function getFrequencyMultiplier(freq) {
  * Project a single provision's value at retirement
  */
 export function projectProvision(provision, yearsToRetirement) {
-  const { amount, frequency, preRetirementReturn: rate = 1 } = provision
+  const { amount, frequency, preRetirementReturn: rate = 1, currentBalance = 0 } = provision
+  // Compound any existing balance
+  const balanceFV = currentBalance > 0 ? fvLumpSum(currentBalance, rate, yearsToRetirement) : 0
   if (frequency === 'One-Time') {
-    return fvLumpSum(amount, rate, yearsToRetirement)
+    return balanceFV + fvLumpSum(amount, rate, yearsToRetirement)
   }
   const freq = getFrequencyMultiplier(frequency)
-  return fvAnnuity(amount, rate, yearsToRetirement, freq)
+  return balanceFV + fvAnnuity(amount, rate, yearsToRetirement, freq)
 }
 
 /**

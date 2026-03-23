@@ -23,7 +23,7 @@ export default function RetirementPlannerPage() {
   const [plan, setPlan] = useState(
     contact?.retirementPlan || {
       retirementAge: 55,
-      lifeExpectancy: 100,
+      lifeExpectancy: 85,
       monthlyExpenses: 3000,
       inflationRate: 4,
       preRetirementReturn: 5,
@@ -115,31 +115,6 @@ export default function RetirementPlannerPage() {
       {breadcrumb}
 
       {stepIndicator}
-
-      {/* Tab bar — only on step 3, just below step indicator */}
-      {step === 3 && (
-        <div className="flex bg-hig-gray-6 rounded-hig-sm p-1 mb-5 w-72">
-          <button
-            onClick={() => setActiveTab('recommendations')}
-            className={`flex-1 py-1.5 text-hig-subhead font-medium rounded-hig-sm transition-colors
-              ${activeTab === 'recommendations' ? 'bg-white shadow-sm text-hig-text' : 'text-hig-text-secondary'}`}
-          >
-            Recommendations
-            {(plan.recommendations || []).length > 0 && (
-              <span className="ml-1.5 text-hig-caption2 bg-hig-blue text-white px-1.5 py-0.5 rounded-full">
-                {(plan.recommendations || []).length}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('provisions')}
-            className={`flex-1 py-1.5 text-hig-subhead font-medium rounded-hig-sm transition-colors
-              ${activeTab === 'provisions' ? 'bg-white shadow-sm text-hig-text' : 'text-hig-text-secondary'}`}
-          >
-            Provisions
-          </button>
-        </div>
-      )}
 
       {step === 1 && (
         <BasicInfo

@@ -15,7 +15,7 @@ export default function ExistingProvision({ plan, currentAge, onChange, onBack, 
     onChange({
       provisions: [
         ...provisions,
-        { id: uid(), name: '', amount: 0, frequency: 'Monthly', preRetirementReturn: 5 },
+        { id: uid(), name: '', amount: 0, frequency: 'Monthly', preRetirementReturn: 5, currentBalance: 0 },
       ],
     })
   }
@@ -87,7 +87,27 @@ export default function ExistingProvision({ plan, currentAge, onChange, onBack, 
                       />
                     </div>
                     <div>
-                      <label className="hig-label">Amount (RM)</label>
+                      <label className="hig-label">Current Balance (RM)</label>
+                      <input
+                        type="number"
+                        value={p.currentBalance || ''}
+                        onChange={(e) => updateProvision(idx, { currentBalance: parseFloat(e.target.value) || 0 })}
+                        className="hig-input"
+                        placeholder="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="hig-label">Pre-Retirement Return (%)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={p.preRetirementReturn}
+                        onChange={(e) => updateProvision(idx, { preRetirementReturn: parseFloat(e.target.value) || 0 })}
+                        className="hig-input"
+                      />
+                    </div>
+                    <div>
+                      <label className="hig-label">Contribution Amount (RM)</label>
                       <input
                         type="number"
                         value={p.amount || ''}
@@ -107,16 +127,6 @@ export default function ExistingProvision({ plan, currentAge, onChange, onBack, 
                           <option key={f}>{f}</option>
                         ))}
                       </select>
-                    </div>
-                    <div>
-                      <label className="hig-label">Pre-Retirement Return (%)</label>
-                      <input
-                        type="number"
-                        step="0.5"
-                        value={p.preRetirementReturn}
-                        onChange={(e) => updateProvision(idx, { preRetirementReturn: parseFloat(e.target.value) || 0 })}
-                        className="hig-input"
-                      />
                     </div>
                   </div>
                 </div>
@@ -173,7 +183,7 @@ export default function ExistingProvision({ plan, currentAge, onChange, onBack, 
                 </div>
                 <div className="flex justify-between">
                   <span className="text-hig-text-secondary">Today's Value</span>
-                  <span className="font-semibold">{formatRMFull(provisions.reduce((s, p) => s + (p.frequency === 'One-Time' ? p.amount : 0), 0))}</span>
+                  <span className="font-semibold">{formatRMFull(provisions.reduce((s, p) => s + (p.currentBalance || 0) + (p.frequency === 'One-Time' ? (p.amount || 0) : 0), 0))}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-hig-text-secondary">Years to Target</span>
