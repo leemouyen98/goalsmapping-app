@@ -466,7 +466,6 @@ function ProtectionExistingCoverage({ plan, setExisting, onBack, onContinue }) {
 function ProtectionPlanner({ plan, currentAge, contactName, updatePlan, showAssumptions, onToggleAssumptions, onBack }) {
   const [activeRisk, setActiveRisk] = useState('death')
   const [activeTab, setActiveTab] = useState('recommendations')
-  const [showAllRecs, setShowAllRecs] = useState(false)
 
   const summary = useMemo(() =>
     generateProtectionSummary({
@@ -481,23 +480,23 @@ function ProtectionPlanner({ plan, currentAge, contactName, updatePlan, showAssu
 
   const active = summary.find((s) => s.risk === activeRisk) || summary[0]
   const allRecs = plan.recommendations || []
-  const activeRiskRecs = allRecs.filter((r) => r.riskType === activeRisk)
-  const otherRecs = allRecs.filter((r) => r.riskType !== activeRisk)
-  // Displayed recs: active-risk recs first; other recs shown only when toggled
-  const displayedRecs = showAllRecs
-    ? [...activeRiskRecs, ...otherRecs]
-    : activeRiskRecs
 
   const addRecommendation = () => {
+    const getShortfall = (risk) => {
+      const s = summary.find((x) => x.risk === risk)
+      return s?.shortfall > 0 ? Math.round(s.shortfall) : 0
+    }
     const rec = {
       id: uid(),
-      riskType: activeRisk,
       name: '',
-      coverageAmount: active?.shortfall > 0 ? Math.round(active.shortfall) : 0,
+      death: getShortfall('death'),
+      tpd: getShortfall('tpd'),
+      aci: getShortfall('aci'),
+      eci: getShortfall('eci'),
       premiumAmount: 0,
       frequency: 'Monthly',
       periodYears: 20,
-      isSelected: false,
+      isSelected: true,
     }
     updatePlan({ recommendations: [...(plan.recommendations || []), rec] })
   }
@@ -676,20 +675,25 @@ function ProtectionPlanner({ plan, currentAge, contactName, updatePlan, showAssu
           <div className="hig-card p-4 max-h-[calc(100vh-160px)] overflow-y-auto sticky top-0">
             {/* Tab bar */}
             <div className="flex bg-hig-gray-6 rounded-hig-sm p-1 mb-3">
-              <button
-                onClick={() => setActiveTab('recommendations')}
-                className={`flex-1 py-2 text-hig-subhead font-medium rounded-hig-sm transition-colors
-                  ${activeTab === 'recommendations' ? 'bg-white shadow-sm text-hig-text' : 'text-hig-text-secondary'}`}
-              >
-                Recommendations
-              </button>
-              <button
-                onClick={() => setActiveTab('existing')}
-                className={`flex-1 py-2 text-hig-subhead font-medium rounded-hig-sm transition-colors
-                  ${activeTab === 'existing' ? 'bg-white shadow-sm text-hig-text' : 'text-hig-text-secondary'}`}
-              >
-                Existing
-              </button>
+              {[
+                { key: 'recommendations', label: 'Recommendations', count: allRecs.length },
+                { key: 'existing', label: 'Existing Coverage', count: RISKS.filter((r) => (plan.existing[r] || 0) > 0).length },
+              ].map(({ key, label, count }) => (
+                <button
+                  key={key}
+                  onClick={() => setActiveTab(key)}
+                  className={`flex-1 py-2 text-hig-caption1 font-medium rounded-hig-sm transition-colors flex items-center justify-center gap-1.5
+                    ${activeTab === key ? 'bg-white shadow-sm text-hig-text' : 'text-hig-text-secondary'}`}
+                >
+                  {label}
+                  <span
+                    className={`text-[10px] font-bold min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center
+                      ${activeTab === key ? 'bg-hig-blue text-white' : 'bg-hig-gray-4 text-hig-text-secondary'}`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              ))}
             </div>
 
             {activeTab === 'recommendations' && (
@@ -698,102 +702,108 @@ function ProtectionPlanner({ plan, currentAge, contactName, updatePlan, showAssu
                   <Plus size={15} /> Add Recommendation
                 </button>
 
-                {activeRiskRecs.length === 0 && (
-                  <p className="text-hig-subhead text-hig-text-secondary text-center py-3">
-                    No {RISK_SHORT[activeRisk]} recommendations yet.
+                {allRecs.length === 0 && (
+                  <p className="text-hig-subhead text-hig-text-secondary text-center py-4">
+                    No recommendations yet. Add one to get started.
                   </p>
                 )}
 
-                {displayedRecs.length === 0 && allRecs.length > 0 && !showAllRecs ? null : null}
-
-                {displayedRecs.map((rec) => (
-                    <div key={rec.id} className="border border-hig-gray-4 rounded-hig-sm p-3 space-y-2.5">
-                      {/* Header row: select toggle + risk badge + delete */}
-                      <div className="flex items-center gap-2">
+                {allRecs.map((rec, idx) => {
+                  const freqMap = { Monthly: 12, Quarterly: 4, 'Semi-annually': 2, Yearly: 1 }
+                  const totalPremiumPaid = (rec.premiumAmount || 0) * (freqMap[rec.frequency] || 12) * (rec.periodYears || 0)
+                  return (
+                    <div key={rec.id} className="border border-hig-gray-4 rounded-hig-sm overflow-hidden">
+                      {/* Header */}
+                      <div
+                        className="flex items-center gap-2 px-3 py-2.5"
+                        style={{ backgroundColor: rec.isSelected ? '#007AFF' : '#8E8E93' }}
+                      >
                         <button
                           onClick={() => toggleRec(rec.id)}
-                          className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-colors
-                            ${rec.isSelected ? 'border-hig-blue bg-hig-blue' : 'border-hig-gray-3'}`}
+                          className="w-5 h-5 rounded-full border-2 border-white/70 shrink-0 flex items-center justify-center transition-colors"
+                          style={{ backgroundColor: rec.isSelected ? 'rgba(255,255,255,0.25)' : 'transparent' }}
                         >
-                          {rec.isSelected && <span className="w-2 h-2 rounded-full bg-white" />}
+                          {rec.isSelected && <span className="text-white text-[9px] font-bold leading-none">✓</span>}
                         </button>
-                        <span className={`text-hig-caption1 flex-1 font-medium ${rec.isSelected ? 'text-hig-blue' : 'text-hig-text-secondary'}`}>
-                          {rec.isSelected ? 'Included in plan' : 'Include in plan'}
+                        <span className="text-hig-subhead font-semibold text-white flex-1">
+                          Recommendation {idx + 1}
                         </span>
-                        {rec.riskType !== activeRisk && (
-                          <span
-                            className="text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                            style={{ backgroundColor: RISK_COLOUR[rec.riskType] }}
-                          >
-                            {RISK_SHORT[rec.riskType]}
-                          </span>
-                        )}
-                        <button onClick={() => removeRec(rec.id)} className="text-hig-text-secondary hover:text-hig-red p-1">
+                        <button onClick={() => removeRec(rec.id)} className="text-white/60 hover:text-white p-0.5 transition-colors">
                           <Trash2 size={14} />
                         </button>
                       </div>
 
-                      {/* Risk type pills */}
-                      <div>
-                        <label className="text-hig-caption1 text-hig-text-secondary block mb-1.5">Risk Type</label>
-                        <div className="flex gap-1 flex-wrap">
-                          {RISKS.map((r) => (
-                            <button
-                              key={r}
-                              onClick={() => updateRec(rec.id, { riskType: r })}
-                              className={`px-2.5 py-1 rounded-full text-hig-caption2 font-medium transition-colors border
-                                ${rec.riskType === r
-                                  ? 'text-white border-transparent'
-                                  : 'text-hig-text-secondary border-hig-gray-4 hover:border-hig-gray-3'
-                                }`}
-                              style={rec.riskType === r ? { backgroundColor: RISK_COLOUR[r] } : {}}
-                            >
-                              {RISK_SHORT[r]}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Product name */}
-                      <div>
-                        <label className="text-hig-caption1 text-hig-text-secondary">Product / Plan Name</label>
+                      {/* Form body */}
+                      <div className="p-3 space-y-2.5 bg-white">
+                        {/* Product name */}
                         <input
                           type="text"
                           value={rec.name || ''}
                           onChange={(e) => updateRec(rec.id, { name: e.target.value })}
-                          className="hig-input mt-1 text-hig-subhead"
-                          placeholder="Product / plan name"
+                          className="hig-input text-hig-subhead w-full"
+                          placeholder="Product / plan name (optional)"
                         />
-                      </div>
 
-                      {/* Coverage */}
-                      <div>
-                        <label className="text-hig-caption1 text-hig-text-secondary">Sum Assured (RM)</label>
-                        <input
-                          type="number"
-                          value={rec.coverageAmount || ''}
-                          onChange={(e) => updateRec(rec.id, { coverageAmount: parseFloat(e.target.value) || 0 })}
-                          className="hig-input mt-1"
-                        />
-                      </div>
+                        {/* Per-risk coverage amounts */}
+                        {RISKS.map((risk) => (
+                          <div
+                            key={risk}
+                            className="rounded-md p-2.5"
+                            style={{
+                              border: `1.5px solid ${RISK_COLOUR[risk]}50`,
+                              backgroundColor: RISK_COLOUR[risk] + '0A',
+                            }}
+                          >
+                            <div className="flex items-center justify-between mb-1.5">
+                              <label
+                                className="text-hig-caption1 font-semibold"
+                                style={{ color: RISK_COLOUR[risk] }}
+                              >
+                                {RISK_SHORT[risk]} Coverage
+                              </label>
+                              <span className="text-[10px] text-hig-text-secondary font-medium">Required</span>
+                            </div>
+                            <div className="relative">
+                              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-hig-text-secondary text-hig-caption1 font-medium select-none">RM</span>
+                              <input
+                                type="number"
+                                value={rec[risk] || ''}
+                                onChange={(e) => updateRec(rec.id, { [risk]: parseFloat(e.target.value) || 0 })}
+                                className="hig-input pl-9 text-hig-subhead"
+                                placeholder="0"
+                              />
+                            </div>
+                          </div>
+                        ))}
 
-                      {/* Premium */}
-                      <div className="grid grid-cols-2 gap-2">
+                        {/* Premium Amount */}
                         <div>
-                          <label className="text-hig-caption1 text-hig-text-secondary">Premium (RM)</label>
-                          <input
-                            type="number"
-                            value={rec.premiumAmount || ''}
-                            onChange={(e) => updateRec(rec.id, { premiumAmount: parseFloat(e.target.value) || 0 })}
-                            className="hig-input mt-1"
-                          />
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-hig-caption1 text-hig-text-secondary font-medium">Premium Amount</label>
+                            <span className="text-[10px] text-hig-text-secondary">Required</span>
+                          </div>
+                          <div className="relative">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-hig-text-secondary text-hig-caption1 select-none">RM</span>
+                            <input
+                              type="number"
+                              value={rec.premiumAmount || ''}
+                              onChange={(e) => updateRec(rec.id, { premiumAmount: parseFloat(e.target.value) || 0 })}
+                              className="hig-input pl-9"
+                              placeholder="0"
+                            />
+                          </div>
                         </div>
+
+                        {/* Frequency */}
                         <div>
-                          <label className="text-hig-caption1 text-hig-text-secondary">Frequency</label>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-hig-caption1 text-hig-text-secondary font-medium">Frequency</label>
+                            <span className="text-[10px] text-hig-text-secondary">Optional</span>
+                          </div>
                           <select
-                            value={rec.frequency}
+                            value={rec.frequency || 'Monthly'}
                             onChange={(e) => updateRec(rec.id, { frequency: e.target.value })}
-                            className="hig-input mt-1"
+                            className="hig-input"
                           >
                             <option>Monthly</option>
                             <option>Quarterly</option>
@@ -801,23 +811,38 @@ function ProtectionPlanner({ plan, currentAge, contactName, updatePlan, showAssu
                             <option>Yearly</option>
                           </select>
                         </div>
+
+                        {/* Period */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-hig-caption1 text-hig-text-secondary font-medium">Period</label>
+                            <span className="text-[10px] text-hig-text-secondary">Required</span>
+                          </div>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              value={rec.periodYears || ''}
+                              onChange={(e) => updateRec(rec.id, { periodYears: parseFloat(e.target.value) || 0 })}
+                              className="hig-input pr-12"
+                              placeholder="0"
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-hig-text-secondary text-hig-caption1 select-none">years</span>
+                          </div>
+                        </div>
+
+                        {/* Total premium paid */}
+                        {totalPremiumPaid > 0 && (
+                          <div className="rounded-md p-3 bg-amber-50 border border-amber-200">
+                            <p className="text-[10px] text-amber-700 font-bold tracking-wide mb-0.5">TOTAL PREMIUM PAID</p>
+                            <p className="text-hig-subhead font-bold text-amber-900">{formatRMFull(totalPremiumPaid)}</p>
+                          </div>
+                        )}
                       </div>
                     </div>
-                ))}
+                  )
+                })}
 
-                {/* Toggle: show/hide other-risk recs */}
-                {otherRecs.length > 0 && (
-                  <button
-                    onClick={() => setShowAllRecs((v) => !v)}
-                    className="text-hig-caption1 text-hig-blue hover:text-blue-700 w-full text-center py-1"
-                  >
-                    {showAllRecs
-                      ? 'Show only current category'
-                      : `Show all recommendations (${allRecs.length})`}
-                  </button>
-                )}
-
-                {/* Total monthly premium */}
+                {/* Total monthly premium across all selected recs */}
                 {allRecs.filter((r) => r.isSelected).length > 0 && (
                   <div className="border-t border-hig-gray-5 pt-3 flex justify-between text-hig-subhead">
                     <span className="text-hig-text-secondary">Total Monthly Premium</span>

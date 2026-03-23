@@ -547,8 +547,13 @@ export function generateProtectionSummary({
 
     const existingCoverage = existing[risk] || 0
     const recCoverage = (recommendations || [])
-      .filter((r) => r.riskType === risk && r.isSelected)
-      .reduce((sum, r) => sum + (r.coverageAmount || 0), 0)
+      .filter((r) => r.isSelected)
+      .reduce((sum, r) => {
+        // New multi-risk format: rec has per-risk amounts (death, tpd, aci, eci)
+        if (!('riskType' in r)) return sum + (r[risk] || 0)
+        // Legacy single-risk format: rec has riskType + coverageAmount
+        return r.riskType === risk ? sum + (r.coverageAmount || 0) : sum
+      }, 0)
 
     const totalCovered = existingCoverage + recCoverage
     const gap = need - totalCovered
