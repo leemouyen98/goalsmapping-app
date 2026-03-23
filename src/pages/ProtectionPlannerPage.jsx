@@ -29,10 +29,10 @@ export default function ProtectionPlannerPage() {
   const [plan, setPlan] = useState(
     contact?.protectionPlan || {
       needs: {
-        death: { lumpSum: 0, monthly: 0, period: 0 },
-        tpd:   { lumpSum: 0, monthly: 0, period: 0 },
-        aci:   { lumpSum: 0, monthly: 0, period: 0 },
-        eci:   { lumpSum: 0, monthly: 0, period: 0 },
+        death: { lumpSum: 0, monthly: 0, period: 20 },
+        tpd:   { lumpSum: 0, monthly: 0, period: 20 },
+        aci:   { lumpSum: 0, monthly: 0, period: 5 },
+        eci:   { lumpSum: 0, monthly: 0, period: 3 },
       },
       existing: { death: 0, tpd: 0, aci: 0, eci: 0 },
       inflationRate: 4,
@@ -308,28 +308,17 @@ function ProtectionBasicInfo({ plan, updatePlan, setNeed, onContinue }) {
                 </p>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {needsSummary.map(({ risk, total }) => (
-                  <div key={risk}>
-                    <div className="flex justify-between items-center mb-1">
-                      <div className="flex items-center gap-1.5">
-                        <span
-                          className="w-2 h-2 rounded-full shrink-0"
-                          style={{ backgroundColor: RISK_COLOUR[risk] }}
-                        />
-                        <span className="text-hig-caption1 text-hig-text-secondary">{RISK_SHORT[risk]}</span>
-                      </div>
-                      <span className="text-hig-caption1 font-semibold">{formatRMFull(total)}</span>
-                    </div>
-                    <div className="h-1.5 bg-hig-gray-6 rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{
-                          width: `${grandTotal > 0 ? Math.round((total / grandTotal) * 100) : 0}%`,
-                          backgroundColor: RISK_COLOUR[risk],
-                        }}
+                  <div key={risk} className="flex items-center justify-between py-2 border-b border-hig-gray-6 last:border-0">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: RISK_COLOUR[risk] }}
                       />
+                      <span className="text-hig-subhead text-hig-text-secondary">{RISK_SHORT[risk]}</span>
                     </div>
+                    <span className="text-hig-subhead font-semibold">{formatRMFull(total)}</span>
                   </div>
                 ))}
               </div>
@@ -551,18 +540,21 @@ function ProtectionPlanner({ plan, currentAge, contactName, updatePlan, showAssu
       <div className="flex bg-hig-gray-6 rounded-hig-sm p-1 mb-4">
         {RISKS.map((risk) => {
           const s = summary.find((x) => x.risk === risk)
-          const colour = RISK_COLOUR[risk]
+          const isActive = activeRisk === risk
+          // Dot colour: active = risk colour; inactive = coverage status
+          const dotColour = isActive
+            ? RISK_COLOUR[risk]
+            : s?.coveragePercent >= 100 ? '#34C759'
+            : s?.coveragePercent >= 50  ? '#FF9500'
+            : '#FF3B30'
           return (
             <button
               key={risk}
               onClick={() => setActiveRisk(risk)}
               className={`flex-1 py-2.5 text-hig-subhead font-medium rounded-hig-sm transition-colors flex items-center justify-center gap-1.5
-                ${activeRisk === risk ? 'bg-white shadow-sm text-hig-text' : 'text-hig-text-secondary'}`}
+                ${isActive ? 'bg-white shadow-sm text-hig-text' : 'text-hig-text-secondary'}`}
             >
-              <span
-                className="w-2 h-2 rounded-full shrink-0"
-                style={{ backgroundColor: activeRisk === risk ? colour : (s && s.shortfall > 0 ? '#FF3B30' : '#34C759') }}
-              />
+              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: dotColour }} />
               {RISK_SHORT[risk]}
             </button>
           )
@@ -590,7 +582,7 @@ function ProtectionPlanner({ plan, currentAge, contactName, updatePlan, showAssu
                     {active.surplus > 0 ? 'Surplus' : 'Shortfall'}
                   </p>
                   <p className={`text-hig-title3 ${active.surplus > 0 ? 'text-hig-green' : 'text-hig-red'}`}>
-                    {active.surplus > 0 ? '+' : '-'}{formatRMFull(active.surplus || active.shortfall)}
+                    {active.surplus > 0 ? '+' : ''}{formatRMFull(active.surplus || active.shortfall)}
                   </p>
                 </div>
               </div>
@@ -734,8 +726,8 @@ function ProtectionPlanner({ plan, currentAge, contactName, updatePlan, showAssu
                         >
                           {rec.isSelected && <span className="w-2 h-2 rounded-full bg-white" />}
                         </button>
-                        <span className="text-hig-caption1 text-hig-text-secondary flex-1">
-                          {rec.isSelected ? 'Selected' : 'Tap to select'}
+                        <span className={`text-hig-caption1 flex-1 font-medium ${rec.isSelected ? 'text-hig-blue' : 'text-hig-text-secondary'}`}>
+                          {rec.isSelected ? 'Included in plan' : 'Include in plan'}
                         </span>
                         <button onClick={() => removeRec(rec.id)} className="text-hig-text-secondary hover:text-hig-red p-1">
                           <Trash2 size={14} />
