@@ -153,6 +153,7 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
   const [expectedAge, setExpectedAge] = useState(85)
   const [savingsRate, setSavingsRate] = useState(5.0)
   const [inflationRate, setInflationRate] = useState(3.0)
+  const [epfDividendRate, setEpfDividendRate] = useState(5.5)
   const [showSettings, setShowSettings] = useState(false)
 
   // ── Chart display toggles ───────────────────────────────────────────────
@@ -211,25 +212,31 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
   }
 
   // ── Financial extraction ────────────────────────────────────────────────
-  const { annualIncome, annualExpenses, initialSavings } = useMemo(() => {
+  const { annualIncome, annualExpenses, initialSavings, initialEpf } = useMemo(() => {
     const fin = financials
-    if (!fin) return { annualIncome: 0, annualExpenses: 0, initialSavings: 0 }
+    if (!fin) return { annualIncome: 0, annualExpenses: 0, initialSavings: 0, initialEpf: 0 }
     const income   = Array.isArray(fin.income)   ? fin.income   : []
     const expenses = Array.isArray(fin.expenses) ? fin.expenses : []
     const assets   = Array.isArray(fin.assets)   ? fin.assets   : []
     return {
       annualIncome:   income.reduce((s, r) => s + toAnnual(r.amount, r.frequency), 0),
       annualExpenses: expenses.reduce((s, r) => s + toAnnual(r.amount, r.frequency), 0),
-      initialSavings: Number(assets.find((a) => a.id === 'savings-cash')?.amount) || 0,
+      initialSavings: Number(assets.find((a) => a.id === 'savings-cash')?.amount)     || 0,
+      initialEpf:     Number(assets.find((a) => a.id === 'epf-persaraan')?.amount)    || 0,
     }
   }, [financials])
 
   // ── Chart data projection ───────────────────────────────────────────────
   const chartData = useMemo(() => {
     if (!annualIncome && !annualExpenses) return []
-    const ir = inflationRate / 100
-    const sr = savingsRate / 100
+    const ir  = inflationRate    / 100
+    const sr  = savingsRate      / 100
+    const epfR = epfDividendRate / 100
+
+    // Cash savings (liquid, accessible now)
     let pool = initialSavings
+    // EPF locked until localRetirementAge, growing at EPF dividend rate
+    let epfLocked = initialEpf
 
     const ciSc   = scenarios.find((s) => s.id === 'ci'         && s.active)
     const disSc  = scenarios.find((s) => s.id === 'disability' && s.active)
@@ -239,6 +246,12 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
     for (let i = 0; i <= expectedAge - currentAge; i++) {
       const age = currentAge + i
       const retired = age >= localRetirementAge
+
+      // EPF released into cash pool at retirement age (before this year's drawdown)
+      if (age === localRetirementAge && epfLocked > 0) {
+        pool += epfLocked
+        epfLocked = 0
+      }
 
       // Income — off at retirement, or during CI recovery window, or permanently from disability/death
       const ciOff  = ciSc  && age >= ciSc.age  && age < ciSc.age + (ciSc.duration ?? 3)
@@ -271,6 +284,9 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
         }
       }
 
+      // EPF grows at its own dividend rate while still locked
+      if (epfLocked > 0) epfLocked *= (1 + epfR)
+
       rows.push({
         age,
         takeHomeIncomeUsed: Math.round(takeHomeIncomeUsed),
@@ -280,7 +296,7 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
       })
     }
     return rows
-  }, [annualIncome, annualExpenses, initialSavings, currentAge, expectedAge, localRetirementAge, inflationRate, savingsRate, goals, scenarios])
+  }, [annualIncome, annualExpenses, initialSavings, initialEpf, currentAge, expectedAge, localRetirementAge, inflationRate, savingsRate, epfDividendRate, goals, scenarios])
 
   // ── Shortfall summary ───────────────────────────────────────────────────
   const shortfallSummary = useMemo(() => {
@@ -431,12 +447,13 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
             <div className="text-hig-caption2 font-semibold text-hig-text-secondary uppercase tracking-wide mb-3">
               Planning Assumptions
             </div>
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-5 gap-4">
               {[
-                { label: 'Retirement Age', value: localRetirementAge, set: setLocalRetirementAge, min: currentAge + 1, max: 80,  step: 1,   suffix: '' },
-                { label: 'Expected Age',   value: expectedAge,        set: setExpectedAge,        min: 60,            max: 100, step: 1,   suffix: '' },
-                { label: 'Savings Growth', value: savingsRate,        set: setSavingsRate,        min: 0,             max: 20,  step: 0.5, suffix: '%' },
-                { label: 'Inflation Rate', value: inflationRate,      set: setInflationRate,      min: 0,             max: 15,  step: 0.5, suffix: '%' },
+                { label: 'Retirement Age',   value: localRetirementAge, set: setLocalRetirementAge, min: currentAge + 1, max: 80,  step: 1,   suffix: '' },
+                { label: 'Expected Age',     value: expectedAge,        set: setExpectedAge,        min: 60,            max: 100, step: 1,   suffix: '' },
+                { label: 'Savings Growth',   value: savingsRate,        set: setSavingsRate,        min: 0,             max: 20,  step: 0.5, suffix: '%' },
+                { label: 'EPF Dividend',     value: epfDividendRate,    set: setEpfDividendRate,    min: 0,             max: 10,  step: 0.5, suffix: '%' },
+                { label: 'Inflation Rate',   value: inflationRate,      set: setInflationRate,      min: 0,             max: 15,  step: 0.5, suffix: '%' },
               ].map(({ label, value, set, min, max, step, suffix }) => (
                 <div key={label}>
                   <label className="hig-label">{label}</label>
@@ -559,8 +576,8 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
                   tickLine={false}
                   axisLine={false}
                   tickFormatter={fmtAxis}
-                  label={{ value: 'Cash Savings (End of year)', angle: 90, position: 'insideRight', offset: 20, style: { fontSize: 10, fill: '#8E8E93' } }}
-                  width={76}
+                  label={{ value: 'Cash Savings', angle: 90, position: 'insideRight', offset: 12, style: { fontSize: 10, fill: '#8E8E93' } }}
+                  width={70}
                 />
               )}
               <Tooltip content={<ChartTooltip />} />
@@ -573,7 +590,7 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
                 <Line
                   yAxisId="right"
                   dataKey="cashSavingsEOY"
-                  name="Cash Savings (End of year)"
+                  name="Cash Savings"
                   stroke="#1C1C1E"
                   strokeWidth={1.5}
                   dot={false}
@@ -598,7 +615,7 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
             {showCashSavings && (
               <div className="flex items-center gap-1.5">
                 <div style={{ width: 18, height: 2, background: '#1C1C1E', borderRadius: 1 }} />
-                <span className="text-hig-caption2 text-hig-text-secondary">Cash Savings (End of year)</span>
+                <span className="text-hig-caption2 text-hig-text-secondary">Cash Savings</span>
               </div>
             )}
           </div>
