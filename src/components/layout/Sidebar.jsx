@@ -1,3 +1,4 @@
+import { useState, useRef, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -18,6 +19,21 @@ const NAV_ITEMS = [
 export default function Sidebar({ expanded, onToggle }) {
   const location = useLocation()
   const navigate = useNavigate()
+  const [hovered, setHovered] = useState(false)
+  const hoverTimer = useRef(null)
+
+  // Effective open state: pinned by click OR temporarily hovered
+  const isOpen = expanded || hovered
+
+  const handleMouseEnter = useCallback(() => {
+    if (expanded) return // already pinned, no need
+    hoverTimer.current = setTimeout(() => setHovered(true), 500)
+  }, [expanded])
+
+  const handleMouseLeave = useCallback(() => {
+    clearTimeout(hoverTimer.current)
+    setHovered(false)
+  }, [])
 
   const isActive = (path) => {
     if (path.startsWith('#')) return false
@@ -40,15 +56,17 @@ export default function Sidebar({ expanded, onToggle }) {
       )}
 
       <aside
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         className={`
           fixed lg:relative z-30 h-full bg-white border-r border-hig-gray-5
           flex flex-col transition-all duration-300 ease-in-out
-          ${expanded ? 'w-60' : 'w-[60px]'}
+          ${isOpen ? 'w-60' : 'w-[60px]'}
         `}
       >
         {/* Logo area */}
         <div className="h-14 flex items-center justify-center border-b border-hig-gray-5 px-3">
-          {expanded ? (
+          {isOpen ? (
             <img
               src="/assets/colourful-llh-logo.jpg"
               alt="LLH Group"
@@ -85,7 +103,7 @@ export default function Sidebar({ expanded, onToggle }) {
                 title={item.label}
               >
                 <Icon size={22} strokeWidth={active ? 2.2 : 1.8} />
-                {expanded && (
+                {isOpen && (
                   <span className={`text-hig-subhead ${active ? 'font-semibold' : ''} truncate`}>
                     {item.label}
                   </span>
@@ -102,7 +120,7 @@ export default function Sidebar({ expanded, onToggle }) {
                      text-hig-text-secondary hover:text-hig-text hover:bg-hig-gray-6
                      transition-colors duration-hig"
         >
-          {expanded ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+          {isOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
         </button>
       </aside>
     </>
