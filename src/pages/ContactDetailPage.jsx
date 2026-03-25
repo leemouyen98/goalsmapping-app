@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useContacts } from '../hooks/useContacts'
 import FinancesTab from '../components/finances/FinancesTab'
+import CashFlowTab from '../components/finances/CashFlowTab'
 import {
   ArrowLeft, Phone, Calendar, Briefcase, Target, Shield,
   Plus, Check, FileText, PhoneCall, Users, MessageSquare, Clock, Pencil,
-  CheckCircle2, X, Tag,
+  CheckCircle2, X, Tag, TrendingUp, ArrowRight, ChevronDown,
 } from 'lucide-react'
 
 const ACTIVITY_ICONS = { Call: PhoneCall, Meeting: Users, Email: MessageSquare }
@@ -27,6 +28,18 @@ export default function ContactDetailPage() {
   const [editForm, setEditForm] = useState({})
 
   const [tab, setTab] = useState('interaction') // interaction | finances
+  const [showCashFlow, setShowCashFlow] = useState(false)
+  const [showCFPrompt, setShowCFPrompt] = useState(false)
+
+  // Check if Financial Info has usable data (any income or expense entered)
+  const hasFinancialData = useMemo(() => {
+    const fin = contact?.financials
+    if (!fin) return false
+    const hasIncome = Array.isArray(fin.income) && fin.income.some((r) => Number(r.amount) > 0)
+    const hasExpenses = Array.isArray(fin.expenses) && fin.expenses.length > 0
+    return hasIncome || hasExpenses
+  }, [contact?.financials])
+
   const [noteText, setNoteText] = useState('')
   const [showTaskForm, setShowTaskForm] = useState(false)
   const [taskForm, setTaskForm] = useState({ title: '', dueDate: '' })
@@ -184,7 +197,7 @@ export default function ContactDetailPage() {
           {/* Quick Planner Links */}
           <div className="hig-card p-4 space-y-2">
             <h3 className="text-hig-caption1 font-semibold text-hig-text-secondary uppercase tracking-wide">
-              Quick Planner
+              Quick Planners
             </h3>
             <button
               onClick={() => navigate(`/contacts/${id}/retirement`)}
@@ -225,6 +238,71 @@ export default function ContactDetailPage() {
 
         {/* Right: Tabs */}
         <div className="flex-1 min-w-0">
+
+          {/* ── Cash Flow Full Suite hero card ── */}
+          {!showCashFlow ? (
+            <div className="hig-card p-4 mb-4 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-hig-sm bg-hig-blue/10 flex items-center justify-center shrink-0">
+                <TrendingUp size={20} className="text-hig-blue" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-hig-subhead font-semibold">Cash Flow Projection</span>
+                  <span className="text-hig-caption2 font-semibold px-2 py-0.5 rounded-full bg-hig-blue/10 text-hig-blue leading-none">
+                    Full Suite
+                  </span>
+                  {hasFinancialData ? (
+                    <span className="text-hig-caption2 font-semibold px-2 py-0.5 rounded-full bg-hig-green/10 text-hig-green leading-none">
+                      Ready
+                    </span>
+                  ) : (
+                    <span className="text-hig-caption2 font-semibold px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 leading-none">
+                      Setup needed
+                    </span>
+                  )}
+                </div>
+                <p className="text-hig-caption1 text-hig-text-secondary">
+                  Full lifetime projection — income, expenses, surplus accumulation, and coverage gaps by age.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  if (!hasFinancialData) {
+                    setShowCFPrompt(true)
+                  } else {
+                    setShowCashFlow(true)
+                  }
+                }}
+                className="hig-btn-primary gap-1.5 shrink-0"
+              >
+                Launch <ArrowRight size={14} />
+              </button>
+            </div>
+          ) : (
+            /* ── Cash Flow open: full-width view ── */
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <TrendingUp size={18} className="text-hig-blue" />
+                  <span className="text-hig-headline font-semibold">Cash Flow Projection</span>
+                  <span className="text-hig-caption2 font-semibold px-2 py-0.5 rounded-full bg-hig-blue/10 text-hig-blue leading-none">
+                    Full Suite
+                  </span>
+                </div>
+                <button
+                  onClick={() => setShowCashFlow(false)}
+                  className="hig-btn-ghost gap-1.5 text-hig-caption1"
+                >
+                  <X size={14} /> Close
+                </button>
+              </div>
+              <CashFlowTab financials={contact.financials} contact={contact} />
+            </div>
+          )}
+
+          {/* ── Tab bar + content (hidden when Cash Flow is open) ── */}
+          {!showCashFlow && (
+            <>
           {/* Tab bar */}
           <div className="flex border-b border-hig-gray-5 mb-4">
             {[
@@ -362,8 +440,54 @@ export default function ContactDetailPage() {
               }}
             />
           )}
+            </>
+          )}
         </div>
       </div>
+
+      {/* Cash Flow — Financial Info gate prompt */}
+      {showCFPrompt && (
+        <div
+          className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowCFPrompt(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-hig-lg shadow-hig-lg w-full max-w-md p-6"
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div className="w-10 h-10 rounded-hig-sm bg-orange-100 flex items-center justify-center shrink-0">
+                <TrendingUp size={20} className="text-orange-500" />
+              </div>
+              <button onClick={() => setShowCFPrompt(false)} className="p-1.5 rounded-hig-sm hover:bg-hig-gray-6 text-hig-text-secondary">
+                <X size={16} />
+              </button>
+            </div>
+            <h2 className="text-hig-title3 mb-1">Financial Info needed</h2>
+            <p className="text-hig-subhead text-hig-text-secondary mb-5">
+              The Cash Flow Projection needs at least one income or expense entry to run.
+              Head to the Finances tab and fill in the Financial Info section first.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowCFPrompt(false)}
+                className="hig-btn-secondary flex-1"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowCFPrompt(false)
+                  setTab('finances')
+                }}
+                className="hig-btn-primary flex-1 gap-1.5"
+              >
+                Set up Financial Info <ArrowRight size={14} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit Contact Modal */}
       {showEditForm && (

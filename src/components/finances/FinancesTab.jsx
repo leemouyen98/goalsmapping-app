@@ -1,13 +1,11 @@
 import { useState, useMemo } from 'react'
 import FinancialInfo from './FinancialInfo'
 import InsuranceTab from './InsuranceTab'
-import CashFlowTab from './CashFlowTab'
 import FinancialRatios from './FinancialRatios'
 
 const SUB_TABS = [
   { key: 'financialInfo', label: 'Financial Info'  },
   { key: 'insurance',     label: 'Insurance'       },
-  { key: 'cashflow',      label: 'Cash Flow'       },
   { key: 'ratios',        label: 'Financial Ratios'},
 ]
 
@@ -53,9 +51,6 @@ export default function FinancesTab({ contact, onUpdateFinancials }) {
       )}
       {subTab === 'insurance' && (
         <InsuranceTab financials={financials} onSave={handleSave} />
-      )}
-      {subTab === 'cashflow' && (
-        <CashFlowTab financials={financials} contact={contact} />
       )}
       {subTab === 'ratios' && (
         <FinancialRatios financials={financials} contact={contact} />
