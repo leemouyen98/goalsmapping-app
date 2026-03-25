@@ -27,7 +27,7 @@ export default function Sidebar({ expanded, onToggle }) {
 
   const handleMouseEnter = useCallback(() => {
     if (expanded) return // already pinned, no need
-    hoverTimer.current = setTimeout(() => setHovered(true), 500)
+    hoverTimer.current = setTimeout(() => setHovered(true), 100)
   }, [expanded])
 
   const handleMouseLeave = useCallback(() => {
