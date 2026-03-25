@@ -52,13 +52,13 @@ export default function Sidebar({ expanded, onToggle }) {
             <img
               src="/assets/colourful-llh-logo.jpg"
               alt="LLH Group"
-              className="h-8 w-auto object-contain"
+              className="h-8 w-auto max-w-full object-contain shrink-0"
             />
           ) : (
             <img
-              src="/assets/colourful-llh-favicon.jpg"
+              src="/assets/colourful-llh-favicon.png"
               alt="LLH"
-              className="w-8 h-8 object-contain rounded-lg"
+              className="w-8 h-8 object-contain rounded-lg shrink-0"
             />
           )}
         </div>

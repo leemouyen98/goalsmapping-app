@@ -58,7 +58,7 @@ export default function LoginPage() {
             <img
               src="/assets/colourful-llh-logo.jpg"
               alt="LLH Group"
-              style={{ height: 36, width: 'auto', objectFit: 'contain' }}
+              style={{ height: 36, width: 'auto', maxWidth: 180, objectFit: 'contain' }}
             />
           </div>
         </div>
@@ -116,7 +116,7 @@ export default function LoginPage() {
           <img
             src="/assets/colourful-llh-logo.jpg"
             alt="LLH Group"
-            className="h-10 w-auto object-contain mx-auto mb-2"
+            className="h-10 w-auto max-w-[200px] object-contain mx-auto mb-2"
           />
           <p className="text-hig-subhead text-hig-text-secondary mt-1">Financial Planning Suite</p>
         </div>

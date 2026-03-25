@@ -50,7 +50,7 @@ export default function TopBar({ onMenuToggle }) {
         <img
           src="/assets/colourful-llh-logo.jpg"
           alt="LLH Group"
-          className="h-8 w-auto object-contain"
+          className="h-8 w-auto max-w-[160px] object-contain shrink-0"
         />
       </div>
 
