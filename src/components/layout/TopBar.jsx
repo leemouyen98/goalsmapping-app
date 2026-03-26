@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { Menu, Search, ChevronDown, LogOut, Settings } from 'lucide-react'
+import { Menu, Search, ChevronDown, LogOut, Settings, Globe } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
+import { useLanguage } from '../../hooks/useLanguage'
 
 export default function TopBar({ onMenuToggle }) {
   const { agent, logout } = useAuth()
+  const { lang, toggle: toggleLang } = useLanguage()
   const location = useLocation()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -120,6 +122,31 @@ export default function TopBar({ onMenuToggle }) {
                 Agent Code: {agent?.code || '—'}
               </p>
             </div>
+            {/* Language toggle */}
+            <div className="flex items-center gap-3 px-4 py-2.5">
+              <Globe size={16} className="text-hig-text-secondary shrink-0" />
+              <div className="flex items-center bg-hig-gray-6 rounded-lg p-0.5 gap-0.5">
+                <button
+                  onClick={() => toggleLang('en')}
+                  className={`px-2.5 py-1 rounded-md text-hig-caption1 font-semibold transition-all duration-150
+                    ${lang === 'en'
+                      ? 'bg-white text-hig-blue shadow-sm'
+                      : 'text-hig-text-secondary hover:text-hig-text'}`}
+                >
+                  EN
+                </button>
+                <button
+                  onClick={() => toggleLang('zh')}
+                  className={`px-2.5 py-1 rounded-md text-hig-caption1 font-semibold transition-all duration-150
+                    ${lang === 'zh'
+                      ? 'bg-white text-hig-blue shadow-sm'
+                      : 'text-hig-text-secondary hover:text-hig-text'}`}
+                >
+                  中
+                </button>
+              </div>
+            </div>
+
             <button
               onClick={() => { setShowProfile(false); navigate('/settings') }}
               className="w-full flex items-center gap-3 px-4 py-2.5 text-hig-subhead
