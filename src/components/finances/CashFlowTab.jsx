@@ -39,12 +39,13 @@ function toAnnual(amount, frequency) {
 // ── Custom tooltip ─────────────────────────────────────────────────────────
 
 function ChartTooltip({ active, payload, label }) {
+  const { t } = useLanguage()
   if (!active || !payload?.length) return null
   const bars = payload.filter((p) => Number(p.value) > 0 && p.dataKey !== 'cashSavingsEOY')
   const savings = payload.find((p) => p.dataKey === 'cashSavingsEOY')
   return (
     <div className="rounded-xl border border-hig-gray-5 bg-white shadow-lg p-3 text-hig-caption2" style={{ minWidth: 185 }}>
-      <div className="font-semibold text-hig-subhead mb-2">Age {label}</div>
+      <div className="font-semibold text-hig-subhead mb-2">{t('common.age')} {label}</div>
       {bars.map((p) => (
         <div key={p.dataKey} className="flex items-center justify-between gap-3 mb-1">
           <div className="flex items-center gap-1.5">
@@ -58,7 +59,7 @@ function ChartTooltip({ active, payload, label }) {
         <div className="flex items-center justify-between gap-3 mt-1.5 pt-1.5 border-t border-hig-gray-5">
           <div className="flex items-center gap-1.5">
             <div className="flex-shrink-0 bg-gray-800 rounded-full" style={{ width: 18, height: 2 }} />
-            <span className="text-hig-text-secondary">Cash Savings (EOY)</span>
+            <span className="text-hig-text-secondary">{t('cashflow.cashSavingsEOY')}</span>
           </div>
           <span className="font-medium">{fmtRM(savings.value)}</span>
         </div>
@@ -194,9 +195,9 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
 
   // ── Scenarios ───────────────────────────────────────────────────────────
   const [scenarios, setScenarios] = useState([
-    { id: 'ci',         label: 'Critical Illness',  icon: 'heart',    age: currentAge, duration: 3, active: false },
-    { id: 'disability', label: 'Disability (TPD)',  icon: 'activity', age: currentAge,              active: false },
-    { id: 'death',      label: 'Death',             icon: 'shield',   age: currentAge,              active: false },
+    { id: 'ci',         icon: 'heart',    age: currentAge, duration: 3, active: false },
+    { id: 'disability', icon: 'activity', age: currentAge,              active: false },
+    { id: 'death',      icon: 'shield',   age: currentAge,              active: false },
   ])
   // which scenario row is open for editing
   const [editingSc, setEditingSc] = useState(null)
@@ -324,11 +325,11 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
     if (!has('critical', 'ci')) {
       const triggered = ciActive && hasShortfall
       recs.push({
-        label:     'Critical Illness',
-        desc:      triggered
+        label:    t('cashflow.recCi'),
+        desc:     triggered
           ? `Scenario shows ${fmtRM(shortfallSummary?.total)} shortfall over ${(ciActive?.duration ?? 3)}yr CI recovery — CI payout covers income gap`
-          : 'Replaces income during CI recovery period',
-        priority:  triggered,
+          : t('cashflow.recCiDesc'),
+        priority: triggered,
       })
     }
 
@@ -336,10 +337,10 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
     if (!has('disability', 'tpd', 'income protection')) {
       const triggered = disActive && hasShortfall
       recs.push({
-        label:    'Total & Permanent Disability',
+        label:    t('cashflow.recTpd'),
         desc:     triggered
           ? `Disability scenario shows ${fmtRM(shortfallSummary?.total)} shortfall — TPD lump sum bridges income loss`
-          : 'Replaces income on permanent disability',
+          : t('cashflow.recTpdDesc'),
         priority: triggered,
       })
     }
@@ -348,21 +349,22 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
     if (!has('life', 'term', 'death', 'wholelife', 'whole life')) {
       const triggered = dedActive && hasShortfall
       recs.push({
-        label:    'Life Coverage',
+        label:    t('cashflow.recLife'),
         desc:     triggered
           ? `Death scenario shows ${fmtRM(shortfallSummary?.total)} shortfall — life sum assured covers dependants`
-          : 'Income replacement for dependants',
+          : t('cashflow.recLifeDesc'),
         priority: triggered,
       })
     }
 
     // Always-on gaps
     if (!has('hospital', 'medical', 'h&s', 'surgical'))
-      recs.push({ label: 'Hospital & Surgical', desc: 'Medical cost protection', priority: false })
+      recs.push({ label: t('cashflow.recHospital'), desc: t('cashflow.recHospitalDesc'), priority: false })
 
     // Sort: scenario-triggered (priority) first
     return recs.sort((a, b) => (b.priority ? 1 : 0) - (a.priority ? 1 : 0))
-  }, [financials?.insurance, scenarios, shortfallSummary])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [financials?.insurance, scenarios, shortfallSummary, t])
 
   // ── Insurance plans list ────────────────────────────────────────────────
   const insurancePlans = useMemo(() => {
@@ -382,13 +384,13 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
         <div className="w-14 h-14 rounded-full bg-hig-gray-6 flex items-center justify-center mx-auto mb-4">
           <BarChart2 size={22} className="text-hig-text-secondary" />
         </div>
-        <div className="text-hig-title3 font-semibold mb-2">No Financial Data</div>
+        <div className="text-hig-title3 font-semibold mb-2">{t('cashflow.noFinancialData')}</div>
         <div className="text-hig-footnote text-hig-text-secondary mb-5">
-          Enter income and expenses to generate a cash flow projection.
+          {t('cashflow.enterDataPrompt')}
         </div>
         {onEditFinancialInfo && (
           <button onClick={onEditFinancialInfo} className="hig-btn-primary">
-            Set up Financial Info
+            {t('cashflow.setupFinancialInfo')}
           </button>
         )}
       </div>
@@ -421,7 +423,7 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
           <div className="flex items-center gap-0.5 flex-shrink-0">
             <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-hig-footnote text-hig-text-secondary hover:bg-hig-gray-6 transition-colors whitespace-nowrap">
               <BarChart2 size={13} />
-              Compare Charts
+              {t('cashflow.compareCharts')}
             </button>
             {onEditFinancialInfo && (
               <button
@@ -486,7 +488,7 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
           {/* Breadcrumb + chart controls */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-1 text-hig-subhead">
-              <span className="text-hig-text-secondary font-normal">Planner</span>
+              <span className="text-hig-text-secondary font-normal">{t('cashflow.planner')}</span>
               <span className="text-hig-text-secondary mx-0.5">/</span>
               <button className="flex items-center gap-1.5 font-semibold hover:opacity-70">
                 <BarChart2 size={14} className="text-hig-blue" />
@@ -510,7 +512,7 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
                     style={{ transform: showCashSavings ? 'translateX(19px)' : 'translateX(2px)' }}
                   />
                 </div>
-                <span className="text-hig-footnote text-hig-text-secondary whitespace-nowrap">Cash Savings</span>
+                <span className="text-hig-footnote text-hig-text-secondary whitespace-nowrap">{t('cashflow.cashSavings')}</span>
               </label>
               <div className="flex items-center gap-0.5">
                 <button className="p-1.5 rounded-lg hover:bg-hig-gray-6 text-hig-text-secondary transition-colors"><BarChart2 size={14} /></button>
@@ -530,7 +532,7 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
             {shortfallSummary ? (
               <div className="flex items-stretch rounded-xl overflow-hidden border border-red-200">
                 <div className="bg-red-50 px-3 py-1.5 flex flex-col justify-center">
-                  <div className="text-hig-caption2 text-red-400 leading-none mb-0.5">Shortfall</div>
+                  <div className="text-hig-caption2 text-red-400 leading-none mb-0.5">{t('cashflow.shortfallLabel')}</div>
                   <div className="text-hig-caption1 text-red-600 font-semibold leading-none">
                     {shortfallSummary.start} to {shortfallSummary.end}
                   </div>
@@ -542,7 +544,7 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
             ) : (
               <div className="flex items-center gap-1.5 rounded-xl border border-green-200 bg-green-50 px-3 py-1.5">
                 <Check size={13} className="text-green-600" strokeWidth={2.5} />
-                <span className="text-hig-caption2 text-green-700 font-semibold">No Shortfall</span>
+                <span className="text-hig-caption2 text-green-700 font-semibold">{t('cashflow.noShortfall')}</span>
               </div>
             )}
           </div>
@@ -568,7 +570,7 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={fmtAxis}
-                label={{ value: 'Expenses', angle: -90, position: 'insideLeft', offset: 16, style: { fontSize: 10, fill: '#8E8E93' } }}
+                label={{ value: t('cashflow.expenses'), angle: -90, position: 'insideLeft', offset: 16, style: { fontSize: 10, fill: '#8E8E93' } }}
                 width={74}
               />
               {showCashSavings && (
@@ -579,21 +581,21 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
                   tickLine={false}
                   axisLine={false}
                   tickFormatter={fmtAxis}
-                  label={{ value: 'Cash Savings', angle: 90, position: 'insideRight', offset: 12, style: { fontSize: 10, fill: '#8E8E93' } }}
+                  label={{ value: t('cashflow.cashSavings'), angle: 90, position: 'insideRight', offset: 12, style: { fontSize: 10, fill: '#8E8E93' } }}
                   width={70}
                 />
               )}
               <Tooltip content={<ChartTooltip />} />
 
-              <Bar yAxisId="left" dataKey="takeHomeIncomeUsed" name="Take-home Income Used" stackId="a" fill="#5AC8FA" isAnimationActive={false} />
-              <Bar yAxisId="left" dataKey="cashUsed"           name="Cash Used"             stackId="a" fill="#FF9F0A" isAnimationActive={false} />
-              <Bar yAxisId="left" dataKey="shortfall"          name="Shortfall"             stackId="a" fill="#FF3B30" radius={[2, 2, 0, 0]} isAnimationActive={false} />
+              <Bar yAxisId="left" dataKey="takeHomeIncomeUsed" name={t('cashflow.legendTakeHome')} stackId="a" fill="#5AC8FA" isAnimationActive={false} />
+              <Bar yAxisId="left" dataKey="cashUsed"           name={t('cashflow.legendCashUsed')}   stackId="a" fill="#FF9F0A" isAnimationActive={false} />
+              <Bar yAxisId="left" dataKey="shortfall"          name={t('cashflow.shortfallLabel')}    stackId="a" fill="#FF3B30" radius={[2, 2, 0, 0]} isAnimationActive={false} />
 
               {showCashSavings && (
                 <Line
                   yAxisId="right"
                   dataKey="cashSavingsEOY"
-                  name="Cash Savings"
+                  name={t('cashflow.cashSavings')}
                   stroke="#1C1C1E"
                   strokeWidth={1.5}
                   dot={false}
@@ -606,9 +608,9 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
           {/* Legend */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3 justify-center">
             {[
-              { color: '#FF3B30', label: 'Shortfall' },
-              { color: '#FF9F0A', label: 'Cash Used' },
-              { color: '#5AC8FA', label: 'Take-home Income Used' },
+              { color: '#FF3B30', label: t('cashflow.shortfallLabel') },
+              { color: '#FF9F0A', label: t('cashflow.legendCashUsed') },
+              { color: '#5AC8FA', label: t('cashflow.legendTakeHome') },
             ].map((item) => (
               <div key={item.label} className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-full" style={{ background: item.color }} />
@@ -618,7 +620,7 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
             {showCashSavings && (
               <div className="flex items-center gap-1.5">
                 <div style={{ width: 18, height: 2, background: '#1C1C1E', borderRadius: 1 }} />
-                <span className="text-hig-caption2 text-hig-text-secondary">Cash Savings</span>
+                <span className="text-hig-caption2 text-hig-text-secondary">{t('cashflow.cashSavings')}</span>
               </div>
             )}
           </div>
@@ -630,8 +632,8 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
           {/* Goals card */}
           <div className="hig-card p-4">
             <PanelHeader
-              title="Goals"
-              actionLabel={goals.length ? 'Activate all' : null}
+              title={t('cashflow.goalsPanel')}
+              actionLabel={goals.length ? t('cashflow.activateAll') : null}
               onAction={() => setGoals((g) => g.map((x) => ({ ...x, active: true })))}
               onAdd={() => setShowAddGoal(true)}
             />
@@ -642,13 +644,13 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
                 <input
                   autoFocus
                   className="hig-input w-full text-hig-footnote"
-                  placeholder="Dream (e.g. Buy Property)"
+                  placeholder={t('cashflow.goalPlaceholder')}
                   value={newGoal.label}
                   onChange={(e) => setNewGoal((g) => ({ ...g, label: e.target.value }))}
                 />
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="hig-label">Age</label>
+                    <label className="hig-label">{t('common.age')}</label>
                     <input type="number" className="hig-input w-full mt-1 text-hig-footnote"
                       placeholder="e.g. 40" value={newGoal.age}
                       onChange={(e) => setNewGoal((g) => ({ ...g, age: e.target.value }))}
@@ -656,7 +658,7 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
                     />
                   </div>
                   <div>
-                    <label className="hig-label">Lump Sum (RM)</label>
+                    <label className="hig-label">{t('cashflow.goalLumpSum')}</label>
                     <NumberInput
                       value={Number(newGoal.amount) || 0}
                       onChange={(num) => setNewGoal((g) => ({ ...g, amount: num }))}
@@ -675,20 +677,20 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
                   <option value="star">⭐ Other</option>
                 </select>
                 <div className="flex gap-2 pt-0.5">
-                  <button onClick={addGoal} className="hig-btn-primary flex-1 py-1.5 text-hig-footnote">Add Goal</button>
-                  <button onClick={() => setShowAddGoal(false)} className="hig-btn-ghost flex-1 py-1.5 text-hig-footnote">Cancel</button>
+                  <button onClick={addGoal} className="hig-btn-primary flex-1 py-1.5 text-hig-footnote">{t('cashflow.addGoal')}</button>
+                  <button onClick={() => setShowAddGoal(false)} className="hig-btn-ghost flex-1 py-1.5 text-hig-footnote">{t('common.cancel')}</button>
                 </div>
               </div>
             )}
 
             {goals.length === 0 ? (
               <div className="text-center py-5">
-                <div className="text-hig-caption1 text-hig-text-secondary mb-2">No goals added</div>
+                <div className="text-hig-caption1 text-hig-text-secondary mb-2">{t('cashflow.noGoalsAdded')}</div>
                 <div className="text-hig-caption2 text-hig-text-secondary mb-3 leading-snug">
-                  Goals add a lump-sum expense to the chart at the target age
+                  {t('cashflow.goalsDesc')}
                 </div>
                 <button onClick={() => setShowAddGoal(true)} className="text-hig-caption2 text-hig-blue hover:opacity-70">
-                  + Add your first goal
+                  {t('cashflow.addFirstGoal')}
                 </button>
               </div>
             ) : (
@@ -712,8 +714,8 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
           {/* Scenarios card */}
           <div className="hig-card p-4">
             <PanelHeader
-              title="Scenarios"
-              actionLabel="Activate all"
+              title={t('cashflow.scenariosPanel')}
+              actionLabel={t('cashflow.activateAll')}
               onAction={() => setScenarios((s) => s.map((x) => ({ ...x, active: true })))}
               onAdd={() => {}}
             />
@@ -736,12 +738,16 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
                       <ScenarioIcon type={sc.icon} size={13} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-hig-footnote font-medium">{sc.label}</div>
+                      <div className="text-hig-footnote font-medium">
+                        {sc.id === 'ci' ? t('cashflow.scenarioCriticalIllness')
+                          : sc.id === 'disability' ? t('cashflow.scenarioDisability')
+                          : t('cashflow.scenarioDeath')}
+                      </div>
                       <div className="text-hig-caption2 text-hig-text-secondary">
                         @ {sc.age} yo.
-                        {sc.id === 'ci' && ` · ${sc.duration ?? 3} yr income loss`}
-                        {sc.id === 'disability' && ' · income stops permanently'}
-                        {sc.id === 'death' && ' · income stops permanently'}
+                        {sc.id === 'ci' && ` ${t('cashflow.ciSuffix', { n: sc.duration ?? 3 })}`}
+                        {sc.id === 'disability' && ` ${t('cashflow.permSuffix')}`}
+                        {sc.id === 'death' && ` ${t('cashflow.permSuffix')}`}
                       </div>
                     </div>
                     <button
@@ -757,7 +763,7 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
                     <div className="ml-9 mb-2 p-2.5 bg-hig-gray-6 rounded-xl space-y-2">
                       <div className={`grid gap-2 ${sc.id === 'ci' ? 'grid-cols-2' : 'grid-cols-1'}`}>
                         <div>
-                          <label className="hig-label">Age when it happens</label>
+                          <label className="hig-label">{t('cashflow.ageWhenHappens')}</label>
                           <input
                             type="number"
                             className="hig-input w-full mt-1 text-hig-caption2"
@@ -768,7 +774,7 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
                         </div>
                         {sc.id === 'ci' && (
                           <div>
-                            <label className="hig-label">Income loss (years)</label>
+                            <label className="hig-label">{t('cashflow.incomeLossYears')}</label>
                             <input
                               type="number"
                               className="hig-input w-full mt-1 text-hig-caption2"
@@ -781,12 +787,12 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
                       </div>
                       {sc.id === 'ci' && (
                         <div className="text-hig-caption2 text-hig-text-secondary leading-snug">
-                          Income drops to RM 0 from age {sc.age} to {sc.age + (sc.duration ?? 3) - 1}. Expenses continue at inflation rate — cash savings drawn down, then shortfall.
+                          {t('cashflow.ciScenarioDesc', { from: sc.age, to: sc.age + (sc.duration ?? 3) - 1 })}
                         </div>
                       )}
                       {sc.id !== 'ci' && (
                         <div className="text-hig-caption2 text-hig-text-secondary leading-snug">
-                          Income permanently stops from age {sc.age}. Savings drawn down, then shortfall.
+                          {t('cashflow.permStopDesc', { age: sc.age })}
                         </div>
                       )}
                     </div>
@@ -804,19 +810,19 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
 
         {/* Recommendations */}
         <div className="hig-card p-4">
-          <PanelHeader title="Recommendations" actionLabel="Activate all" onAdd={() => {}} />
+          <PanelHeader title={t('cashflow.recsPanel')} actionLabel={t('cashflow.activateAll')} onAdd={() => {}} />
           {recommendations.length === 0 ? (
             <div className="text-center py-4">
               <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-2">
                 <Check size={15} className="text-green-600" strokeWidth={2.5} />
               </div>
-              <div className="text-hig-footnote text-hig-text-secondary">All key coverages in place</div>
+              <div className="text-hig-footnote text-hig-text-secondary">{t('cashflow.allCoveragesInPlace')}</div>
             </div>
           ) : (
             <>
               <button className="flex items-center gap-1.5 text-hig-footnote text-hig-blue mb-3 hover:opacity-70">
                 <Plus size={13} />
-                Add New Recommendations
+                {t('cashflow.addNewRecs')}
               </button>
               <div className="space-y-1">
                 {recommendations.map((rec) => (
@@ -832,7 +838,7 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
                     <div className="flex-1 min-w-0">
                       <div className={`text-hig-footnote font-semibold ${rec.priority ? 'text-red-600' : ''}`}>
                         {rec.label}
-                        {rec.priority && <span className="ml-1.5 text-hig-caption2 font-normal bg-red-500 text-white px-1.5 py-0.5 rounded-md">Triggered</span>}
+                        {rec.priority && <span className="ml-1.5 text-hig-caption2 font-normal bg-red-500 text-white px-1.5 py-0.5 rounded-md">{t('cashflow.triggeredBadge')}</span>}
                       </div>
                       <div className="text-hig-caption2 text-hig-text-secondary leading-snug mt-0.5">{rec.desc}</div>
                     </div>

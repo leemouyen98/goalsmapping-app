@@ -1,6 +1,8 @@
 import { X } from 'lucide-react'
+import { useLanguage } from '../../hooks/useLanguage'
 
 export default function PlanningAssumptions({ plan, currentAge, onChange, onClose }) {
+  const { t } = useLanguage()
   const set = (key) => (e) => {
     const rawVal = e.target.value
     const isNumeric = e.target.type === 'number' || e.target.type === 'range'
@@ -12,7 +14,7 @@ export default function PlanningAssumptions({ plan, currentAge, onChange, onClos
     <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-hig-lg shadow-hig-lg w-full max-w-lg p-6 max-h-[85vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-hig-title3">Planning Assumptions</h2>
+          <h2 className="text-hig-title3">{t('retirement.planningAssumptions')}</h2>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-hig-gray-6 transition-colors">
             <X size={20} className="text-hig-text-secondary" />
           </button>
@@ -21,17 +23,17 @@ export default function PlanningAssumptions({ plan, currentAge, onChange, onClos
         <div className="space-y-5">
           {/* Planning Parameters */}
           <div>
-            <h3 className="text-hig-headline mb-3">Planning Parameters</h3>
+            <h3 className="text-hig-headline mb-3">{t('retirement.planningParams')}</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="hig-label">Retirement Age</label>
+                <label className="hig-label">{t('retirement.retirementAge')}</label>
                 <div className="flex items-center gap-3">
                   <input type="range" min={55} max={70} value={plan.retirementAge} onChange={set('retirementAge')} className="flex-1 accent-hig-blue" />
                   <span className="text-hig-headline text-hig-blue w-8 text-right">{plan.retirementAge}</span>
                 </div>
               </div>
               <div>
-                <label className="hig-label">Life Expectancy</label>
+                <label className="hig-label">{t('retirement.lifeExpectancy')}</label>
                 <div className="flex items-center gap-3">
                   <input type="range" min={61} max={120} value={plan.lifeExpectancy} onChange={set('lifeExpectancy')} className="flex-1 accent-hig-blue" />
                   <span className="text-hig-headline text-hig-blue w-8 text-right">{plan.lifeExpectancy}</span>
@@ -44,23 +46,23 @@ export default function PlanningAssumptions({ plan, currentAge, onChange, onClos
 
           {/* Retirement Expense */}
           <div>
-            <h3 className="text-hig-headline mb-3">Retirement Expense</h3>
+            <h3 className="text-hig-headline mb-3">{t('retirement.retirementExpense')}</h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
-                <label className="hig-label">Monthly Expenses (RM)</label>
+                <label className="hig-label">{t('retirement.monthlyExpensesRM')}</label>
                 <input type="number" value={plan.monthlyExpenses || ''} onChange={set('monthlyExpenses')} className="hig-input" />
               </div>
               <div>
-                <label className="hig-label">Inflation Rate (%)</label>
+                <label className="hig-label">{t('retirement.inflationRatePct')}</label>
                 <input type="number" step="0.5" min={0} max={10} value={plan.inflationRate} onChange={set('inflationRate')} className="hig-input" />
               </div>
               <div>
-                <label className="hig-label">Pre-Retirement Return (%)</label>
+                <label className="hig-label">{t('retirement.preReturnRatePct')}</label>
                 <input type="number" step="0.5" min={0} max={20} value={plan.preRetirementReturn ?? 5} onChange={set('preRetirementReturn')} className="hig-input" />
-                <p className="text-hig-caption2 text-hig-text-secondary mt-1">Required accumulation curve discount rate</p>
+                <p className="text-hig-caption2 text-hig-text-secondary mt-1">{t('retirement.accumDiscountRate')}</p>
               </div>
               <div>
-                <label className="hig-label">Post-Retirement Return (%)</label>
+                <label className="hig-label">{t('retirement.postReturnRatePct')}</label>
                 <input type="number" step="0.5" min={0} max={10} value={plan.postRetirementReturn} onChange={set('postRetirementReturn')} className="hig-input" />
               </div>
             </div>
@@ -71,7 +73,7 @@ export default function PlanningAssumptions({ plan, currentAge, onChange, onClos
           {/* EPF */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-hig-headline">EPF Payout Information</h3>
+              <h3 className="text-hig-headline">{t('retirement.epfInfo')}</h3>
               <button
                 type="button"
                 onClick={() => onChange({ includeEPF: !plan.includeEPF })}
@@ -83,19 +85,19 @@ export default function PlanningAssumptions({ plan, currentAge, onChange, onClos
             {plan.includeEPF && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="hig-label">EPF Balance (RM)</label>
+                  <label className="hig-label">{t('retirement.epfBalanceRM')}</label>
                   <input type="number" value={plan.epfBalance || ''} onChange={set('epfBalance')} className="hig-input" />
                 </div>
                 <div>
-                  <label className="hig-label">EPF Growth Rate (%)</label>
+                  <label className="hig-label">{t('retirement.epfGrowthRatePct')}</label>
                   <input type="number" step="0.5" value={plan.epfGrowthRate} onChange={set('epfGrowthRate')} className="hig-input" />
                 </div>
                 <div>
-                  <label className="hig-label">Annual Income (RM)</label>
+                  <label className="hig-label">{t('retirement.annualIncomeRM')}</label>
                   <input type="number" value={plan.annualIncome || ''} onChange={set('annualIncome')} className="hig-input" />
                 </div>
                 <div>
-                  <label className="hig-label">Income Growth Rate (%)</label>
+                  <label className="hig-label">{t('retirement.incomeGrowthRatePct')}</label>
                   <input type="number" step="0.5" value={plan.incomeGrowthRate} onChange={set('incomeGrowthRate')} className="hig-input" />
                 </div>
               </div>
@@ -104,7 +106,7 @@ export default function PlanningAssumptions({ plan, currentAge, onChange, onClos
         </div>
 
         <div className="flex justify-end mt-6">
-          <button onClick={onClose} className="hig-btn-primary">Done</button>
+          <button onClick={onClose} className="hig-btn-primary">{t('common.done')}</button>
         </div>
       </div>
     </div>

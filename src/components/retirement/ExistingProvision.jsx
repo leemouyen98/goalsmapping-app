@@ -57,15 +57,15 @@ export default function ExistingProvision({ plan, currentAge, onChange, onBack, 
       {/* Left: Form */}
       <div className="flex-1 space-y-4">
         <div className="hig-card p-5">
-          <h3 className="text-hig-headline mb-2">Existing Provision</h3>
+          <h3 className="text-hig-headline mb-2">{t('retirement.existingProvision')}</h3>
           <p className="text-hig-subhead text-hig-text-secondary mb-5">
-            Include what you already have in place (Savings, Insurance, Investment) for a more accurate estimate of your future needs.
+            {t('retirement.existingProvisionDesc')}
           </p>
 
           {provisions.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-hig-subhead text-hig-text-secondary mb-4">
-                No existing provisions added yet.
+                {t('retirement.noProvisions')}
               </p>
               <button onClick={addProvision} className="hig-btn-primary gap-2">
                 <Plus size={16} /> {t('retirement.addProvision')}
@@ -84,7 +84,7 @@ export default function ExistingProvision({ plan, currentAge, onChange, onBack, 
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div>
-                      <label className="hig-label">Name</label>
+                      <label className="hig-label">{t('retirement.provisionName')}</label>
                       <input
                         value={p.name}
                         onChange={(e) => updateProvision(idx, { name: e.target.value })}
@@ -93,18 +93,18 @@ export default function ExistingProvision({ plan, currentAge, onChange, onBack, 
                       />
                     </div>
                     <div>
-                      <label className="hig-label">Type</label>
+                      <label className="hig-label">{t('retirement.provisionType')}</label>
                       <select
                         value={p.type || ''}
                         onChange={(e) => updateProvision(idx, { type: e.target.value })}
                         className="hig-input"
                       >
-                        <option value="">Select...</option>
-                        {PROVISION_TYPES.map((t) => <option key={t}>{t}</option>)}
+                        <option value="">{t('common.select')}</option>
+                        {PROVISION_TYPES.map((pt) => <option key={pt}>{pt}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className="hig-label">Current Balance (RM)</label>
+                      <label className="hig-label">{t('retirement.currentBalanceRM')}</label>
                       <NumberInput
                         value={p.currentBalance}
                         onChange={(num) => updateProvision(idx, { currentBalance: num })}
@@ -113,7 +113,7 @@ export default function ExistingProvision({ plan, currentAge, onChange, onBack, 
                       />
                     </div>
                     <div>
-                      <label className="hig-label">Pre-Retirement Return (%)</label>
+                      <label className="hig-label">{t('retirement.preRetirementReturnPct')}</label>
                       <input
                         type="number"
                         step="0.5"
@@ -123,7 +123,7 @@ export default function ExistingProvision({ plan, currentAge, onChange, onBack, 
                       />
                     </div>
                     <div>
-                      <label className="hig-label">Contribution Amount (RM)</label>
+                      <label className="hig-label">{t('retirement.contributionAmountRM')}</label>
                       <NumberInput
                         value={p.amount}
                         onChange={(num) => updateProvision(idx, { amount: num })}
@@ -132,7 +132,7 @@ export default function ExistingProvision({ plan, currentAge, onChange, onBack, 
                       />
                     </div>
                     <div>
-                      <label className="hig-label">Frequency</label>
+                      <label className="hig-label">{t('common.period')}</label>
                       <select
                         value={p.frequency}
                         onChange={(e) => updateProvision(idx, { frequency: e.target.value })}
@@ -167,42 +167,42 @@ export default function ExistingProvision({ plan, currentAge, onChange, onBack, 
       {/* Right: Summary */}
       <div className="w-72 shrink-0">
         <div className="hig-card p-5 space-y-4 sticky top-4">
-          <h3 className="text-hig-headline">Provision Summary</h3>
+          <h3 className="text-hig-headline">{t('retirement.provisionSummary')}</h3>
 
           {provisions.length === 0 ? (
             <p className="text-hig-subhead text-hig-text-secondary">
-              Add your existing provisions to see a summary.
+              {t('retirement.addProvisionsPrompt')}
             </p>
           ) : (
             <>
               <div className="bg-green-50 rounded-hig-sm p-4">
                 <p className="text-hig-caption1 text-hig-green font-medium mb-1">
-                  At age {plan.retirementAge}
+                  {t('retirement.epfAtAge', { age: plan.retirementAge })}
                 </p>
                 <p className="text-hig-title2 text-hig-green">
                   {formatRMFull(totalProjected)}
                 </p>
                 <p className="text-hig-caption2 text-hig-text-secondary mt-1">
-                  Grows by {formatRMFull(totalProjected - totalCapital)} over {yearsToRetirement} years
-                  {totalCapital > 0 ? ` — a ${Math.round(((totalProjected / totalCapital) - 1) * 100).toLocaleString('en-MY')}% gain on committed capital.` : '.'}
+                  {t('retirement.growsBy', { amount: formatRMFull(totalProjected - totalCapital), years: yearsToRetirement })}
+                  {totalCapital > 0 ? ` — ${t('retirement.gainOnCapital', { pct: Math.round(((totalProjected / totalCapital) - 1) * 100).toLocaleString('en-MY') })}` : '.'}
                 </p>
               </div>
 
               <div className="space-y-2.5 text-hig-subhead">
                 <div className="flex justify-between">
-                  <span className="text-hig-text-secondary">Provisions</span>
-                  <span className="font-semibold">{provisions.length} investment{provisions.length > 1 ? 's' : ''}</span>
+                  <span className="text-hig-text-secondary">{t('retirement.existingProvision')}</span>
+                  <span className="font-semibold">{provisions.length}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-hig-text-secondary">Total Committed</span>
+                  <span className="text-hig-text-secondary">{t('retirement.totalCommitted')}</span>
                   <span className="font-semibold">{formatRMFull(totalCapital)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-hig-text-secondary">Today's Value</span>
+                  <span className="text-hig-text-secondary">{t('retirement.todayValue')}</span>
                   <span className="font-semibold">{formatRMFull(provisions.reduce((s, p) => s + (p.currentBalance || 0) + (p.frequency === 'One-Time' ? (p.amount || 0) : 0), 0))}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-hig-text-secondary">Years to Target</span>
+                  <span className="text-hig-text-secondary">{t('retirement.yearsToTarget')}</span>
                   <span className="font-semibold">{yearsToRetirement}</span>
                 </div>
               </div>
@@ -212,7 +212,7 @@ export default function ExistingProvision({ plan, currentAge, onChange, onBack, 
               <div className="space-y-2">
                 {projections.map((p, i) => (
                   <div key={p.id} className="flex justify-between text-hig-caption1">
-                    <span className="text-hig-text-secondary truncate">{p.name || `Provision ${i + 1}`}</span>
+                    <span className="text-hig-text-secondary truncate">{p.name || t('retirement.provisionN', { n: i + 1 })}</span>
                     <span className="font-medium">{formatRMFull(p.projectedValue)}</span>
                   </div>
                 ))}

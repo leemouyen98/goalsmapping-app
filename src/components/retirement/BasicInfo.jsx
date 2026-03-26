@@ -53,10 +53,10 @@ export default function BasicInfo({
       <div className="flex-1 space-y-6">
         {/* Planning Parameters */}
         <div className="hig-card p-5">
-          <h3 className="text-hig-headline mb-4">Planning Parameters</h3>
+          <h3 className="text-hig-headline mb-4">{t('retirement.planningParams')}</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="hig-label">Retirement Age</label>
+              <label className="hig-label">{t('retirement.retirementAge')}</label>
               <div className="flex items-center gap-3">
                 <input
                   type="range"
@@ -69,7 +69,7 @@ export default function BasicInfo({
               </div>
             </div>
             <div>
-              <label className="hig-label">Life Expectancy</label>
+              <label className="hig-label">{t('retirement.lifeExpectancy')}</label>
               <div className="flex items-center gap-3">
                 <input
                   type="range"
@@ -86,10 +86,10 @@ export default function BasicInfo({
 
         {/* Retirement Expense */}
         <div className="hig-card p-5">
-          <h3 className="text-hig-headline mb-4">Retirement Expense</h3>
+          <h3 className="text-hig-headline mb-4">{t('retirement.retirementExpense')}</h3>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2 md:col-span-1">
-              <label className="hig-label">Monthly Expenses (today's value)</label>
+              <label className="hig-label">{t('retirement.monthlyExpensesToday')}</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-hig-text-secondary text-hig-subhead">RM</span>
                 <NumberInput
@@ -101,27 +101,27 @@ export default function BasicInfo({
               </div>
             </div>
             <div>
-              <label className="hig-label">Inflation Rate</label>
+              <label className="hig-label">{t('retirement.inflationRate')}</label>
               <div className="relative">
                 <input type="number" step="0.5" min={0} max={10} value={plan.inflationRate} onChange={set('inflationRate')} className="hig-input pr-8" />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-hig-text-secondary">%</span>
               </div>
             </div>
             <div>
-              <label className="hig-label">Pre-Retirement Return</label>
+              <label className="hig-label">{t('retirement.preReturnRate')}</label>
               <div className="relative">
                 <input type="number" step="0.5" min={0} max={20} value={plan.preRetirementReturn ?? 5} onChange={set('preRetirementReturn')} className="hig-input pr-8" />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-hig-text-secondary">%</span>
               </div>
-              <p className="text-hig-caption2 text-hig-text-secondary mt-1">Expected portfolio return before retirement — higher return = lower corpus needed.</p>
+              <p className="text-hig-caption2 text-hig-text-secondary mt-1">{t('retirement.preReturnRateDesc')}</p>
             </div>
             <div>
-              <label className="hig-label">Post-Retirement Return</label>
+              <label className="hig-label">{t('retirement.postReturnRate')}</label>
               <div className="relative">
                 <input type="number" step="0.5" min={0} max={10} value={plan.postRetirementReturn} onChange={set('postRetirementReturn')} className="hig-input pr-8" />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-hig-text-secondary">%</span>
               </div>
-              <p className="text-hig-caption2 text-hig-text-secondary mt-1">Return on the corpus after retirement — lower than pre-retirement (conservative allocation). Typical: 3–5%.</p>
+              <p className="text-hig-caption2 text-hig-text-secondary mt-1">{t('retirement.postReturnRateDesc')}</p>
             </div>
           </div>
         </div>
@@ -129,13 +129,13 @@ export default function BasicInfo({
         {/* EPF */}
         <div className="hig-card p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-hig-headline">EPF Payout Information</h3>
+            <h3 className="text-hig-headline">{t('retirement.epfInfo')}</h3>
             <div
               className="flex items-center gap-2 cursor-pointer select-none"
               onClick={() => onChange({ includeEPF: !plan.includeEPF })}
             >
               <span className={`text-hig-subhead transition-colors ${plan.includeEPF ? 'text-hig-text' : 'text-hig-text-secondary'}`}>
-                Include EPF
+                {t('retirement.includeEPF')}
               </span>
               <div className={`w-12 h-7 rounded-full transition-colors duration-hig relative
                 ${plan.includeEPF ? 'bg-hig-green' : 'bg-hig-gray-3'}`}
@@ -149,14 +149,14 @@ export default function BasicInfo({
           {plan.includeEPF && (
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="hig-label">Current EPF Balance</label>
+                <label className="hig-label">{t('retirement.epfBalance')}</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-hig-text-secondary text-hig-subhead">RM</span>
                   <NumberInput value={plan.epfBalance} onChange={(num) => onChange({ epfBalance: num })} className="hig-input pl-10" placeholder="50,000" />
                 </div>
               </div>
               <div>
-                <label className="hig-label">EPF Growth Rate</label>
+                <label className="hig-label">{t('retirement.epfGrowthRate')}</label>
                 <div className="relative">
                   <input type="number" step="0.5" value={plan.epfGrowthRate} onChange={set('epfGrowthRate')} className="hig-input pr-8" />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-hig-text-secondary">%</span>
@@ -164,13 +164,13 @@ export default function BasicInfo({
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="hig-label mb-0">Annual Income</label>
+                  <label className="hig-label mb-0">{t('retirement.annualIncome')}</label>
                   {isLinked ? (
                     <span className="text-hig-caption2 font-semibold px-2 py-0.5 bg-hig-blue/10 text-hig-blue rounded-full leading-none">
-                      Linked
+                      {t('retirement.linked')}
                     </span>
                   ) : (
-                    <span className="text-hig-caption2 text-hig-text-secondary font-normal">optional</span>
+                    <span className="text-hig-caption2 text-hig-text-secondary font-normal">{t('common.optional')}</span>
                   )}
                 </div>
 
@@ -187,7 +187,7 @@ export default function BasicInfo({
                         onClick={onGoToFinancialInfo}
                         className="flex items-center gap-1 text-hig-caption2 text-hig-blue hover:text-blue-700 transition-colors shrink-0 font-medium"
                       >
-                        Edit in Financial Info <ExternalLink size={10} />
+                        {t('retirement.editInFinancial')} <ExternalLink size={10} />
                       </button>
                     )}
                   </div>
@@ -204,19 +204,20 @@ export default function BasicInfo({
                     {(() => {
                       const monthly = effectiveAnnualIncome / 12
                       const er = monthly > 5000 ? 12 : 13
-                      return `${11 + er}% goes to EPF (11% employee + ${er}% employer${monthly > 5000 ? ', salary > RM5,000/mth' : ''})`
+                      const suffix = monthly > 5000 ? t('retirement.epfSalaryHighSuffix') : ''
+                      return t('retirement.epfContribNote', { total: 11 + er, er, suffix })
                     })()}
                   </p>
                 ) : (
                   <p className="text-hig-caption2 text-hig-text-secondary mt-1">
                     {isLinked
-                      ? 'Set gross income in Financial Info to enable EPF contribution projection.'
-                      : 'Leave blank for self-employed / voluntary contributors.'}
+                      ? t('retirement.epfSetGrossIncome')
+                      : t('retirement.epfSelfEmployed')}
                   </p>
                 )}
               </div>
               <div>
-                <label className="hig-label">Income Growth Rate</label>
+                <label className="hig-label">{t('retirement.incomeGrowth')}</label>
                 <div className="relative">
                   <input type="number" step="0.5" value={plan.incomeGrowthRate} onChange={set('incomeGrowthRate')} className="hig-input pr-8" />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-hig-text-secondary">%</span>
@@ -230,20 +231,20 @@ export default function BasicInfo({
       {/* Right: Summary Panel */}
       <div className="w-72 shrink-0 space-y-4">
         <div className="hig-card p-5 space-y-4 sticky top-4">
-          <h3 className="text-hig-headline">Summary</h3>
+          <h3 className="text-hig-headline">{t('retirement.summaryHeader')}</h3>
 
           <div className="space-y-3 text-hig-subhead">
             <div className="flex justify-between">
-              <span className="text-hig-text-secondary">Current Age</span>
+              <span className="text-hig-text-secondary">{t('retirement.currentAge')}</span>
               <span className="font-semibold">{currentAge}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-hig-text-secondary">Years to Retirement</span>
-              <span className="font-semibold">{yearsToRetirement} years</span>
+              <span className="text-hig-text-secondary">{t('retirement.yearsToRetirement')}</span>
+              <span className="font-semibold">{yearsToRetirement} {t('common.years')}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-hig-text-secondary">Retirement Duration</span>
-              <span className="font-semibold">{retirementDuration} years</span>
+              <span className="text-hig-text-secondary">{t('retirement.retirementDuration')}</span>
+              <span className="font-semibold">{retirementDuration} {t('common.years')}</span>
             </div>
           </div>
 
@@ -252,13 +253,13 @@ export default function BasicInfo({
           {/* Projected Monthly Expense */}
           <div className="bg-blue-50 rounded-hig-sm p-4">
             <p className="text-hig-caption1 text-hig-blue font-medium mb-1">
-              Projected monthly expenses at age {plan.retirementAge}
+              {t('retirement.projectedMonthlyAt', { age: plan.retirementAge })}
             </p>
             <p className="text-hig-title3 text-hig-blue">
               {formatRMFull(monthlyAtRetirement)}
             </p>
             <p className="text-hig-caption2 text-hig-text-secondary mt-1">
-              Adjusted for {formatPercent(plan.inflationRate)} inflation over {yearsToRetirement} years
+              {t('retirement.adjustedForInflation', { rate: plan.inflationRate, years: yearsToRetirement })}
             </p>
           </div>
 
@@ -272,22 +273,22 @@ export default function BasicInfo({
             return (
               <div className="bg-green-50 rounded-hig-sm p-4 space-y-2">
                 <p className="text-hig-caption1 text-hig-green font-medium">
-                  Estimated EPF Balance at age {plan.retirementAge}
+                  {t('retirement.epfAtAge', { age: plan.retirementAge })}
                 </p>
                 <p className="text-hig-title3 text-hig-green">
                   {formatRMFull(epfProjection.finalBalance)}
                 </p>
                 <p className="text-hig-caption2 text-hig-text-secondary">
-                  At {formatPercent(plan.epfGrowthRate)} growth rate
+                  {t('retirement.atGrowthRate', { rate: plan.epfGrowthRate })}
                 </p>
                 <div className="border-t border-green-200 pt-2 flex items-start gap-1.5 text-hig-caption2 text-hig-text-secondary">
                   <Info size={11} className="mt-0.5 shrink-0 text-hig-green" />
                   <span>
-                    EPF contribution: Employee {empRate}% + Employer {erRate}% = <strong>{totalRate}%</strong>
+                    {t('retirement.epfContribPrefix', { emp: empRate, er: erRate })} <strong>{totalRate}%</strong>
                     {isHighEarner
-                      ? ' (salary > RM5,000/mth — employer rate is 12%)'
-                      : ' (salary ≤ RM5,000/mth — employer rate is 13%)'}
-                    . Rate adjusts dynamically as income grows.
+                      ? t('retirement.epfSalaryHighNote')
+                      : t('retirement.epfSalaryLowNote')}
+                    {t('retirement.epfRateAdjusts')}
                   </span>
                 </div>
               </div>

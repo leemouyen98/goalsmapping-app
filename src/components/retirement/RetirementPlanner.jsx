@@ -3,12 +3,14 @@ import { formatRMFull, generateRetirementProjection, tvmSolve, generateBreakdown
 import { Plus, ChevronDown, ChevronUp, Trash2, CheckCircle2, AlertTriangle, XCircle, Maximize2 } from 'lucide-react'
 import RetirementChart from './RetirementChart'
 import PlanningAssumptions from './PlanningAssumptions'
+import { useLanguage } from '../../hooks/useLanguage'
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2)
 
 const PROVISION_FREQUENCIES = ['One-Time', 'Monthly', 'Quarterly', 'Semi-annually', 'Yearly']
 
 export default function RetirementPlanner({ plan, currentAge, contactName, linkedGrossMonthly = 0, onChange, onEditAssumptions, showAssumptions, onToggleAssumptions, activeTab, onActiveTabChange }) {
+  const { t } = useLanguage()
   const setActiveTab = onActiveTabChange
   const [expandedRec, setExpandedRec] = useState(null)
   const [showBreakdown, setShowBreakdown] = useState(null)
@@ -72,10 +74,10 @@ export default function RetirementPlanner({ plan, currentAge, contactName, linke
       : 'hig-red'
 
   const statusLabel = projection.isFullyFunded
-    ? 'On Track'
+    ? t('retirement.onTrack')
     : projection.coveragePercent >= 75
-      ? 'Progressing'
-      : 'At Risk'
+      ? t('retirement.progressing')
+      : t('retirement.atRisk')
 
   // Recommendation presets — auto-selected so the chart updates immediately
   const addPresetRecommendation = (monthlyAmount, years, lumpSum = 0) => {
@@ -126,7 +128,7 @@ export default function RetirementPlanner({ plan, currentAge, contactName, linke
   }
 
   const removeRecommendation = (recId) => {
-    if (!window.confirm('Remove this recommendation? This cannot be undone.')) return
+    if (!window.confirm(t('retirement.removeRecConfirm'))) return
     onChange({ recommendations: (plan.recommendations || []).filter((r) => r.id !== recId) })
     flashSaved()
   }
@@ -161,16 +163,16 @@ export default function RetirementPlanner({ plan, currentAge, contactName, linke
           <div className="flex items-start justify-between gap-4">
             <div className="flex gap-5 flex-wrap">
               <div>
-                <p className="text-hig-caption1 text-hig-text-secondary font-medium">Target Amount</p>
+                <p className="text-hig-caption1 text-hig-text-secondary font-medium">{t('retirement.targetAmount')}</p>
                 <p className="text-hig-title3">{formatRMFull(projection.targetAmount)}</p>
               </div>
               <div>
-                <p className="text-hig-caption1 text-hig-text-secondary font-medium">Covered</p>
+                <p className="text-hig-caption1 text-hig-text-secondary font-medium">{t('retirement.covered')}</p>
                 <p className="text-hig-title3 text-hig-green">{formatRMFull(projection.totalCovered)}</p>
               </div>
               <div>
                 <p className="text-hig-caption1 text-hig-text-secondary font-medium">
-                  {projection.isFullyFunded ? 'Surplus' : 'Shortfall'}
+                  {projection.isFullyFunded ? t('retirement.surplus') : t('retirement.shortfall')}
                 </p>
                 <p className={`text-hig-title3 ${projection.isFullyFunded ? 'text-hig-green' : 'text-hig-red'}`}>
                   {projection.isFullyFunded ? '+' : ''}{formatRMFull(projection.isFullyFunded ? projection.surplus : projection.shortfall)}
@@ -191,28 +193,28 @@ export default function RetirementPlanner({ plan, currentAge, contactName, linke
           </div>
 
           <p className="text-hig-caption1 text-hig-text-secondary mt-2">
-            Expense: {formatRMFull(projection.monthlyAtRetirement)}/mth from age {plan.retirementAge} · {plan.inflationRate}% inflation · {projection.retirementDuration} yrs
+            {t('retirement.expenseDesc', { amount: formatRMFull(projection.monthlyAtRetirement), age: plan.retirementAge, rate: plan.inflationRate, years: projection.retirementDuration })}
           </p>
 
           <div className="flex items-center gap-4 mt-1.5 text-hig-caption1">
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-hig-green inline-block" />
-              Existing {formatRMFull(projection.epfAtRetirement + projection.provisionsAtRetirement)}
+              {t('retirement.existing')} {formatRMFull(projection.epfAtRetirement + projection.provisionsAtRetirement)}
             </span>
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-hig-blue inline-block" />
-              Recommended {formatRMFull(projection.recommendationsAtRetirement)}
+              {t('retirement.recommended')} {formatRMFull(projection.recommendationsAtRetirement)}
             </span>
           </div>
 
           <div className={`mt-2.5 px-3 py-2 rounded-hig-sm flex items-center gap-2 text-hig-caption1
             ${projection.isFullyFunded ? 'bg-green-50 text-hig-green' : projection.coveragePercent >= 75 ? 'bg-orange-50 text-hig-orange' : 'bg-red-50 text-hig-red'}`}>
             {projection.isFullyFunded ? (
-              <><CheckCircle2 size={14} /> You have more than enough to meet your goal.</>
+              <><CheckCircle2 size={14} /> {t('retirement.msgOnTrack')}</>
             ) : projection.coveragePercent >= 75 ? (
-              <><AlertTriangle size={14} /> You're almost there! A small adjustment could help.</>
+              <><AlertTriangle size={14} /> {t('retirement.msgProgressing')}</>
             ) : (
-              <><XCircle size={14} /> There's a significant gap. Let's explore options to bridge it.</>
+              <><XCircle size={14} /> {t('retirement.msgAtRisk')}</>
             )}
           </div>
         </div>
@@ -230,7 +232,7 @@ export default function RetirementPlanner({ plan, currentAge, contactName, linke
         {/* Current Situation / With Recommendation */}
         <div className="grid grid-cols-2 gap-3">
           <div className="hig-card p-4">
-            <h4 className="text-hig-subhead font-semibold mb-2">Current Situation</h4>
+            <h4 className="text-hig-subhead font-semibold mb-2">{t('retirement.currentSituation')}</h4>
             <div className="flex items-center gap-2 mb-1.5">
               {projection.fundsRunOutAge >= plan.lifeExpectancy
                 ? <CheckCircle2 size={18} className="text-hig-green" />
@@ -241,29 +243,29 @@ export default function RetirementPlanner({ plan, currentAge, contactName, linke
             </div>
             <p className="text-hig-caption1 text-hig-text-secondary">
               {projection.fundsRunOutAge >= plan.lifeExpectancy
-                ? 'Funds should last through retirement years.'
-                : `Funds run out at age ${projection.fundsRunOutAge}. ${baseCoveragePercent}% of goal covered.`}
+                ? t('retirement.fundsLastThrough')
+                : t('retirement.fundsRunOutMsg', { age: projection.fundsRunOutAge, pct: baseCoveragePercent })}
             </p>
           </div>
 
           <div className="hig-card p-4">
-            <h4 className="text-hig-subhead font-semibold mb-2">With Recommendation</h4>
+            <h4 className="text-hig-subhead font-semibold mb-2">{t('retirement.withRecommendation')}</h4>
             {selectedRecs.length === 0 ? (
               <>
                 <div className="flex items-center gap-2 mb-1">
                   <AlertTriangle size={18} className="text-hig-orange" />
-                  <p className="text-hig-subhead text-hig-text-secondary">None Selected</p>
+                  <p className="text-hig-subhead text-hig-text-secondary">{t('retirement.noneSelected')}</p>
                 </div>
-                <p className="text-hig-caption1 text-hig-text-secondary">Add a recommendation to see the impact.</p>
+                <p className="text-hig-caption1 text-hig-text-secondary">{t('retirement.addRecToSeeImpact')}</p>
               </>
             ) : projection.isFullyFunded ? (
               <>
                 <div className="flex items-center gap-2 mb-1.5">
                   <CheckCircle2 size={18} className="text-hig-green" />
-                  <span className="text-hig-subhead font-semibold text-hig-green">Fully Funded</span>
+                  <span className="text-hig-subhead font-semibold text-hig-green">{t('retirement.fullyFundedLabel')}</span>
                 </div>
                 <p className="text-hig-caption1 text-hig-green bg-green-50 rounded-hig-sm p-2">
-                  Sufficient funds throughout retirement years.
+                  {t('retirement.sufficientFunds')}
                 </p>
               </>
             ) : projection.fundsRunOutWithRec >= plan.lifeExpectancy ? (
@@ -273,7 +275,7 @@ export default function RetirementPlanner({ plan, currentAge, contactName, linke
                   <span className="text-hig-title3 text-hig-green">{plan.lifeExpectancy}+ yo</span>
                 </div>
                 <p className="text-hig-caption1 text-hig-text-secondary">
-                  Funds last through life expectancy — 100% covered.
+                  {t('retirement.fundsLast100Pct')}
                 </p>
               </>
             ) : (
@@ -283,7 +285,7 @@ export default function RetirementPlanner({ plan, currentAge, contactName, linke
                   <span className="text-hig-title3">{projection.fundsRunOutWithRec} yo</span>
                 </div>
                 <p className="text-hig-caption1 text-hig-text-secondary">
-                  Extends to age {projection.fundsRunOutWithRec} — {projection.coveragePercent}% covered.
+                  {t('retirement.extendsToAge', { age: projection.fundsRunOutWithRec, pct: projection.coveragePercent })}
                 </p>
               </>
             )}
@@ -302,7 +304,7 @@ export default function RetirementPlanner({ plan, currentAge, contactName, linke
               className={`flex-1 py-1.5 text-hig-caption1 font-medium rounded-hig-sm transition-colors
                 ${activeTab === 'recommendations' ? 'bg-white shadow-sm text-hig-text' : 'text-hig-text-secondary'}`}
             >
-              Recommendations
+              {t('retirement.recommendations')}
               {(plan.recommendations || []).length > 0 && (
                 <span className="ml-1 text-hig-caption2 bg-hig-blue text-white px-1.5 py-0.5 rounded-full">
                   {(plan.recommendations || []).length}
@@ -314,7 +316,7 @@ export default function RetirementPlanner({ plan, currentAge, contactName, linke
               className={`flex-1 py-1.5 text-hig-caption1 font-medium rounded-hig-sm transition-colors
                 ${activeTab === 'provisions' ? 'bg-white shadow-sm text-hig-text' : 'text-hig-text-secondary'}`}
             >
-              Provisions
+              {t('retirement.provisions')}
             </button>
           </div>
 
@@ -325,17 +327,17 @@ export default function RetirementPlanner({ plan, currentAge, contactName, linke
                   onClick={() => setShowCustomForm(true)}
                   className="hig-btn-primary flex-1 gap-2"
                 >
-                  <Plus size={16} /> Add New Recommendation
+                  <Plus size={16} /> {t('retirement.addNewRecommendation')}
                 </button>
                 {savedFlash && (
                   <span className="text-hig-caption1 text-hig-green font-medium flex items-center gap-1 shrink-0">
-                    <CheckCircle2 size={13} /> Saved
+                    <CheckCircle2 size={13} /> {t('retirement.savedFlash')}
                   </span>
                 )}
               </div>
               {shortfallAmount > 0 && (plan.recommendations || []).length === 0 && (
                 <p className="text-hig-caption1 text-hig-text-secondary">
-                  To achieve your objective, you could get on track with one of the following:
+                  {t('retirement.toAchieveObjective')}
                 </p>
               )}
 
@@ -347,8 +349,8 @@ export default function RetirementPlanner({ plan, currentAge, contactName, linke
                       onClick={() => addPresetRecommendation(suggestedMonthly10, period10)}
                       className="w-full text-left p-3 rounded-hig-sm border border-hig-gray-4 hover:border-hig-blue hover:bg-blue-50/30 transition-colors"
                     >
-                      <p className="text-hig-subhead font-medium">Invest {formatRMFull(suggestedMonthly10)}/mth</p>
-                      <p className="text-hig-caption1 text-hig-text-secondary">for {period10} year{period10 !== 1 ? 's' : ''}</p>
+                      <p className="text-hig-subhead font-medium">{t('retirement.investPerMth', { amount: formatRMFull(suggestedMonthly10) })}</p>
+                      <p className="text-hig-caption1 text-hig-text-secondary">{t(period10 !== 1 ? 'retirement.forYearsStrPlural' : 'retirement.forYearsStr', { years: period10 })}</p>
                     </button>
                   )}
                   {suggestedMonthly20 > 0 && (
@@ -356,8 +358,8 @@ export default function RetirementPlanner({ plan, currentAge, contactName, linke
                       onClick={() => addPresetRecommendation(suggestedMonthly20, period20)}
                       className="w-full text-left p-3 rounded-hig-sm border border-hig-gray-4 hover:border-hig-blue hover:bg-blue-50/30 transition-colors"
                     >
-                      <p className="text-hig-subhead font-medium">Invest {formatRMFull(suggestedMonthly20)}/mth</p>
-                      <p className="text-hig-caption1 text-hig-text-secondary">for {period20} year{period20 !== 1 ? 's' : ''}</p>
+                      <p className="text-hig-subhead font-medium">{t('retirement.investPerMth', { amount: formatRMFull(suggestedMonthly20) })}</p>
+                      <p className="text-hig-caption1 text-hig-text-secondary">{t(period20 !== 1 ? 'retirement.forYearsStrPlural' : 'retirement.forYearsStr', { years: period20 })}</p>
                     </button>
                   )}
                   {suggestedLumpSum > 0 && (
@@ -365,8 +367,8 @@ export default function RetirementPlanner({ plan, currentAge, contactName, linke
                       onClick={() => addPresetRecommendation(0, plan.retirementAge - currentAge, suggestedLumpSum)}
                       className="w-full text-left p-3 rounded-hig-sm border border-hig-gray-4 hover:border-hig-blue hover:bg-blue-50/30 transition-colors"
                     >
-                      <p className="text-hig-subhead font-medium">Invest {formatRMFull(suggestedLumpSum)} one-time</p>
-                      <p className="text-hig-caption1 text-hig-text-secondary">today</p>
+                      <p className="text-hig-subhead font-medium">{t('retirement.investOnce', { amount: formatRMFull(suggestedLumpSum) })}</p>
+                      <p className="text-hig-caption1 text-hig-text-secondary">{t('retirement.today')}</p>
                     </button>
                   )}
                 </div>
@@ -384,11 +386,11 @@ export default function RetirementPlanner({ plan, currentAge, contactName, linke
                       {rec.isSelected && <span className="w-2 h-2 rounded-full bg-white" />}
                     </button>
                     <div className="flex-1 min-w-0">
-                      <p className="text-hig-subhead font-medium">Recommendation {idx + 1}</p>
+                      <p className="text-hig-subhead font-medium">{t('retirement.recommendationN', { n: idx + 1 })}</p>
                       <p className="text-hig-caption1 text-hig-text-secondary truncate">
                         {rec.lumpSum && !rec.monthlyAmount
-                          ? `Lump Sum ${formatRMFull(rec.lumpSum)} @ ${rec.growthRate}% for ${rec.periodYears} yrs`
-                          : `${formatRMFull(rec.monthlyAmount)}/mth for ${rec.periodYears} yrs @ ${rec.growthRate}%`}
+                          ? t('retirement.lumpSumDesc', { amount: formatRMFull(rec.lumpSum), rate: rec.growthRate, years: rec.periodYears })
+                          : t('retirement.monthlyDesc', { amount: formatRMFull(rec.monthlyAmount), years: rec.periodYears, rate: rec.growthRate })}
                       </p>
                     </div>
                     <button onClick={() => setExpandedRec(expandedRec === rec.id ? null : rec.id)} className="p-1 text-hig-text-secondary hover:text-hig-text">
@@ -404,7 +406,7 @@ export default function RetirementPlanner({ plan, currentAge, contactName, linke
                         onClick={() => setShowBreakdown(showBreakdown === rec.id ? null : rec.id)}
                         className="hig-btn-ghost text-hig-caption1 w-full"
                       >
-                        {showBreakdown === rec.id ? 'Hide' : 'Show'} Calculation Breakdown
+                        {showBreakdown === rec.id ? t('retirement.hideCalc') : t('retirement.showCalc')} {t('retirement.calcBreakdown')}
                         {showBreakdown === rec.id ? <ChevronUp size={14} className="ml-1" /> : <ChevronDown size={14} className="ml-1" />}
                       </button>
                       {showBreakdown === rec.id && (
@@ -461,6 +463,7 @@ export default function RetirementPlanner({ plan, currentAge, contactName, linke
 // ─── Inline Provision Panel ─────────────────────────────────────────────────
 
 function ProvisionPanel({ plan, currentAge, onChange }) {
+  const { t } = useLanguage()
   const provisions = plan.provisions || []
   const yearsToRetirement = (plan.retirementAge || 55) - currentAge
   const [showForm, setShowForm] = useState(false)
@@ -492,14 +495,14 @@ function ProvisionPanel({ plan, currentAge, onChange }) {
         onClick={() => setShowForm((v) => !v)}
         className="hig-btn-secondary w-full gap-2 text-hig-caption1"
       >
-        <Plus size={14} /> Entry
+        <Plus size={14} /> {t('retirement.addEntry')}
       </button>
 
       {/* Inline add form */}
       {showForm && (
         <div className="border border-hig-blue/30 rounded-hig-sm p-3 bg-blue-50/20 space-y-2">
           <div>
-            <label className="hig-label">Name</label>
+            <label className="hig-label">{t('common.name')}</label>
             <input
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -509,7 +512,7 @@ function ProvisionPanel({ plan, currentAge, onChange }) {
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="hig-label">Amount (RM)</label>
+              <label className="hig-label">{t('retirement.amountRM')}</label>
               <input
                 type="number"
                 value={form.amount || ''}
@@ -519,7 +522,7 @@ function ProvisionPanel({ plan, currentAge, onChange }) {
               />
             </div>
             <div>
-              <label className="hig-label">Frequency</label>
+              <label className="hig-label">{t('common.period')}</label>
               <select
                 value={form.frequency}
                 onChange={(e) => setForm({ ...form, frequency: e.target.value })}
@@ -530,7 +533,7 @@ function ProvisionPanel({ plan, currentAge, onChange }) {
             </div>
           </div>
           <div>
-            <label className="hig-label">Pre-Retirement Return (%)</label>
+            <label className="hig-label">{t('retirement.preRetirementReturnPct')}</label>
             <input
               type="number"
               step="0.5"
@@ -540,8 +543,8 @@ function ProvisionPanel({ plan, currentAge, onChange }) {
             />
           </div>
           <div className="flex gap-2 pt-1">
-            <button onClick={() => setShowForm(false)} className="hig-btn-secondary text-hig-caption1 flex-1">Cancel</button>
-            <button onClick={addProvision} className="hig-btn-primary text-hig-caption1 flex-1">Add</button>
+            <button onClick={() => setShowForm(false)} className="hig-btn-secondary text-hig-caption1 flex-1">{t('common.cancel')}</button>
+            <button onClick={addProvision} className="hig-btn-primary text-hig-caption1 flex-1">{t('common.add')}</button>
           </div>
         </div>
       )}
@@ -549,14 +552,14 @@ function ProvisionPanel({ plan, currentAge, onChange }) {
       {/* Existing provisions list */}
       {provisions.length === 0 && !showForm ? (
         <p className="text-hig-caption1 text-hig-text-secondary text-center py-4">
-          No existing provisions.
+          {t('retirement.noExistingProvisions')}
         </p>
       ) : (
         <>
           {provisions.map((p, i) => (
             <div key={p.id} className="p-3 border border-hig-gray-4 rounded-hig-sm flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-hig-subhead font-medium truncate">{p.name || `Provision ${i + 1}`}</p>
+                <p className="text-hig-subhead font-medium truncate">{p.name || t('retirement.provisionN', { n: i + 1 })}</p>
                 <p className="text-hig-caption1 text-hig-text-secondary">
                   {formatRMFull(p.amount)} {p.frequency} @ {p.preRetirementReturn}%
                 </p>
@@ -569,7 +572,7 @@ function ProvisionPanel({ plan, currentAge, onChange }) {
 
           {provisions.length > 0 && (
             <div className="pt-1 border-t border-hig-gray-5 flex justify-between text-hig-caption1">
-              <span className="text-hig-text-secondary">Projected at age {plan.retirementAge}</span>
+              <span className="text-hig-text-secondary">{t('retirement.projectedAtAge', { age: plan.retirementAge })}</span>
               <span className="font-semibold text-hig-green">{formatRMFull(totalProjected)}</span>
             </div>
           )}
@@ -582,6 +585,7 @@ function ProvisionPanel({ plan, currentAge, onChange }) {
 // ─── TVM Calculator Modal ───────────────────────────────────────────────────
 
 function CustomRecommendationModal({ form, setForm, calcFor, setCalcFor, shortfallAmount, currentAge, retirementAge, onAdd, onClose }) {
+  const { t } = useLanguage()
   const maxYears = retirementAge - currentAge
 
   const solved = useMemo(() => {
@@ -600,26 +604,26 @@ function CustomRecommendationModal({ form, setForm, calcFor, setCalcFor, shortfa
   }, [form, calcFor])
 
   const labels = {
-    fv: { title: 'ESTIMATED VALUE AT AGE ' + retirementAge, color: 'bg-green-50 text-hig-green' },
-    pmt: { title: 'REQUIRED MONTHLY CONTRIBUTION', color: 'bg-teal-50 text-teal-700' },
-    pv: { title: 'REQUIRED LUMP SUM', color: 'bg-teal-50 text-teal-700' },
-    rate: { title: 'REQUIRED INVESTMENT RETURN RATE', color: 'bg-teal-50 text-teal-700' },
+    fv: { title: t('retirement.tvmFvLabel', { age: retirementAge }), color: 'bg-green-50 text-hig-green' },
+    pmt: { title: t('retirement.tvmPmtLabel'), color: 'bg-teal-50 text-teal-700' },
+    pv: { title: t('retirement.tvmPvLabel'), color: 'bg-teal-50 text-teal-700' },
+    rate: { title: t('retirement.tvmRateLabel'), color: 'bg-teal-50 text-teal-700' },
   }
 
   return (
     <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-hig-lg shadow-hig-lg w-full max-w-lg p-6 max-h-[85vh] overflow-y-auto">
-        <h2 className="text-hig-title3 mb-4">Simulate Custom Recommendation</h2>
+        <h2 className="text-hig-title3 mb-4">{t('retirement.simulateCustomRec')}</h2>
 
         {/* Calculate For tabs */}
         <div className="mb-4">
-          <p className="text-hig-caption1 text-hig-text-secondary mb-2">Calculate For</p>
+          <p className="text-hig-caption1 text-hig-text-secondary mb-2">{t('retirement.calculateFor')}</p>
           <div className="flex bg-hig-gray-6 rounded-hig-sm p-1">
             {[
-              { key: 'fv', label: 'Est. Value' },
-              { key: 'pmt', label: 'Monthly' },
-              { key: 'pv', label: 'Lump Sum' },
-              { key: 'rate', label: 'Interest' },
+              { key: 'fv', label: t('retirement.tvmEstValue') },
+              { key: 'pmt', label: t('retirement.tvmMonthly') },
+              { key: 'pv', label: t('retirement.tvmLumpSum') },
+              { key: 'rate', label: t('retirement.tvmInterest') },
             ].map((tab) => (
               <button
                 key={tab.key}
@@ -647,7 +651,7 @@ function CustomRecommendationModal({ form, setForm, calcFor, setCalcFor, shortfa
             onClick={() => setForm({ ...form, fv: shortfallAmount })}
             className="text-hig-caption1 text-hig-blue font-medium mb-3 hover:underline"
           >
-            Use Shortfall Amount ({formatRMFull(shortfallAmount)})
+            {t('retirement.useShortfall', { amount: formatRMFull(shortfallAmount) })}
           </button>
         )}
 
@@ -655,7 +659,7 @@ function CustomRecommendationModal({ form, setForm, calcFor, setCalcFor, shortfa
         <div className="space-y-3">
           {calcFor !== 'fv' && (
             <div>
-              <label className="hig-label">Target Value (FV)</label>
+              <label className="hig-label">{t('retirement.targetValueFV')}</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-hig-text-secondary text-hig-subhead">RM</span>
                 <input type="number" value={form.fv || ''} onChange={(e) => setForm({...form, fv: parseFloat(e.target.value) || 0})} className="hig-input pl-10" />
@@ -665,7 +669,7 @@ function CustomRecommendationModal({ form, setForm, calcFor, setCalcFor, shortfa
 
           {calcFor !== 'rate' && (
             <div>
-              <label className="hig-label">Growth Rate (per year)</label>
+              <label className="hig-label">{t('retirement.growthRatePerYear')}</label>
               <div className="relative">
                 <input type="number" step="0.5" value={form.rate} onChange={(e) => setForm({...form, rate: parseFloat(e.target.value) || 0})} className="hig-input pr-8" />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-hig-text-secondary">%</span>
@@ -675,18 +679,18 @@ function CustomRecommendationModal({ form, setForm, calcFor, setCalcFor, shortfa
 
           {calcFor !== 'pv' && (
             <div>
-              <label className="hig-label">Lump Sum Contribution</label>
+              <label className="hig-label">{t('retirement.lumpSumContrib')}</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-hig-text-secondary text-hig-subhead">RM</span>
                 <input type="number" value={form.pv || ''} onChange={(e) => setForm({...form, pv: parseFloat(e.target.value) || 0})} className="hig-input pl-10" />
               </div>
-              <p className="text-hig-caption1 text-hig-text-secondary mt-0.5">One-time investment today</p>
+              <p className="text-hig-caption1 text-hig-text-secondary mt-0.5">{t('retirement.oneTimeToday')}</p>
             </div>
           )}
 
           {calcFor !== 'pmt' && (
             <div>
-              <label className="hig-label">Monthly Contribution</label>
+              <label className="hig-label">{t('retirement.monthlyContrib')}</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-hig-text-secondary text-hig-subhead">RM</span>
                 <input type="number" value={form.pmt || ''} onChange={(e) => setForm({...form, pmt: parseFloat(e.target.value) || 0})} className="hig-input pl-10" />
@@ -696,20 +700,20 @@ function CustomRecommendationModal({ form, setForm, calcFor, setCalcFor, shortfa
           )}
 
           <div>
-            <label className="hig-label">Investment Contribution Period</label>
+            <label className="hig-label">{t('retirement.investPeriod')}</label>
             <div className="relative">
               <input type="number" min={1} max={maxYears} value={form.n} onChange={(e) => setForm({...form, n: parseInt(e.target.value) || 1})} className="hig-input pr-16" />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-hig-text-secondary">years</span>
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-hig-text-secondary">{t('common.years')}</span>
             </div>
             <p className="text-hig-caption1 text-hig-text-secondary mt-0.5">
-              Years of monthly contributions from age {currentAge} to target age at {retirementAge} (max {maxYears} years)
+              {t('retirement.investPeriodDesc', { from: currentAge, to: retirementAge, max: maxYears })}
             </p>
           </div>
         </div>
 
         <div className="flex justify-end gap-3 mt-6">
-          <button onClick={onClose} className="hig-btn-secondary">Cancel</button>
-          <button onClick={onAdd} className="hig-btn-primary">Add Recommendation</button>
+          <button onClick={onClose} className="hig-btn-secondary">{t('common.cancel')}</button>
+          <button onClick={onAdd} className="hig-btn-primary">{t('retirement.addRecommendationBtn')}</button>
         </div>
       </div>
     </div>
@@ -719,6 +723,7 @@ function CustomRecommendationModal({ form, setForm, calcFor, setCalcFor, shortfa
 // ─── Calculation Breakdown Table ────────────────────────────────────────────
 
 function BreakdownTable({ rec, startAge }) {
+  const { t } = useLanguage()
   const breakdown = useMemo(() =>
     generateBreakdown({
       lumpSum: rec.lumpSum || 0,
@@ -732,14 +737,14 @@ function BreakdownTable({ rec, startAge }) {
 
   return (
     <div className="text-hig-caption1">
-      <h4 className="text-hig-subhead font-semibold mb-2">Investment Growth Projection</h4>
+      <h4 className="text-hig-subhead font-semibold mb-2">{t('retirement.investGrowthProjection')}</h4>
       <table className="w-full">
         <thead className="sticky top-0 bg-white z-10">
           <tr className="border-b border-hig-gray-4 text-left text-hig-text-secondary">
-            <th className="py-1.5 pr-2">Age</th>
-            <th className="py-1.5 pr-2">Payment</th>
-            <th className="py-1.5 pr-2">Accumulated Capital</th>
-            <th className="py-1.5">Projected Value</th>
+            <th className="py-1.5 pr-2">{t('common.age')}</th>
+            <th className="py-1.5 pr-2">{t('retirement.colPayment')}</th>
+            <th className="py-1.5 pr-2">{t('retirement.colAccumCapital')}</th>
+            <th className="py-1.5">{t('retirement.colProjectedValue')}</th>
           </tr>
         </thead>
         <tbody>

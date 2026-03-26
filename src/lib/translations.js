@@ -326,6 +326,139 @@ const translations = {
     forYears:           { en: 'for',                      zh: '期限'             },
     lumpSum:            { en: 'Lump Sum',                 zh: '一次性投入'       },
     growthRate:         { en: 'Growth Rate',              zh: '增长率'           },
+
+    // ── Section headers ─────────────────────────────────────────────────────
+    planningParams:        { en: 'Planning Parameters',           zh: '规划参数'           },
+    retirementExpense:     { en: 'Retirement Expense',            zh: '退休支出'           },
+    epfInfo:               { en: 'EPF Payout Information',        zh: '公积金信息'         },
+    summaryHeader:         { en: 'Summary',                       zh: '摘要'               },
+    retirementDuration:    { en: 'Retirement Duration',           zh: '退休年数'           },
+
+    // ── Form labels ─────────────────────────────────────────────────────────
+    monthlyExpensesToday:  { en: 'Monthly Expenses (today\'s value)', zh: '每月支出（今日价值）' },
+    monthlyExpensesRM:     { en: 'Monthly Expenses (RM)',          zh: '每月支出 (RM)'      },
+    inflationRatePct:      { en: 'Inflation Rate (%)',             zh: '通胀率 (%)'         },
+    preReturnRatePct:      { en: 'Pre-Retirement Return (%)',      zh: '退休前回报率 (%)'   },
+    postReturnRatePct:     { en: 'Post-Retirement Return (%)',     zh: '退休后回报率 (%)'   },
+    epfBalanceRM:          { en: 'EPF Balance (RM)',               zh: '公积金余额 (RM)'    },
+    epfGrowthRatePct:      { en: 'EPF Growth Rate (%)',            zh: '公积金增长率 (%)'   },
+    annualIncomeRM:        { en: 'Annual Income (RM)',             zh: '年收入 (RM)'        },
+    incomeGrowthRatePct:   { en: 'Income Growth Rate (%)',         zh: '收入增长率 (%)'     },
+    linked:                { en: 'Linked',                         zh: '已关联'             },
+    editInFinancial:       { en: 'Edit in Financial Info',         zh: '在财务资料中编辑'   },
+    accumDiscountRate:     { en: 'Required accumulation curve discount rate', zh: '所需积累曲线折现率' },
+    preReturnRateDesc:     { en: 'Expected portfolio return before retirement — higher return = lower corpus needed.', zh: '退休前预期回报率——回报越高，所需积累越少。' },
+    postReturnRateDesc:    { en: 'Return on the corpus after retirement — lower than pre-retirement (conservative allocation). Typical: 3–5%.', zh: '退休后资金回报率——通常低于退休前（保守配置），建议3–5%。' },
+
+    // ── Summary panel helper text ────────────────────────────────────────────
+    projectedMonthlyAt:    { en: 'Projected monthly expenses at age {age}', zh: '{age} 岁时预计月支出' },
+    adjustedForInflation:  { en: 'Adjusted for {rate}% inflation over {years} years', zh: '按 {rate}% 通胀率，{years} 年后调整' },
+    epfAtAge:              { en: 'Estimated EPF Balance at age {age}',       zh: '{age} 岁时预计公积金余额' },
+    atGrowthRate:          { en: 'At {rate}% growth rate',                   zh: '增长率 {rate}%' },
+
+    // ── EPF field helper text ────────────────────────────────────────────────
+    epfSetGrossIncome:     { en: 'Set gross income in Financial Info to enable EPF contribution projection.', zh: '请在财务资料中填入总收入，以启用公积金缴款预测。' },
+    epfSelfEmployed:       { en: 'Leave blank for self-employed / voluntary contributors.', zh: '自雇人士或自愿缴款者可留空。' },
+    epfContribNote:        { en: '{total}% goes to EPF (11% employee + {er}% employer{suffix})', zh: '公积金缴款 {total}%（员工 11% + 雇主 {er}%{suffix}）' },
+    epfSalaryHighSuffix:   { en: ', salary > RM5,000/mth', zh: '，月薪 > RM5,000' },
+    epfContribPrefix:      { en: 'EPF contribution: Employee {emp}% + Employer {er}% =', zh: '公积金缴款：员工 {emp}% + 雇主 {er}% =' },
+    epfSalaryHighNote:     { en: ' (salary > RM5,000/mth — employer rate is 12%)', zh: '（月薪 > RM5,000 — 雇主缴率 12%）' },
+    epfSalaryLowNote:      { en: ' (salary ≤ RM5,000/mth — employer rate is 13%)', zh: '（月薪 ≤ RM5,000 — 雇主缴率 13%）' },
+    epfRateAdjusts:        { en: '. Rate adjusts dynamically as income grows.', zh: '。缴率随收入增长动态调整。' },
+
+    // ── ExistingProvision ────────────────────────────────────────────────────
+    existingProvisionDesc: { en: 'Include what you already have in place (Savings, Insurance, Investment) for a more accurate estimate of your future needs.', zh: '填入您已有的储备（储蓄、保险、投资），以更准确地估计未来需求。' },
+    noProvisions:          { en: 'No existing provisions added yet.',         zh: '暂未添加任何储备。'   },
+    provisionName:         { en: 'Name',                                      zh: '名称'               },
+    provisionType:         { en: 'Type',                                      zh: '类型'               },
+    currentBalanceRM:      { en: 'Current Balance (RM)',                      zh: '当前余额 (RM)'      },
+    contributionAmountRM:  { en: 'Contribution Amount (RM)',                  zh: '定期缴款 (RM)'      },
+    preRetirementReturnPct:{ en: 'Pre-Retirement Return (%)',                 zh: '退休前回报率 (%)'   },
+    provisionSummary:      { en: 'Provision Summary',                         zh: '储备摘要'           },
+    addProvisionsPrompt:   { en: 'Add your existing provisions to see a summary.', zh: '添加储备以查看摘要。' },
+    totalCommitted:        { en: 'Total Committed',                           zh: '总承诺额'           },
+    todayValue:            { en: 'Today\'s Value',                            zh: '今日价值'           },
+    yearsToTarget:         { en: 'Years to Target',                           zh: '距目标年数'         },
+    provisionN:            { en: 'Provision {n}',                             zh: '储备 {n}'           },
+    growsBy:               { en: 'Grows by {amount} over {years} years',     zh: '{years} 年增长 {amount}' },
+    gainOnCapital:         { en: '{pct}% gain on committed capital.',         zh: '承诺资金增长 {pct}%。' },
+
+    // ── RetirementPlanner — chart panel ─────────────────────────────────────
+    existing:              { en: 'Existing',                                  zh: '现有'               },
+    recommended:           { en: 'Recommended',                               zh: '建议'               },
+    expenseDesc:           { en: 'Expense: {amount}/mth from age {age} · {rate}% inflation · {years} yrs', zh: '支出：{age} 岁起每月 {amount} · 通胀 {rate}% · {years} 年' },
+
+    // ── Status messages ──────────────────────────────────────────────────────
+    msgOnTrack:            { en: 'You have more than enough to meet your goal.', zh: '您的储备超出目标，规划到位！' },
+    msgProgressing:        { en: 'You\'re almost there! A small adjustment could help.', zh: '已接近目标！稍作调整即可达标。' },
+    msgAtRisk:             { en: 'There\'s a significant gap. Let\'s explore options to bridge it.', zh: '存在较大缺口，让我们一同探讨填补方案。' },
+
+    // ── Situation cards ──────────────────────────────────────────────────────
+    currentSituation:      { en: 'Current Situation',                         zh: '当前情况'           },
+    withRecommendation:    { en: 'With Recommendation',                       zh: '加建议后'           },
+    fundsLastThrough:      { en: 'Funds should last through retirement years.', zh: '资金将支撑整个退休期。' },
+    fundsRunOutMsg:        { en: 'Funds run out at age {age}. {pct}% of goal covered.', zh: '资金将在 {age} 岁耗尽，已覆盖目标 {pct}%。' },
+    noneSelected:          { en: 'None Selected',                             zh: '未选择'             },
+    addRecToSeeImpact:     { en: 'Add a recommendation to see the impact.',   zh: '添加建议以查看影响。' },
+    fullyFundedLabel:      { en: 'Fully Funded',                              zh: '完全覆盖'           },
+    sufficientFunds:       { en: 'Sufficient funds throughout retirement years.', zh: '退休期间资金充足。' },
+    fundsLast100Pct:       { en: 'Funds last through life expectancy — 100% covered.', zh: '资金支撑至预期寿命——100% 已覆盖。' },
+    extendsToAge:          { en: 'Extends to age {age} — {pct}% covered.',   zh: '延伸至 {age} 岁——已覆盖 {pct}%。' },
+
+    // ── Recommendations panel ────────────────────────────────────────────────
+    addNewRecommendation:  { en: 'Add New Recommendation',                    zh: '添加新建议'         },
+    savedFlash:            { en: 'Saved',                                     zh: '已保存'             },
+    toAchieveObjective:    { en: 'To achieve your objective, you could get on track with one of the following:', zh: '为实现目标，您可参考以下方案之一：' },
+    investPerMth:          { en: 'Invest {amount}/mth',                       zh: '每月投入 {amount}'  },
+    forYearsStr:           { en: 'for {years} year',                          zh: '期限 {years} 年'    },
+    forYearsStrPlural:     { en: 'for {years} years',                         zh: '期限 {years} 年'    },
+    investOnce:            { en: 'Invest {amount} one-time',                  zh: '一次性投入 {amount}' },
+    today:                 { en: 'today',                                     zh: '今日'               },
+    recommendationN:       { en: 'Recommendation {n}',                        zh: '建议 {n}'           },
+    lumpSumDesc:           { en: 'Lump Sum {amount} @ {rate}% for {years} yrs', zh: '一次性 {amount} · {rate}% · {years} 年' },
+    monthlyDesc:           { en: '{amount}/mth for {years} yrs @ {rate}%',   zh: '{amount}/月 · {years} 年 · {rate}%' },
+    calcBreakdown:         { en: 'Calculation Breakdown',                     zh: '计算明细'           },
+    hideCalc:              { en: 'Hide',                                      zh: '隐藏'               },
+    showCalc:              { en: 'Show',                                      zh: '显示'               },
+    removeRecConfirm:      { en: 'Remove this recommendation? This cannot be undone.', zh: '删除此建议？此操作无法撤销。' },
+
+    // ── Inline provision panel ───────────────────────────────────────────────
+    addEntry:              { en: 'Entry',                                     zh: '添加'               },
+    amountRM:              { en: 'Amount (RM)',                               zh: '金额 (RM)'          },
+    noExistingProvisions:  { en: 'No existing provisions.',                   zh: '暂无储备。'         },
+    projectedAtAge:        { en: 'Projected at age {age}',                   zh: '{age} 岁时预测额'   },
+
+    // ── TVM Modal ────────────────────────────────────────────────────────────
+    simulateCustomRec:     { en: 'Simulate Custom Recommendation',            zh: '模拟自定义建议'     },
+    calculateFor:          { en: 'Calculate For',                             zh: '计算目标'           },
+    tvmEstValue:           { en: 'Est. Value',                                zh: '预估价值'           },
+    tvmMonthly:            { en: 'Monthly',                                   zh: '月供'               },
+    tvmLumpSum:            { en: 'Lump Sum',                                  zh: '一次性'             },
+    tvmInterest:           { en: 'Interest',                                  zh: '利率'               },
+    useShortfall:          { en: 'Use Shortfall Amount ({amount})',           zh: '使用缺口金额 ({amount})' },
+    targetValueFV:         { en: 'Target Value (FV)',                         zh: '目标价值 (FV)'      },
+    growthRatePerYear:     { en: 'Growth Rate (per year)',                    zh: '年增长率'           },
+    lumpSumContrib:        { en: 'Lump Sum Contribution',                     zh: '一次性投入'         },
+    oneTimeToday:          { en: 'One-time investment today',                 zh: '今日一次性投入'     },
+    monthlyContrib:        { en: 'Monthly Contribution',                      zh: '每月缴款'           },
+    investPeriod:          { en: 'Investment Contribution Period',            zh: '投资缴款期限'       },
+    investPeriodDesc:      { en: 'Years of monthly contributions from age {from} to target age at {to} (max {max} years)', zh: '从 {from} 岁起每月缴款至 {to} 岁（最多 {max} 年）' },
+    addRecommendationBtn:  { en: 'Add Recommendation',                        zh: '添加建议'           },
+
+    // ── TVM Modal solved-value labels ────────────────────────────────────────
+    tvmFvLabel:            { en: 'Estimated Value at Age {age}',              zh: '{age} 岁时预估价值'  },
+    tvmPmtLabel:           { en: 'Required Monthly Contribution',             zh: '所需月缴额'          },
+    tvmPvLabel:            { en: 'Required Lump Sum',                         zh: '所需一次性投入'      },
+    tvmRateLabel:          { en: 'Required Investment Return Rate',           zh: '所需投资回报率'      },
+
+    // ── Panel tab label ──────────────────────────────────────────────────────
+    provisions:            { en: 'Provisions',                                zh: '储备'                },
+
+    // ── Breakdown table ──────────────────────────────────────────────────────
+    investGrowthProjection:{ en: 'Investment Growth Projection',              zh: '投资增长预测'        },
+    colPayment:            { en: 'Payment',                                   zh: '缴款'                },
+    colAccumCapital:       { en: 'Accumulated Capital',                       zh: '累计本金'            },
+    colProjectedValue:     { en: 'Projected Value',                           zh: '预估价值'            },
   },
 
   // ─── Protection / Insurance Planner ────────────────────────────────────────
@@ -356,6 +489,88 @@ const translations = {
     premium:          { en: 'Premium',                    zh: '保费'             },
     backToCoverage:   { en: 'Back to Existing Coverage',  zh: '返回现有保障'     },
     syncInsurance:    { en: 'Sync from Insurance Tab',    zh: '从保险栏同步'     },
+
+    // ── Full risk labels & descriptions ─────────────────────────────────────
+    wealthProtection:    { en: 'Wealth Protection',       zh: '财富保障'         },
+    deathFull:           { en: 'Death',                   zh: '身故'             },
+    tpdFull:             { en: 'Total Permanent Disability (TPD)', zh: '永久完全伤残 (TPD)' },
+    aciFull:             { en: 'Advanced Stage Critical Illness',  zh: '晚期重疾'  },
+    eciFull:             { en: 'Early Stage Critical Illness',     zh: '早期重疾'  },
+    deathDesc:           { en: 'Pays a lump sum and/or monthly income to your dependants if you pass away.', zh: '身故时向受益人支付一次性赔偿金和/或月收入。' },
+    tpdDesc:             { en: 'Replaces your income if you become totally and permanently disabled.',        zh: '永久完全伤残时提供收入替代。' },
+    aciDesc:             { en: 'Covers treatment and living costs when a critical illness reaches an advanced stage.', zh: '晚期重疾时覆盖治疗及生活费用。' },
+    eciDesc:             { en: 'Provides early cash the moment a critical illness is first diagnosed, before it progresses.', zh: '重疾确诊初期即时提供资金，在病情恶化前做出支持。' },
+
+    // ── Needs Analysis form ──────────────────────────────────────────────────
+    needsAnalysisTitle:  { en: 'Wealth Protection Needs Analysis', zh: '财富保障需求分析' },
+    needsAnalysisDesc:   { en: 'Estimate the coverage required if an unexpected event occurs. Lump Sum covers immediate obligations; monthly expenses sustain the family for the defined period.', zh: '估算意外发生时所需保障额。一次性赔偿覆盖即时义务，月支出则维持家庭在指定期间内的生活。' },
+    lumpSumRM:           { en: 'Lump Sum (RM)',                    zh: '一次性保障额 (RM)' },
+    monthlyExpensesRM:   { en: 'Monthly Expenses (RM)',            zh: '月支出 (RM)'       },
+    periodYears:         { en: 'Period (years)',                   zh: '期限（年）'        },
+    planningParamsTitle: { en: 'Planning Parameters',              zh: '规划参数'          },
+    planningParamsDesc:  { en: 'These affect how monthly expenses are discounted to arrive at the total coverage needed.', zh: '这些参数影响月支出的折现计算，从而得出所需总保障额。' },
+    inflationRatePct:    { en: 'Inflation Rate (%)',               zh: '通胀率 (%)'        },
+    inflationRateDesc:   { en: 'Increases effective coverage requirement over time.',        zh: '随时间推移提高实际所需保障额。' },
+    returnRatePct:       { en: 'Investment Return Rate (%)',        zh: '投资回报率 (%)'   },
+    returnRateDesc:      { en: 'Return on payout invested — reduces coverage needed.',       zh: '赔付金投资回报——可降低所需保障额。' },
+    coverageSummary:     { en: 'Coverage Summary',                 zh: '保障摘要'          },
+    fillNeedsPrompt:     { en: 'Fill in your needs to see the estimated coverage required.', zh: '填写需求以查看所需保障额。' },
+    totalCoverageNeeded: { en: 'Total Coverage Needed',            zh: '所需总保障额'      },
+    acrossAllCategories: { en: 'Across all 4 risk categories',     zh: '涵盖4个风险类别'   },
+
+    // ── Existing Coverage form ───────────────────────────────────────────────
+    existingCoverageHeader: { en: 'Existing Coverage',             zh: '现有保障'          },
+    existingCoverageDesc:   { en: 'Enter the total sum assured already in force for each risk category across all policies.', zh: '输入所有保单中各风险类别的现有总保额。' },
+    targetLabel:            { en: 'Target: {amount}',             zh: '目标：{amount}'    },
+    coveredPct:             { en: '{pct}% covered',               zh: '已覆盖 {pct}%'     },
+    gapLabel:               { en: 'Gap: {amount}',                zh: '缺口：{amount}'    },
+    fullyCovered:           { en: 'Fully covered',               zh: '已完全覆盖'        },
+
+    // ── Step 3 Planner ───────────────────────────────────────────────────────
+    targetCoverage:         { en: 'Target Coverage',             zh: '目标保障额'        },
+    needsBreakdown:         { en: 'Needs Breakdown',             zh: '需求明细'          },
+    pvTotalNeed:            { en: 'PV Total Need',               zh: '现值总需求'        },
+    noRecs:                 { en: 'No recommendations yet. Add one to get started.', zh: '暂无建议，请添加。' },
+    noCoverageAmounts:      { en: 'No coverage amounts entered yet.', zh: '尚未填写保障额。' },
+    policyType:             { en: 'Policy Type',                 zh: '保单类型'          },
+    coverageTerm:           { en: 'Coverage Term',               zh: '保障期限'          },
+    riskCoverage:           { en: '{risk} Coverage',             zh: '{risk} 保障额'     },
+    suggested:              { en: 'Suggested: {amount}',         zh: '建议：{amount}'    },
+    shortfallRounded:       { en: 'Shortfall is {amount} — rounded up to nearest RM 50,000.', zh: '缺口为 {amount}，已四舍五入至最近 RM 5万。' },
+    premiumAmount:          { en: 'Premium Amount',              zh: '保费金额'          },
+    totalPremiumPaid:       { en: 'TOTAL PREMIUM PAID',          zh: '总缴保费'          },
+    totalMonthlyPremium:    { en: 'Total Monthly Premium',       zh: '总月缴保费'        },
+    coverageRates:          { en: 'Inflation: {inflation}% · Return: {ret}%', zh: '通胀：{inflation}% · 回报：{ret}%' },
+    calcBasis:              { en: 'Based on: Lump Sum + PV of inflation-adjusted monthly expenses', zh: '计算依据：一次性保障 + 通胀调整月支出的现值' },
+    activePoliciesSingular: { en: '{n} active policy found in Insurance Tab', zh: 'Insurance 栏发现 {n} 份有效保单' },
+    activePoliciesPlural:   { en: '{n} active policies found in Insurance Tab', zh: 'Insurance 栏发现 {n} 份有效保单' },
+    fromInsuranceTab:       { en: 'From Insurance Tab ({n} active {policy})', zh: 'Insurance 栏（{n} 份有效{policy}）' },
+    policyWord:             { en: 'policy',                      zh: '保单'              },
+    policiesWord:           { en: 'policies',                    zh: '保单'              },
+    enteredInStep2:         { en: 'Entered in Step 2',           zh: '已在步骤 2 填入'   },
+    ciCoverageNote:         { en: 'CI sum used for both ACI & ECI. Lapsed / matured policies excluded.', zh: 'CI 保额适用于 ACI 与 ECI。已失效/已满期保单不计。' },
+
+    // ── Step 3 Planner — additional keys ────────────────────────────────────
+    surplus:              { en: 'Surplus',                            zh: '盈余'                        },
+    shortfall:            { en: 'Shortfall',                          zh: '缺口'                        },
+    lumpSum:              { en: 'Lump Sum',                           zh: '一次性保障'                   },
+    monthlyXYrs:          { en: 'Monthly × {n} yrs',                  zh: '月供 × {n} 年'               },
+    recommendations:      { en: 'Recommendations',                    zh: '建议'                        },
+    addRecommendation:    { en: 'Add Recommendation',                  zh: '添加建议'                    },
+    productPlaceholder:   { en: 'Product / plan name (optional)',      zh: '产品/计划名称（可选）'         },
+    pctOfTarget:          { en: '{pct}% of {target}',                 zh: '{target} 的 {pct}%'          },
+    totalNeeded:          { en: 'Total Needed',                       zh: '所需总额'                    },
+    unprotected:          { en: 'Unprotected',                        zh: '未保障额'                    },
+    noNeedsEntered:       { en: 'No needs entered',                   zh: '尚未填写需求'                 },
+    priorityBadge:        { en: 'Priority',                           zh: '优先'                        },
+    criticalBadge:        { en: 'Critical',                           zh: '紧急'                        },
+    coveredLabel:         { en: 'covered',                            zh: '已覆盖'                      },
+    gapClosed:            { en: 'Gap closed',                         zh: '缺口已填补'                   },
+    fullyProtected:       { en: 'Fully Protected',                    zh: '完全保障'                    },
+    partiallyProtected:   { en: 'Partially Protected',                zh: '部分保障'                    },
+    underProtected:       { en: 'Under-Protected',                    zh: '保障不足'                    },
+    noDataStatus:         { en: 'No Data',                            zh: '暂无数据'                    },
+    overallPctMet:        { en: '{pct}% of total coverage needs met', zh: '总保障需求已满足 {pct}%'       },
   },
 
   // ─── Cash Flow Planner ──────────────────────────────────────────────────────
@@ -377,6 +592,61 @@ const translations = {
     epfBalance:       { en: 'EPF Balance',                zh: '公积金余额'       },
     totalAssets:      { en: 'Total Liquid Assets',        zh: '流动资产总值'     },
     fullSuite:        { en: 'Full Suite',                 zh: '完整套件'         },
+
+    // ── Empty state ──────────────────────────────────────────────────────────
+    noFinancialData:     { en: 'No Financial Data',       zh: '暂无财务数据'     },
+    enterDataPrompt:     { en: 'Enter income and expenses to generate a cash flow projection.', zh: '请输入收入与支出以生成现金流预测。' },
+    setupFinancialInfo:  { en: 'Set up Financial Info',   zh: '设置财务资料'     },
+    compareCharts:       { en: 'Compare Charts',          zh: '比较图表'         },
+
+    // ── Goals ────────────────────────────────────────────────────────────────
+    goalLabel:           { en: 'Goal Label',              zh: '目标名称'         },
+    goalAge:             { en: 'Age',                     zh: '年龄'             },
+    goalLumpSum:         { en: 'Lump Sum (RM)',            zh: '一次性金额 (RM)'  },
+    addGoal:             { en: 'Add Goal',                zh: '添加目标'         },
+
+    // ── Goals (additional) ───────────────────────────────────────────────────
+    goalsPanel:         { en: 'Goals',                          zh: '目标'                    },
+    activateAll:        { en: 'Activate all',                   zh: '全部激活'                 },
+    noGoalsAdded:       { en: 'No goals added',                 zh: '暂无目标'                 },
+    goalsDesc:          { en: 'Goals add a lump-sum expense to the chart at the target age', zh: '目标将在预定年龄为图表增加一次性支出' },
+    addFirstGoal:       { en: '+ Add your first goal',          zh: '+ 添加第一个目标'         },
+    goalPlaceholder:    { en: 'Dream (e.g. Buy Property)',       zh: '目标（如购买房产）'        },
+
+    // ── Scenarios ────────────────────────────────────────────────────────────
+    scenarioCriticalIllness: { en: 'Critical Illness',   zh: '重疾'             },
+    scenarioDisability:      { en: 'Disability (TPD)',   zh: '全残 (TPD)'       },
+    scenarioDeath:           { en: 'Death',              zh: '身故'             },
+    ageWhenHappens:          { en: 'Age when it happens', zh: '发生时年龄'      },
+    incomeLossYears:         { en: 'Income loss (years)', zh: '收入损失（年）'  },
+    ciSuffix:           { en: '· {n} yr income loss',           zh: '· {n} 年收入损失'         },
+    permSuffix:         { en: '· income stops permanently',     zh: '· 收入永久停止'           },
+    ciScenarioDesc:     { en: 'Income drops to RM 0 from age {from} to {to}. Expenses continue at inflation rate — cash savings drawn down, then shortfall.', zh: '收入从 {from} 岁至 {to} 岁降为 RM 0。支出按通胀率增加——先动用现金储蓄，不足时产生资金缺口。' },
+    permStopDesc:       { en: 'Income permanently stops from age {age}. Savings drawn down, then shortfall.', zh: '收入从 {age} 岁起永久停止。储蓄耗尽后产生资金缺口。' },
+    scenariosPanel:     { en: 'Scenarios',                      zh: '情景分析'                 },
+
+    // ── Chart labels ─────────────────────────────────────────────────────────
+    shortfallLabel:     { en: 'Shortfall',                      zh: '资金缺口'                 },
+    noShortfall:        { en: 'No Shortfall',                   zh: '无资金缺口'               },
+    expenses:           { en: 'Expenses',                       zh: '支出'                    },
+    cashSavingsEOY:     { en: 'Cash Savings (EOY)',              zh: '现金储蓄（年末）'          },
+    legendTakeHome:     { en: 'Take-home Income Used',          zh: '实收收入使用'              },
+    legendCashUsed:     { en: 'Cash Used',                      zh: '动用现金'                 },
+    planner:            { en: 'Planner',                        zh: '规划'                    },
+
+    // ── Recommendations panel ────────────────────────────────────────────────
+    recsPanel:          { en: 'Recommendations',                zh: '建议'                    },
+    allCoveragesInPlace:{ en: 'All key coverages in place',     zh: '所有关键保障已到位'        },
+    addNewRecs:         { en: 'Add New Recommendations',        zh: '添加建议'                 },
+    triggeredBadge:     { en: 'Triggered',                      zh: '触发'                    },
+    recCi:              { en: 'Critical Illness',               zh: '重疾险'                  },
+    recTpd:             { en: 'Total & Permanent Disability',   zh: '全残险'                  },
+    recLife:            { en: 'Life Coverage',                  zh: '寿险'                    },
+    recHospital:        { en: 'Hospital & Surgical',            zh: '住院手术险'               },
+    recCiDesc:          { en: 'Replaces income during CI recovery period', zh: '弥补重疾康复期间的收入损失' },
+    recTpdDesc:         { en: 'Replaces income on permanent disability', zh: '提供永久伤残时的收入替代' },
+    recLifeDesc:        { en: 'Income replacement for dependants', zh: '为受扶养人提供收入替代' },
+    recHospitalDesc:    { en: 'Medical cost protection',        zh: '医疗费用保障'              },
   },
 
   // ─── Insurance Tab (in Financial Info) ─────────────────────────────────────

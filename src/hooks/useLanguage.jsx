@@ -15,25 +15,30 @@ export function LanguageProvider({ children }) {
   }
 
   /**
-   * t('section.key') — returns the string for the current language.
+   * t('section.key', { var: value }) — returns the string for the current language.
    * Supports dot-path into the translations tree, e.g. t('nav.dashboard').
-   * Falls back to the key itself if not found.
+   * Optional second argument replaces {placeholder} tokens in the string.
+   * e.g. t('retirement.fundsRunOutMsg', { age: 75, pct: 80 })
+   * Falls back to English then to the key path if not found.
    */
-  const t = useCallback((path) => {
+  const t = useCallback((path, vars = null) => {
     const parts = path.split('.')
     let node = translations
     for (const part of parts) {
       if (node == null) break
       node = node[part]
     }
+    let str = path
     if (node && typeof node === 'object' && node[lang] !== undefined) {
-      return node[lang]
+      str = node[lang]
+    } else if (node && typeof node === 'object' && node.en !== undefined) {
+      str = node.en
     }
-    // fallback: return English or path
-    if (node && typeof node === 'object' && node.en !== undefined) {
-      return node.en
+    // Replace {placeholder} tokens with provided vars
+    if (vars && typeof str === 'string') {
+      str = str.replace(/\{(\w+)\}/g, (_, key) => (vars[key] !== undefined ? vars[key] : `{${key}}`))
     }
-    return path
+    return str
   }, [lang])
 
   return (
