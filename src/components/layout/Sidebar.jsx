@@ -71,15 +71,15 @@ export default function Sidebar({ expanded, onToggle }) {
         <div className="h-16 flex items-center justify-center border-b border-hig-gray-5 px-3">
           {isOpen ? (
             <ProtectedImg
-              src="/assets/colourful-llh-logo.jpg"
-              alt="LLH Group"
+              src="/assets/sora-logo.png"
+              alt="Sora Advisory"
               className="h-10 w-auto max-w-full object-contain"
               wrapperClassName="shrink-0"
             />
           ) : (
             <ProtectedImg
-              src="/assets/colourful-llh-favicon.png"
-              alt="LLH"
+              src="/assets/sora-favicon.png"
+              alt="Sora"
               className="w-8 h-8 object-contain rounded-lg"
               wrapperClassName="shrink-0"
             />
