@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useContacts } from '../hooks/useContacts'
 import { useToast } from '../hooks/useToast'
+import { useLanguage } from '../hooks/useLanguage'
 import {
   Plus, Users, CheckSquare, CalendarClock, Cake,
   ExternalLink, Building2, FileText, Shield, Globe, Landmark,
@@ -22,9 +23,9 @@ const QUICK_LINKS = [
 ]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-function greeting() {
+function greetingKey() {
   const h = new Date().getHours()
-  return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'
+  return h < 12 ? 'dashboard.greetMorning' : h < 18 ? 'dashboard.greetAfternoon' : 'dashboard.greetEvening'
 }
 
 function todayStr() {
@@ -168,6 +169,13 @@ export default function DashboardPage() {
   const { contacts, contactsLoading, contactsError } = useContacts()
   const navigate = useNavigate()
   const { addToast } = useToast()
+  const { t } = useLanguage()
+
+  const TYPE_LABELS = {
+    task: t('dashboard.typeTask'),
+    review: t('dashboard.typeReview'),
+    birthday: t('dashboard.typeBirthday'),
+  }
 
   useEffect(() => {
     if (contactsError) addToast(contactsError, 'error')
@@ -220,7 +228,7 @@ export default function DashboardPage() {
           items.push({
             type: 'birthday', days: d, contact: c,
             title: c.name,
-            sub: `Turns ${getAge(c.dob) + (d > 0 ? 1 : 0)} · ${fmtShort(c.dob)}`,
+            sub: t('dashboard.turnAge') + ' ' + (getAge(c.dob) + (d > 0 ? 1 : 0)) + ' · ' + fmtShort(c.dob),
           })
       }
     })
@@ -241,7 +249,7 @@ export default function DashboardPage() {
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 24 }}>
           <div>
             <h1 style={{ fontSize: 26, fontWeight: 700, color: '#1C1C1E', lineHeight: 1.2 }}>
-              {greeting()}{agent?.name ? `, ${agent.name.split(' ')[0]}` : ''} 👋
+              {t(greetingKey())}{agent?.name ? `, ${agent.name.split(' ')[0]}` : ''} 👋
             </h1>
             <p style={{ fontSize: 14, color: '#8E8E93', marginTop: 4 }}>{todayStr()}</p>
           </div>
@@ -251,35 +259,35 @@ export default function DashboardPage() {
             className="hig-btn-primary"
             style={{ gap: 7, fontSize: 14 }}
           >
-            <Plus size={15} /> New Contact
+            <Plus size={15} /> {t('dashboard.newContact')}
           </button>
         </div>
 
         {/* ── Stats ───────────────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: 12, marginBottom: 24 }}>
           <StatCard
-            icon={Users} label="Contacts" color="#007AFF" loading={contactsLoading}
+            icon={Users} label={t('dashboard.statContacts')} color="#007AFF" loading={contactsLoading}
             value={stats.total}
-            sub={stats.total === 1 ? 'Client Profile' : 'Client Profiles'}
+            sub={stats.total === 1 ? t('dashboard.statClientProfile') : t('dashboard.statClientProfiles')}
             onClick={() => navigate('/contacts')}
           />
           <StatCard
-            icon={CheckSquare} label="Pending Tasks"
+            icon={CheckSquare} label={t('dashboard.statPendingTasks')}
             color={stats.pending > 0 ? '#FF9500' : '#34C759'} loading={contactsLoading}
             value={stats.pending}
-            sub={stats.pending === 0 ? 'All clear ✓' : 'across all contacts'}
+            sub={stats.pending === 0 ? t('dashboard.statAllClear') : t('dashboard.statAcrossContacts')}
             onClick={() => navigate('/contacts')}
           />
           <StatCard
-            icon={CalendarClock} label="Reviews This Month" color="#AF52DE" loading={contactsLoading}
+            icon={CalendarClock} label={t('dashboard.statReviewsMonth')} color="#AF52DE" loading={contactsLoading}
             value={stats.reviewsMonth}
-            sub={stats.reviewsMonth === 0 ? 'None scheduled' : 'scheduled'}
+            sub={stats.reviewsMonth === 0 ? t('dashboard.statNoneScheduled') : t('dashboard.statScheduled')}
             onClick={() => navigate('/contacts')}
           />
           <StatCard
-            icon={Cake} label="Birthdays This Month" color="#FF2D55" loading={contactsLoading}
+            icon={Cake} label={t('dashboard.statBirthdaysMonth')} color="#FF2D55" loading={contactsLoading}
             value={stats.bdays}
-            sub={stats.bdays === 0 ? 'None this month' : 'this month'}
+            sub={stats.bdays === 0 ? t('dashboard.statNoneBirthday') : t('dashboard.statThisMonth')}
             onClick={() => navigate('/contacts')}
           />
         </div>
@@ -290,13 +298,13 @@ export default function DashboardPage() {
           {/* Left: Unified feed */}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <h2 style={{ fontSize: 17, fontWeight: 600, color: '#1C1C1E' }}>Upcoming</h2>
+              <h2 style={{ fontSize: 17, fontWeight: 600, color: '#1C1C1E' }}>{t('dashboard.upcoming')}</h2>
               {feed.length > 0 && (
                 <button
                   onClick={() => navigate('/contacts')}
                   style={{ fontSize: 13, color: '#007AFF', fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer' }}
                 >
-                  View all contacts →
+                  {t('dashboard.viewAllContacts')}
                 </button>
               )}
             </div>
@@ -355,7 +363,7 @@ export default function DashboardPage() {
                           {item.title}
                         </p>
                         <p style={{ fontSize: 12, color: '#8E8E93', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {item.type === 'task' ? item.contact.name + '  ·  Due ' + item.sub : item.sub}
+                          {item.type === 'task' ? item.contact.name + '  ·  ' + t('dashboard.taskDue') + ' ' + item.sub : item.sub}
                         </p>
                       </div>
 
@@ -365,7 +373,7 @@ export default function DashboardPage() {
                           fontSize: 11, fontWeight: 600, letterSpacing: 0.3, textTransform: 'uppercase',
                           color: cfg.color, opacity: 0.7,
                         }}>
-                          {cfg.label}
+                          {TYPE_LABELS[item.type]}
                         </span>
                         <UrgencyBadge days={item.days} type={item.type} />
                       </div>
@@ -388,9 +396,9 @@ export default function DashboardPage() {
                 }}>
                   <CheckCircle2 size={26} style={{ color: '#34C759' }} />
                 </div>
-                <p style={{ fontSize: 17, fontWeight: 600, color: '#1C1C1E' }}>All clear</p>
+                <p style={{ fontSize: 17, fontWeight: 600, color: '#1C1C1E' }}>{t('dashboard.allClear')}</p>
                 <p style={{ fontSize: 14, color: '#8E8E93', maxWidth: 280, lineHeight: 1.5 }}>
-                  No tasks, reviews, or birthdays coming up in the next 60 days.
+                  {t('dashboard.allClearDesc')}
                 </p>
                 {contacts.length === 0 && (
                   <button
@@ -398,7 +406,7 @@ export default function DashboardPage() {
                     className="hig-btn-primary"
                     style={{ marginTop: 4, gap: 7, fontSize: 14 }}
                   >
-                    <Plus size={15} /> Add your first contact
+                    <Plus size={15} /> {t('dashboard.addFirstContact')}
                   </button>
                 )}
               </div>
@@ -410,7 +418,7 @@ export default function DashboardPage() {
 
             {/* Quick Links — responsive grid */}
             <div>
-              <h2 style={{ fontSize: 17, fontWeight: 600, color: '#1C1C1E', marginBottom: 12 }}>Quick Links</h2>
+              <h2 style={{ fontSize: 17, fontWeight: 600, color: '#1C1C1E', marginBottom: 12 }}>{t('dashboard.quickLinks')}</h2>
               <div className="grid grid-cols-4 lg:grid-cols-2" style={{ gap: 8 }}>
                 {QUICK_LINKS.map(({ label, icon: Icon, url, color }) => (
                   <a

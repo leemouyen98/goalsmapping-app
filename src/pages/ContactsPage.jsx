@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useContacts } from '../hooks/useContacts'
+import { useLanguage } from '../hooks/useLanguage'
 import {
   Plus, Search, Trash2, Tag, MoreHorizontal,
   ChevronRight, Phone, Calendar, AlertCircle,
@@ -25,6 +26,7 @@ export default function ContactsPage() {
   const { contacts, contactsLoading, contactsError, addContact, deleteContacts, addTag } = useContacts()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
+  const { t } = useLanguage()
 
   // Initialise from URL ?q= param (set by TopBar global search or direct links)
   const [search, setSearch] = useState(() => searchParams.get('q') || '')
@@ -101,10 +103,10 @@ export default function ContactsPage() {
     <div className="max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-hig-title2">Contacts</h1>
+        <h1 className="text-hig-title2">{t('contacts.title')}</h1>
         <button onClick={() => setShowForm(true)} className="hig-btn-primary gap-2">
           <Plus size={18} />
-          Add New Contact
+          {t('contacts.addNew')}
         </button>
       </div>
 
@@ -114,7 +116,7 @@ export default function ContactsPage() {
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-hig-text-secondary" />
           <input
             type="text"
-            placeholder="Search contacts..."
+            placeholder={t('contacts.searchPlaceholder')}
             value={search}
             onChange={(e) => {
               const val = e.target.value
@@ -133,19 +135,19 @@ export default function ContactsPage() {
               className="hig-btn-secondary gap-2"
             >
               <MoreHorizontal size={16} />
-              {selected.size} selected
+              {selected.size} {t('contacts.selected')}
             </button>
             {showBulkMenu && (
               <div className="absolute right-0 top-12 w-48 bg-white rounded-hig shadow-hig-lg border border-hig-gray-5 py-1 z-50">
                 <button onClick={() => handleBulkTag('Client')} className="w-full flex items-center gap-2 px-4 py-2.5 text-hig-subhead hover:bg-hig-gray-6">
-                  <Tag size={14} /> Tag as Client
+                  <Tag size={14} /> {t('contacts.tagAsClient')}
                 </button>
                 <button onClick={() => handleBulkTag('Prospect')} className="w-full flex items-center gap-2 px-4 py-2.5 text-hig-subhead hover:bg-hig-gray-6">
-                  <Tag size={14} /> Tag as Prospect
+                  <Tag size={14} /> {t('contacts.tagAsProspect')}
                 </button>
                 <hr className="my-1 border-hig-gray-5" />
                 <button onClick={handleBulkDelete} className="w-full flex items-center gap-2 px-4 py-2.5 text-hig-subhead text-hig-red hover:bg-red-50">
-                  <Trash2 size={14} /> Delete
+                  <Trash2 size={14} /> {t('common.delete')}
                 </button>
               </div>
             )}
@@ -160,10 +162,10 @@ export default function ContactsPage() {
         <div className="hidden md:grid grid-cols-[1fr_130px_60px_120px_48px] items-center
                         px-4 py-3 bg-hig-gray-6 border-b border-hig-gray-5
                         text-hig-caption1 font-semibold text-hig-text-secondary uppercase tracking-wide">
-          <span>Name</span>
-          <span>Last Activity</span>
-          <span className="text-center">Plans</span>
-          <span>Tags</span>
+          <span>{t('contacts.colName')}</span>
+          <span>{t('contacts.colLastActivity')}</span>
+          <span className="text-center">{t('contacts.colPlans')}</span>
+          <span>{t('contacts.colTags')}</span>
           <span></span>
         </div>
 
@@ -173,16 +175,16 @@ export default function ContactsPage() {
             <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,59,48,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <AlertCircle size={20} style={{ color: '#FF3B30' }} />
             </div>
-            <p className="text-hig-subhead font-medium" style={{ color: '#FF3B30' }}>Failed to load contacts</p>
+            <p className="text-hig-subhead font-medium" style={{ color: '#FF3B30' }}>{t('contacts.loadFailed')}</p>
             <p className="text-hig-caption1 text-hig-text-secondary">{contactsError}</p>
           </div>
         ) : contactsLoading ? (
           <div className="px-4 py-12 text-center text-hig-subhead text-hig-text-secondary">
-            Loading contacts…
+            {t('contacts.loadingMsg')}
           </div>
         ) : filtered.length === 0 ? (
           <div className="px-4 py-12 text-center text-hig-subhead text-hig-text-secondary">
-            {search ? 'No contacts match your search.' : 'No contacts yet. Add your first client.'}
+            {search ? t('contacts.noMatch') : t('contacts.noContacts')}
           </div>
         ) : filtered.map((c) => {
           const lastActivity = getLastActivity(c)
@@ -210,7 +212,7 @@ export default function ContactsPage() {
                     ))}
                   </div>
                   <div className="flex items-center gap-2 mt-0.5 text-hig-caption1 text-hig-text-secondary">
-                    <span>Age {getAge(c.dob)}</span>
+                    <span>{t('common.age')} {getAge(c.dob)}</span>
                     {c.mobile && <><span>·</span><span className="flex items-center gap-0.5"><Phone size={10} /> {c.mobile}</span></>}
                     {lastActivity && <><span>·</span><span>{lastActivity.toLocaleDateString('en-MY', { day: 'numeric', month: 'short' })}</span></>}
                   </div>
@@ -233,7 +235,7 @@ export default function ContactsPage() {
                 <div>
                   <p className="text-hig-subhead font-medium text-hig-text">{c.name}</p>
                   <p className="text-hig-caption1 text-hig-text-secondary">
-                    Age {getAge(c.dob)}
+                    {t('common.age')} {getAge(c.dob)}
                     {c.mobile && <span className="ml-2 inline-flex items-center gap-1"><Phone size={11} /> {c.mobile}</span>}
                   </p>
                 </div>
@@ -276,33 +278,33 @@ export default function ContactsPage() {
             onSubmit={handleAdd}
             className="bg-white rounded-hig-lg shadow-hig-lg w-full max-w-lg p-6 space-y-4 max-h-[85vh] overflow-y-auto"
           >
-            <h2 className="text-hig-title3">Add New Contact</h2>
+            <h2 className="text-hig-title3">{t('contacts.modalTitle')}</h2>
 
             <div>
-              <label className="hig-label">Name <span className="text-hig-red">*</span></label>
-              <input value={form.name} onChange={(e) => setForm({...form, name: e.target.value})} className="hig-input" placeholder="Full name" required />
+              <label className="hig-label">{t('contacts.fieldName')} <span className="text-hig-red">*</span></label>
+              <input value={form.name} onChange={(e) => setForm({...form, name: e.target.value})} className="hig-input" placeholder={t('contacts.placeholderName')} required />
             </div>
             <div>
-              <label className="hig-label">Date of Birth <span className="text-hig-red">*</span></label>
+              <label className="hig-label">{t('contacts.fieldDob')} <span className="text-hig-red">*</span></label>
               <input type="date" value={form.dob} onChange={(e) => setForm({...form, dob: e.target.value})} className="hig-input" required />
             </div>
             <div>
-              <label className="hig-label">Mobile</label>
+              <label className="hig-label">{t('contacts.fieldMobile')}</label>
               <input value={form.mobile} onChange={(e) => setForm({...form, mobile: e.target.value})} className="hig-input" placeholder="012-3456789" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="hig-label">Employment Status</label>
+                <label className="hig-label">{t('contacts.fieldEmployment')}</label>
                 <select value={form.employment} onChange={(e) => setForm({...form, employment: e.target.value})} className="hig-input">
                   <option value="">Select...</option>
-                  <option>Employed</option>
-                  <option>Self-Employed</option>
-                  <option>Unemployed</option>
-                  <option>Retired</option>
+                  <option>{t('contacts.empEmployed')}</option>
+                  <option>{t('contacts.empSelfEmployed')}</option>
+                  <option>{t('contacts.empUnemployed')}</option>
+                  <option>{t('contacts.empRetired')}</option>
                 </select>
               </div>
               <div>
-                <label className="hig-label">Retirement Age</label>
+                <label className="hig-label">{t('contacts.fieldRetAge')}</label>
                 <input
                   type="number" min={40} max={80}
                   value={form.retirementAge ?? 55}
@@ -314,27 +316,27 @@ export default function ContactsPage() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="hig-label">Review Date</label>
+                <label className="hig-label">{t('contacts.fieldReviewDate')}</label>
                 <input type="date" value={form.reviewDate} onChange={(e) => setForm({...form, reviewDate: e.target.value})} className="hig-input" />
               </div>
               <div>
-                <label className="hig-label">Review Frequency</label>
+                <label className="hig-label">{t('contacts.fieldReviewFreq')}</label>
                 <select value={form.reviewFrequency} onChange={(e) => setForm({...form, reviewFrequency: e.target.value})} className="hig-input">
                   <option value="">Select...</option>
-                  <option>Annually</option>
-                  <option>Semi-annually</option>
-                  <option>Quarterly</option>
+                  <option>{t('contacts.freqAnnually')}</option>
+                  <option>{t('contacts.freqSemiAnnual')}</option>
+                  <option>{t('contacts.freqQuarterly')}</option>
                 </select>
               </div>
             </div>
             <div>
-              <label className="hig-label">Notes</label>
-              <textarea value={form.notes} onChange={(e) => setForm({...form, notes: e.target.value})} className="hig-input min-h-[80px] resize-y" placeholder="Any notes..." />
+              <label className="hig-label">{t('contacts.fieldNotes')}</label>
+              <textarea value={form.notes} onChange={(e) => setForm({...form, notes: e.target.value})} className="hig-input min-h-[80px] resize-y" placeholder={t('contacts.placeholderNotes')} />
             </div>
 
             <div className="flex justify-end gap-3 pt-2">
-              <button type="button" onClick={() => { setShowForm(false); setSearchParams({}) }} className="hig-btn-secondary">Cancel</button>
-              <button type="submit" className="hig-btn-primary">Add Contact</button>
+              <button type="button" onClick={() => { setShowForm(false); setSearchParams({}) }} className="hig-btn-secondary">{t('common.cancel')}</button>
+              <button type="submit" className="hig-btn-primary">{t('contacts.btnAdd')}</button>
             </div>
           </form>
         </div>

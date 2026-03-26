@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useContacts } from '../hooks/useContacts'
 import { useAuth } from '../hooks/useAuth'
+import { useLanguage } from '../hooks/useLanguage'
 import FinancesTab from '../components/finances/FinancesTab'
 import CashFlowTab from '../components/finances/CashFlowTab'
 import {
@@ -35,6 +36,7 @@ function fmtRM(val) {
 }
 
 export default function ContactDetailPage() {
+  const { t } = useLanguage()
   const { id } = useParams()
   const navigate = useNavigate()
   const { isAdmin } = useAuth()
@@ -90,7 +92,7 @@ export default function ContactDetailPage() {
   if (!contact) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-hig-subhead text-hig-text-secondary">Contact not found</p>
+        <p className="text-hig-subhead text-hig-text-secondary">{t('contactDetail.contactNotFound')}</p>
       </div>
     )
   }
@@ -159,22 +161,22 @@ export default function ContactDetailPage() {
   const askConfirm = (action) => { setShowOptionsMenu(false); setConfirmAction(action) }
 
   const confirmDelete = () => askConfirm({
-    title: 'Delete Contact',
-    body: `Permanently delete ${contact.name} and all their data? This cannot be undone.`,
+    title: t('contactDetail.deleteContact'),
+    body: t('contactDetail.deleteConfirm'),
     danger: true,
     onConfirm: () => { deleteContacts([id]); navigate('/contacts') },
   })
 
   const confirmResetRetirement = () => askConfirm({
-    title: 'Reset Retirement Planner',
-    body: 'Clears the Retirement Plan data for this contact. Profile and financial info are kept.',
+    title: t('contactDetail.resetRetirement'),
+    body: t('contactDetail.resetRetirementDesc'),
     danger: false,
     onConfirm: () => updateContact(id, { retirementPlan: null, retirementAge: 55 }),
   })
 
   const confirmResetInsurance = () => askConfirm({
-    title: 'Reset Insurance Planner',
-    body: 'Clears the Insurance Plan and all policy entries. Profile and financial info are kept.',
+    title: t('contactDetail.resetInsurance'),
+    body: t('contactDetail.resetInsuranceDesc'),
     danger: false,
     onConfirm: () => {
       updateContact(id, { protectionPlan: null })
@@ -183,8 +185,8 @@ export default function ContactDetailPage() {
   })
 
   const confirmResetCashFlow = () => askConfirm({
-    title: 'Reset Cash Flow Planner',
-    body: 'Clears all Financial Info (income, expenses, assets). The contact profile is kept.',
+    title: t('contactDetail.resetCashFlow'),
+    body: t('contactDetail.resetCashFlowDesc'),
     danger: false,
     onConfirm: () => { saveFinancials(id, null); setShowCashFlow(false) },
   })
@@ -202,9 +204,9 @@ export default function ContactDetailPage() {
           </button>
           <div className="flex items-center gap-2">
             <TrendingUp size={17} className="text-hig-blue" />
-            <span className="text-hig-headline font-semibold">Cash Flow Projection</span>
+            <span className="text-hig-headline font-semibold">{t('cashflow.title')}</span>
             <span className="text-hig-caption2 font-semibold px-2 py-0.5 rounded-full bg-hig-blue/10 text-hig-blue leading-none">
-              Full Suite
+              {t('cashflow.fullSuite')}
             </span>
           </div>
           <div className="w-32" />
@@ -253,9 +255,9 @@ export default function ContactDetailPage() {
                   <p className="text-hig-caption2 font-semibold text-hig-text-secondary uppercase tracking-wide">Reset Planner</p>
                 </div>
                 {[
-                  ...(isAdmin ? [{ label: 'Cash Flow Planner', icon: BarChart2, onClick: confirmResetCashFlow }] : []),
-                  { label: 'Retirement Planner', icon: Target, onClick: confirmResetRetirement },
-                  { label: 'Insurance Planner', icon: Shield, onClick: confirmResetInsurance },
+                  ...(isAdmin ? [{ label: t('contactDetail.cashFlowPlanner'), icon: BarChart2, onClick: confirmResetCashFlow }] : []),
+                  { label: t('contactDetail.retirementPlanner'), icon: Target, onClick: confirmResetRetirement },
+                  { label: t('contactDetail.insurancePlanner'), icon: Shield, onClick: confirmResetInsurance },
                 ].map(({ label, icon: Icon, onClick }) => (
                   <button
                     key={label}
@@ -273,7 +275,7 @@ export default function ContactDetailPage() {
                   className="w-full flex items-center gap-3 px-3 py-2 text-hig-subhead hover:bg-red-50 text-red-500 transition-colors text-left"
                 >
                   <Trash2 size={14} className="shrink-0" />
-                  <span>Delete Contact</span>
+                  <span>{t('contactDetail.deleteContact')}</span>
                 </button>
               </div>
             </>
@@ -286,7 +288,7 @@ export default function ContactDetailPage() {
             onClick={() => setShowStartPlanning((s) => !s)}
             className="hig-btn-primary gap-2"
           >
-            Start Planning
+            {t('contactDetail.startPlanning')}
             <ChevronDown size={14} className={`transition-transform duration-hig ${showStartPlanning ? 'rotate-180' : ''}`} />
           </button>
           {showStartPlanning && (
@@ -304,8 +306,8 @@ export default function ContactDetailPage() {
                         <TrendingUp size={14} className="text-hig-blue" />
                       </div>
                       <div>
-                        <p className="font-medium leading-none mb-0.5">Cash Flow Planner</p>
-                        <p className="text-hig-caption2 text-hig-text-secondary leading-none">Full suite</p>
+                        <p className="font-medium leading-none mb-0.5">{t('contactDetail.cashFlowPlanner')}</p>
+                        <p className="text-hig-caption2 text-hig-text-secondary leading-none">{t('cashflow.fullSuite')}</p>
                       </div>
                       {hasFinancialData && (
                         <span className="ml-auto text-hig-caption2 text-hig-green font-semibold">Ready</span>
@@ -322,8 +324,8 @@ export default function ContactDetailPage() {
                     <Target size={14} className="text-hig-blue" />
                   </div>
                   <div>
-                    <p className="font-medium leading-none mb-0.5">Retirement Planner</p>
-                    <p className="text-hig-caption2 text-hig-text-secondary leading-none">Quick planner</p>
+                    <p className="font-medium leading-none mb-0.5">{t('contactDetail.retirementPlanner')}</p>
+                    <p className="text-hig-caption2 text-hig-text-secondary leading-none">{t('contactDetail.startPlanning')}</p>
                   </div>
                   {contact.retirementPlan && (
                     <CheckCircle2 size={14} className="ml-auto text-hig-green shrink-0" />
@@ -337,8 +339,8 @@ export default function ContactDetailPage() {
                     <Shield size={14} className="text-hig-green" />
                   </div>
                   <div>
-                    <p className="font-medium leading-none mb-0.5">Insurance Planner</p>
-                    <p className="text-hig-caption2 text-hig-text-secondary leading-none">Quick planner</p>
+                    <p className="font-medium leading-none mb-0.5">{t('contactDetail.insurancePlanner')}</p>
+                    <p className="text-hig-caption2 text-hig-text-secondary leading-none">{t('contactDetail.startPlanning')}</p>
                   </div>
                   {contact.protectionPlan && (
                     <CheckCircle2 size={14} className="ml-auto text-hig-green shrink-0" />
@@ -455,7 +457,7 @@ export default function ContactDetailPage() {
                   onClick={() => setTab('finances')}
                   className="rounded-hig-sm p-2.5 bg-hig-gray-6 hover:bg-hig-gray-5 transition-colors text-left"
                 >
-                  <p className="text-hig-caption2 text-hig-text-secondary font-medium mb-0.5">Net Worth</p>
+                  <p className="text-hig-caption2 text-hig-text-secondary font-medium mb-0.5">{t('contactDetail.netWorth')}</p>
                   <p className={`text-hig-subhead font-bold leading-tight ${sidebarFinancial.netWorth >= 0 ? 'text-hig-text' : 'text-hig-red'}`}>
                     {fmtRM(sidebarFinancial.netWorth)}
                   </p>
@@ -464,7 +466,7 @@ export default function ContactDetailPage() {
                   onClick={() => setTab('finances')}
                   className="rounded-hig-sm p-2.5 bg-hig-gray-6 hover:bg-hig-gray-5 transition-colors text-left"
                 >
-                  <p className="text-hig-caption2 text-hig-text-secondary font-medium mb-0.5">Monthly CF</p>
+                  <p className="text-hig-caption2 text-hig-text-secondary font-medium mb-0.5">{t('contactDetail.monthlyCashFlow')}</p>
                   <p className={`text-hig-subhead font-bold leading-tight ${sidebarFinancial.monthlyCashFlow >= 0 ? 'text-hig-text' : 'text-hig-red'}`}>
                     {fmtRM(sidebarFinancial.monthlyCashFlow)}
                   </p>
@@ -488,19 +490,19 @@ export default function ContactDetailPage() {
           {/* Tab bar */}
           <div className="flex border-b border-hig-gray-5 mb-4">
             {[
-              { key: 'interaction', label: 'Interaction' },
-              { key: 'finances', label: 'Finances' },
-            ].map((t) => (
+              { key: 'interaction', label: t('contactDetail.tabInteraction') },
+              { key: 'finances', label: t('contactDetail.tabFinances') },
+            ].map((tabItem) => (
               <button
-                key={t.key}
-                onClick={() => setTab(t.key)}
+                key={tabItem.key}
+                onClick={() => setTab(tabItem.key)}
                 className={`px-5 py-3 text-hig-subhead font-medium border-b-2 transition-colors
-                  ${tab === t.key
+                  ${tab === tabItem.key
                     ? 'border-hig-blue text-hig-blue'
                     : 'border-transparent text-hig-text-secondary hover:text-hig-text'
                   }`}
               >
-                {t.label}
+                {tabItem.label}
               </button>
             ))}
           </div>
@@ -513,15 +515,15 @@ export default function ContactDetailPage() {
                 padding: 4, background: '#F2F2F7', borderRadius: 10, width: 'fit-content',
               }}>
                 {[
-                  { key: 'notes',      label: 'Notes'      },
-                  { key: 'tasks',      label: 'Tasks'      },
-                  { key: 'activities', label: 'Activities' },
-                ].map(t => {
-                  const active = interactionSubTab === t.key
+                  { key: 'notes',      label: t('contactDetail.subTabNotes')      },
+                  { key: 'tasks',      label: t('contactDetail.subTabTasks')      },
+                  { key: 'activities', label: t('contactDetail.subTabActivities') },
+                ].map(subTab => {
+                  const active = interactionSubTab === subTab.key
                   return (
                     <button
-                      key={t.key}
-                      onClick={() => setInteractionSubTab(t.key)}
+                      key={subTab.key}
+                      onClick={() => setInteractionSubTab(subTab.key)}
                       style={{
                         padding: '7px 16px', borderRadius: 8, border: 'none', cursor: 'pointer',
                         fontSize: 13, fontWeight: active ? 600 : 500,
@@ -531,7 +533,7 @@ export default function ContactDetailPage() {
                         transition: 'all 0.15s',
                       }}
                     >
-                      {t.label}
+                      {subTab.label}
                     </button>
                   )
                 })}
@@ -540,12 +542,12 @@ export default function ContactDetailPage() {
               {/* Notes */}
               {interactionSubTab === 'notes' && (
                 <div className="hig-card p-4">
-                  <h3 className="text-hig-headline mb-3">Notes</h3>
+                  <h3 className="text-hig-headline mb-3">{t('contactDetail.subTabNotes')}</h3>
                   <div className="flex gap-3">
                     <textarea
                       value={noteText}
                       onChange={(e) => setNoteText(e.target.value)}
-                      placeholder="Add a note..."
+                      placeholder={t('contactDetail.addNote')}
                       className="hig-input flex-1 min-h-[60px] resize-y"
                     />
                     <button onClick={handleAddNote} disabled={!noteText.trim()} className="hig-btn-primary self-end">
@@ -553,6 +555,9 @@ export default function ContactDetailPage() {
                     </button>
                   </div>
                   <div className="mt-3 space-y-2">
+                    {contact.interactions.filter((i) => i.type === 'note').length === 0 && (
+                      <p className="text-hig-subhead text-hig-text-secondary py-2">{t('contactDetail.noNotes')}</p>
+                    )}
                     {contact.interactions
                       .filter((i) => i.type === 'note')
                       .map((n) => (
@@ -572,9 +577,9 @@ export default function ContactDetailPage() {
               {interactionSubTab === 'tasks' && (
                 <div className="hig-card p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-hig-headline">Tasks</h3>
+                    <h3 className="text-hig-headline">{t('contactDetail.subTabTasks')}</h3>
                     <button onClick={() => setShowTaskForm(!showTaskForm)} className="hig-btn-ghost gap-1">
-                      <Plus size={14} /> Add Task
+                      <Plus size={14} /> {t('contactDetail.addTask')}
                     </button>
                   </div>
                   {showTaskForm && (
@@ -586,7 +591,7 @@ export default function ContactDetailPage() {
                   )}
                   <div className="space-y-1">
                     {contact.tasks.length === 0 && (
-                      <p className="text-hig-subhead text-hig-text-secondary py-2">No tasks yet.</p>
+                      <p className="text-hig-subhead text-hig-text-secondary py-2">{t('contactDetail.noTasks')}</p>
                     )}
                     {contact.tasks.map((t) => (
                       <div key={t.id} className="flex items-center gap-3 py-2 border-t border-hig-gray-5">
@@ -612,9 +617,9 @@ export default function ContactDetailPage() {
               {interactionSubTab === 'activities' && (
                 <div className="hig-card p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-hig-headline">Activities</h3>
+                    <h3 className="text-hig-headline">{t('contactDetail.subTabActivities')}</h3>
                     <button onClick={() => setShowActivityForm(!showActivityForm)} className="hig-btn-ghost gap-1">
-                      <Plus size={14} /> Add Activity
+                      <Plus size={14} /> {t('contactDetail.logActivity')}
                     </button>
                   </div>
                   {showActivityForm && (
@@ -630,7 +635,7 @@ export default function ContactDetailPage() {
                   )}
                   <div className="space-y-1">
                     {contact.activities.length === 0 && (
-                      <p className="text-hig-subhead text-hig-text-secondary py-2">No activities yet.</p>
+                      <p className="text-hig-subhead text-hig-text-secondary py-2">{t('contactDetail.noActivities')}</p>
                     )}
                     {contact.activities.map((a) => {
                       const Icon = ACTIVITY_ICONS[a.type] || MessageSquare
@@ -785,6 +790,7 @@ function EditContactModal({ editForm, setEditForm, onClose, onSubmit }) {
 
 // ── Confirm Modal ─────────────────────────────────────────────────────────────
 function ConfirmModal({ title, body, danger, onConfirm, onCancel }) {
+  const { t } = useLanguage()
   return (
     <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4" onClick={onCancel}>
       <div
@@ -801,12 +807,12 @@ function ConfirmModal({ title, body, danger, onConfirm, onCancel }) {
           </div>
         </div>
         <div className="flex justify-end gap-3 pt-2">
-          <button onClick={onCancel} className="hig-btn-secondary">Cancel</button>
+          <button onClick={onCancel} className="hig-btn-secondary">{t('common.cancel')}</button>
           <button
             onClick={onConfirm}
             className={danger ? 'hig-btn-primary bg-red-500 hover:bg-red-600 border-red-500' : 'hig-btn-primary'}
           >
-            {danger ? 'Delete' : 'Reset'}
+            {danger ? t('dialog.deleteBtn') : t('dialog.resetBtn')}
           </button>
         </div>
       </div>

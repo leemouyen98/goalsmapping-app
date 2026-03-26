@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { User, Lock, Shield, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useToast } from '../hooks/useToast'
+import { useLanguage } from '../hooks/useLanguage'
 
 // ─── Section card ──────────────────────────────────────────────────────────────
 function SectionCard({ icon: Icon, iconColor, iconBg, title, children }) {
@@ -27,6 +28,7 @@ function SectionCard({ icon: Icon, iconColor, iconBg, title, children }) {
 export default function SettingsPage() {
   const { agent, token } = useAuth()
   const { addToast } = useToast()
+  const { t } = useLanguage()
 
   const [pw, setPw] = useState({ current: '', next: '', confirm: '' })
   const [showPw, setShowPw] = useState({ current: false, next: false, confirm: false })
@@ -40,15 +42,15 @@ export default function SettingsPage() {
     setPwError('')
 
     if (pw.next !== pw.confirm) {
-      setPwError('New passwords do not match.')
+      setPwError(t('settings.errMismatch'))
       return
     }
     if (pw.next.length < 6) {
-      setPwError('New password must be at least 6 characters.')
+      setPwError(t('settings.errTooShort'))
       return
     }
     if (pw.next === pw.current) {
-      setPwError('New password must differ from your current password.')
+      setPwError(t('settings.errSamePassword'))
       return
     }
 
@@ -67,10 +69,10 @@ export default function SettingsPage() {
         setPwError(data.error || 'Failed to update password.')
       } else {
         setPw({ current: '', next: '', confirm: '' })
-        addToast('Password updated successfully.', 'success')
+        addToast(t('settings.pwSuccess'), 'success')
       }
     } catch {
-      setPwError('Network error. Check your connection and try again.')
+      setPwError(t('settings.errNetwork'))
     } finally {
       setPwLoading(false)
     }
@@ -86,8 +88,8 @@ export default function SettingsPage() {
 
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 700, color: '#1C1C1E', lineHeight: 1.2 }}>Settings</h1>
-        <p style={{ fontSize: 14, color: '#8E8E93', marginTop: 4 }}>Manage your account and security preferences.</p>
+        <h1 style={{ fontSize: 26, fontWeight: 700, color: '#1C1C1E', lineHeight: 1.2 }}>{t('settings.title')}</h1>
+        <p style={{ fontSize: 14, color: '#8E8E93', marginTop: 4 }}>{t('settings.subtitle')}</p>
       </div>
 
       {/* ── Profile ───────────────────────────────────────────────────────────── */}
@@ -95,7 +97,7 @@ export default function SettingsPage() {
         icon={User}
         iconColor="#007AFF"
         iconBg="rgba(0,122,255,0.1)"
-        title="Profile"
+        title={t('settings.profile')}
       >
         {/* Avatar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
@@ -116,7 +118,7 @@ export default function SettingsPage() {
         {/* Read-only fields */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
           <div>
-            <label className="hig-label">Agent Code</label>
+            <label className="hig-label">{t('settings.agentCode')}</label>
             <input
               value={agent?.code || '—'}
               readOnly
@@ -125,7 +127,7 @@ export default function SettingsPage() {
             />
           </div>
           <div>
-            <label className="hig-label">Full Name</label>
+            <label className="hig-label">{t('settings.fullName')}</label>
             <input
               value={agent?.name || '—'}
               readOnly
@@ -135,7 +137,7 @@ export default function SettingsPage() {
           </div>
         </div>
         <p style={{ fontSize: 12, color: '#C7C7CC', marginTop: 10 }}>
-          Contact your admin to update your name or agent code.
+          {t('settings.adminNote')}
         </p>
       </SectionCard>
 
@@ -144,18 +146,18 @@ export default function SettingsPage() {
         icon={Lock}
         iconColor="#34C759"
         iconBg="rgba(52,199,89,0.1)"
-        title="Change Password"
+        title={t('settings.changePassword')}
       >
         <form onSubmit={handlePasswordChange} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
-            <label className="hig-label">Current Password</label>
+            <label className="hig-label">{t('settings.currentPassword')}</label>
             <div className="relative">
               <input
                 type={showPw.current ? 'text' : 'password'}
                 value={pw.current}
                 onChange={e => setPw(f => ({ ...f, current: e.target.value }))}
                 className="hig-input pr-10"
-                placeholder="Enter your current password"
+                placeholder={t('settings.phCurrentPw')}
                 required
                 autoComplete="current-password"
               />
@@ -172,14 +174,14 @@ export default function SettingsPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div>
-              <label className="hig-label">New Password</label>
+              <label className="hig-label">{t('settings.newPassword')}</label>
               <div className="relative">
                 <input
                   type={showPw.next ? 'text' : 'password'}
                   value={pw.next}
                   onChange={e => setPw(f => ({ ...f, next: e.target.value }))}
                   className="hig-input pr-10"
-                  placeholder="Min 6 characters"
+                  placeholder={t('settings.phNewPw')}
                   required
                   autoComplete="new-password"
                 />
@@ -194,14 +196,14 @@ export default function SettingsPage() {
               </div>
             </div>
             <div>
-              <label className="hig-label">Confirm New Password</label>
+              <label className="hig-label">{t('settings.confirmPassword')}</label>
               <div className="relative">
                 <input
                   type={showPw.confirm ? 'text' : 'password'}
                   value={pw.confirm}
                   onChange={e => setPw(f => ({ ...f, confirm: e.target.value }))}
                   className="hig-input pr-10"
-                  placeholder="Repeat new password"
+                  placeholder={t('settings.phConfirmPw')}
                   required
                   autoComplete="new-password"
                 />
@@ -236,7 +238,7 @@ export default function SettingsPage() {
               disabled={pwLoading}
               style={{ opacity: pwLoading ? 0.65 : 1, minWidth: 140 }}
             >
-              {pwLoading ? 'Updating…' : 'Update Password'}
+              {pwLoading ? t('settings.updating') : t('settings.updatePassword')}
             </button>
           </div>
         </form>
@@ -250,7 +252,7 @@ export default function SettingsPage() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Shield size={13} style={{ color: '#C7C7CC' }} />
-          <p style={{ fontSize: 12, fontWeight: 500, color: '#8E8E93' }}>GoalsMapping · Financial Planning Suite</p>
+          <p style={{ fontSize: 12, fontWeight: 500, color: '#8E8E93' }}>{t('settings.appLabel')}</p>
         </div>
         <p style={{ fontSize: 11, color: '#C7C7CC' }}>V1.0 · LLH Group</p>
       </div>

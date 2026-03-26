@@ -119,7 +119,7 @@ export default function TopBar({ onMenuToggle }) {
             <div className="px-4 py-3 border-b border-hig-gray-5">
               <p className="text-hig-subhead font-semibold">{agent?.name}</p>
               <p className="text-hig-caption1 text-hig-text-secondary">
-                Agent Code: {agent?.code || '—'}
+                {t('topbar.agentCode')}: {agent?.code || '—'}
               </p>
             </div>
             {/* Language toggle */}
@@ -153,7 +153,7 @@ export default function TopBar({ onMenuToggle }) {
                          text-hig-text hover:bg-hig-gray-6 transition-colors"
             >
               <Settings size={16} />
-              Settings
+              {t('topbar.settings')}
             </button>
             <button
               onClick={logout}
@@ -161,7 +161,7 @@ export default function TopBar({ onMenuToggle }) {
                          text-hig-red hover:bg-red-50 transition-colors"
             >
               <LogOut size={16} />
-              Log Out
+              {t('topbar.logOut')}
             </button>
           </div>
         )}

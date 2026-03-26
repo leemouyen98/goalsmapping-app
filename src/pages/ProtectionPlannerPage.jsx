@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useContacts } from '../hooks/useContacts'
+import { useLanguage } from '../hooks/useLanguage'
 import { getAge } from '../lib/formatters'
 import { formatRMFull, protectionNeed, generateProtectionSummary } from '../lib/calculations'
 import { ArrowLeft, X, Plus, Trash2, Settings, ChevronDown, ChevronUp, AlertTriangle, CheckCircle, TrendingDown, ShieldAlert } from 'lucide-react'
@@ -28,6 +29,7 @@ const RISK_DESC = {
 const roundUp50K = (val) => Math.ceil(Math.max(val, 1) / 50000) * 50000
 
 export default function ProtectionPlannerPage() {
+  const { t } = useLanguage()
   const { id } = useParams()
   const navigate = useNavigate()
   const { contacts, saveProtectionPlan } = useContacts()
@@ -130,9 +132,9 @@ export default function ProtectionPlannerPage() {
     <div className="flex items-center justify-between mb-5">
       <div className="flex items-center gap-1.5">
         {[
-          { n: 1, label: 'Needs Analysis' },
-          { n: 2, label: 'Existing Coverage' },
-          { n: 3, label: 'Planner' },
+          { n: 1, label: t('protection.stepNeeds') },
+          { n: 2, label: t('protection.stepCoverage') },
+          { n: 3, label: t('protection.stepPlanner') },
         ].map((s, idx) => (
           <div key={s.n} className="flex items-center gap-1.5">
             {idx > 0 && <span className="w-5 h-px bg-hig-gray-4" />}
@@ -161,7 +163,7 @@ export default function ProtectionPlannerPage() {
         onClick={() => { setStep(3); setShowAssumptions(true) }}
         className="flex items-center gap-1.5 text-hig-caption1 font-medium text-hig-blue hover:text-blue-700 transition-colors"
       >
-        <Settings size={14} /> Planning Assumptions
+        <Settings size={14} /> {t('protection.planningAssumptions')}
       </button>
     </div>
   )
@@ -209,6 +211,7 @@ export default function ProtectionPlannerPage() {
 // ─── Step 1: Needs Analysis ───────────────────────────────────────────────────
 
 function ProtectionBasicInfo({ plan, updatePlan, setNeed, onContinue }) {
+  const { t } = useLanguage()
   // Calculate totals for right-side summary
   const needsSummary = useMemo(() =>
     RISKS.map((risk) => ({
@@ -323,7 +326,7 @@ function ProtectionBasicInfo({ plan, updatePlan, setNeed, onContinue }) {
         </div>
 
         <div className="flex justify-end">
-          <button onClick={onContinue} className="hig-btn-primary">Continue</button>
+          <button onClick={onContinue} className="hig-btn-primary">{t('common.continue')}</button>
         </div>
       </div>
 
@@ -378,6 +381,7 @@ function ProtectionBasicInfo({ plan, updatePlan, setNeed, onContinue }) {
 // ─── Step 2: Existing Coverage ────────────────────────────────────────────────
 
 function ProtectionExistingCoverage({ plan, setExisting, onBack, onContinue, insuranceTotals = {}, onSyncFromInsurance }) {
+  const { t } = useLanguage()
   // Compute targets for reference
   const targets = useMemo(() =>
     Object.fromEntries(
@@ -429,7 +433,7 @@ function ProtectionExistingCoverage({ plan, setExisting, onBack, onContinue, ins
                 onClick={onSyncFromInsurance}
                 className="hig-btn-ghost text-hig-caption1 text-hig-blue whitespace-nowrap shrink-0 border border-hig-blue/30 hover:bg-hig-blue/10"
               >
-                Sync values ↓
+                {t('protection.syncInsurance')}
               </button>
             </div>
           )}
@@ -489,8 +493,8 @@ function ProtectionExistingCoverage({ plan, setExisting, onBack, onContinue, ins
         </div>
 
         <div className="flex justify-between">
-          <button onClick={onBack} className="hig-btn-ghost gap-1.5"><ArrowLeft size={16} /> Back</button>
-          <button onClick={onContinue} className="hig-btn-primary">Continue</button>
+          <button onClick={onBack} className="hig-btn-ghost gap-1.5"><ArrowLeft size={16} /> {t('common.back')}</button>
+          <button onClick={onContinue} className="hig-btn-primary">{t('common.continue')}</button>
         </div>
       </div>
 
@@ -612,6 +616,7 @@ function buildUrgencyNarrative({ risk, active, plan, monthlyIncome, contactName 
 // ─── Step 3: Protection Planner ───────────────────────────────────────────────
 
 function ProtectionPlanner({ plan, currentAge, contactName, monthlyIncome, updatePlan, showAssumptions, onToggleAssumptions, onBack, insuranceTotals = {} }) {
+  const { t } = useLanguage()
   const [activeRisk, setActiveRisk] = useState('death')
   const [activeTab, setActiveTab] = useState('recommendations')
   const [expandedRecId, setExpandedRecId] = useState(null)
@@ -790,7 +795,7 @@ function ProtectionPlanner({ plan, currentAge, contactName, monthlyIncome, updat
           {/* Back navigation */}
           <div className="flex">
             <button onClick={onBack} className="hig-btn-ghost gap-1.5">
-              <ArrowLeft size={16} /> Back to Existing Coverage
+              <ArrowLeft size={16} /> {t('protection.backToCoverage')}
             </button>
           </div>
         </div>

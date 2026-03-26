@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useLanguage } from '../../hooks/useLanguage'
 import { formatRMFull } from '../../lib/calculations'
 import { projectProvision } from '../../lib/calculations'
 import { Plus, Trash2, ArrowLeft } from 'lucide-react'
@@ -9,6 +10,7 @@ const PROVISION_TYPES = ['Unit Trust', 'Fixed Deposit', 'ASNB', 'Cash Savings', 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2)
 
 export default function ExistingProvision({ plan, currentAge, onChange, onBack, onContinue }) {
+  const { t } = useLanguage()
   const provisions = plan.provisions || []
   const yearsToRetirement = plan.retirementAge - currentAge
 
@@ -65,7 +67,7 @@ export default function ExistingProvision({ plan, currentAge, onChange, onBack, 
                 No existing provisions added yet.
               </p>
               <button onClick={addProvision} className="hig-btn-primary gap-2">
-                <Plus size={16} /> Add Entry
+                <Plus size={16} /> {t('retirement.addProvision')}
               </button>
             </div>
           ) : (
@@ -147,7 +149,7 @@ export default function ExistingProvision({ plan, currentAge, onChange, onBack, 
               ))}
 
               <button onClick={addProvision} className="hig-btn-secondary gap-2 w-full">
-                <Plus size={16} /> Add Entry
+                <Plus size={16} /> {t('retirement.addProvision')}
               </button>
             </div>
           )}
@@ -155,10 +157,10 @@ export default function ExistingProvision({ plan, currentAge, onChange, onBack, 
 
         <div className="flex justify-between">
           <button onClick={onBack} className="hig-btn-ghost gap-1.5">
-            <ArrowLeft size={16} /> Back
+            <ArrowLeft size={16} /> {t('common.back')}
           </button>
           <button onClick={onContinue} className="hig-btn-primary">
-            Continue
+            {t('common.continue')}
           </button>
         </div>
       </div>

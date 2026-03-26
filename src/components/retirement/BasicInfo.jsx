@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useLanguage } from '../../hooks/useLanguage'
 import { formatRMFull, formatPercent, retirementCorpusNeeded, projectEPF, getEPFRate } from '../../lib/calculations'
 import { Info, ExternalLink } from 'lucide-react'
 
@@ -7,6 +8,7 @@ export default function BasicInfo({
   linkedGrossMonthly = 0,   // pulled from Financial Info — gross-income row (monthly)
   onGoToFinancialInfo = null,
 }) {
+  const { t } = useLanguage()
   const yearsToRetirement = plan.retirementAge - currentAge
   const retirementDuration = plan.lifeExpectancy - plan.retirementAge
 
@@ -294,7 +296,7 @@ export default function BasicInfo({
           })()}
 
           <button onClick={onContinue} className="hig-btn-primary w-full">
-            Continue
+            {t('common.continue')}
           </button>
         </div>
       </div>

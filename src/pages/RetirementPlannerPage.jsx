@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useContacts } from '../hooks/useContacts'
+import { useLanguage } from '../hooks/useLanguage'
 import { getAge } from '../lib/formatters'
 import { ArrowLeft, Settings } from 'lucide-react'
 import BasicInfo from '../components/retirement/BasicInfo'
@@ -8,6 +9,7 @@ import ExistingProvision from '../components/retirement/ExistingProvision'
 import RetirementPlanner from '../components/retirement/RetirementPlanner'
 
 export default function RetirementPlannerPage() {
+  const { t } = useLanguage()
   const { id } = useParams()
   const navigate = useNavigate()
   const { contacts, saveRetirementPlan } = useContacts()
@@ -69,7 +71,7 @@ export default function RetirementPlannerPage() {
         <ArrowLeft size={16} /> {contact.name}
       </button>
       <span className="text-hig-text-secondary">/</span>
-      <span className="text-hig-subhead font-medium">Retirement Planner</span>
+      <span className="text-hig-subhead font-medium">{t('contactDetail.retirementPlanner')}</span>
     </div>
   )
 
@@ -78,9 +80,9 @@ export default function RetirementPlannerPage() {
     <div className="flex items-center justify-between mb-5">
       <div className="flex items-center gap-1.5">
         {[
-          { n: 1, label: 'Basic Info' },
-          { n: 2, label: 'Existing Provision' },
-          { n: 3, label: 'Planner' },
+          { n: 1, label: t('retirement.stepBasicInfo') },
+          { n: 2, label: t('retirement.stepProvision') },
+          { n: 3, label: t('retirement.stepPlanner') },
         ].map((s, idx) => (
           <div key={s.n} className="flex items-center gap-1.5">
             {idx > 0 && (
@@ -111,7 +113,7 @@ export default function RetirementPlannerPage() {
         onClick={() => { setStep(3); setShowAssumptions(true) }}
         className="flex items-center gap-1.5 text-hig-caption1 font-medium text-hig-blue hover:text-blue-700 transition-colors"
       >
-        <Settings size={14} /> Planning Assumptions
+        <Settings size={14} /> {t('retirement.planningAssumptions')}
       </button>
     </div>
   )

@@ -9,25 +9,26 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
-
-const NAV_ITEMS = [
-  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/contacts',  label: 'Contacts',  icon: Users },
-]
-
-const BOTTOM_NAV = [
-  { path: '/settings', label: 'Settings', icon: Settings },
-]
+import { useLanguage } from '../../hooks/useLanguage'
 
 export default function Sidebar({ expanded, onToggle }) {
   const location  = useLocation()
   const navigate  = useNavigate()
   const { isAdmin } = useAuth()
+  const { t } = useLanguage()
   const [hovered, setHovered] = useState(false)
   const hoverTimer = useRef(null)
 
-  // Effective open state: pinned by click OR temporarily hovered
   const isOpen = expanded || hovered
+
+  const NAV_ITEMS = [
+    { path: '/dashboard', label: t('nav.dashboard'), icon: LayoutDashboard },
+    { path: '/contacts',  label: t('nav.contacts'),  icon: Users },
+  ]
+
+  const BOTTOM_NAV = [
+    { path: '/settings', label: t('nav.settings'), icon: Settings },
+  ]
 
   const handleMouseEnter = useCallback(() => {
     if (expanded) return
@@ -48,7 +49,6 @@ export default function Sidebar({ expanded, onToggle }) {
 
   return (
     <>
-      {/* Overlay for mobile/tablet when expanded */}
       {expanded && (
         <div
           className="fixed inset-0 bg-black/20 z-20 lg:hidden"
@@ -90,7 +90,7 @@ export default function Sidebar({ expanded, onToggle }) {
             const active = isActive(item)
             return (
               <button
-                key={item.label}
+                key={item.path}
                 onClick={() => navigate(item.path)}
                 className={`
                   w-full flex items-center gap-3 min-h-touch rounded-hig-sm
@@ -112,7 +112,6 @@ export default function Sidebar({ expanded, onToggle }) {
             )
           })}
 
-          {/* Admin-only nav item */}
           {isAdmin && (() => {
             const active = location.pathname.startsWith('/admin')
             return (
@@ -126,12 +125,12 @@ export default function Sidebar({ expanded, onToggle }) {
                     : 'text-hig-text-secondary hover:bg-hig-gray-6'
                   }
                 `}
-                title="Admin"
+                title={t('nav.admin')}
               >
                 <Shield size={22} strokeWidth={active ? 2.2 : 1.8} />
                 {isOpen && (
                   <span className={`text-hig-subhead ${active ? 'font-semibold' : ''} truncate`}>
-                    Admin
+                    {t('nav.admin')}
                   </span>
                 )}
               </button>
@@ -146,7 +145,7 @@ export default function Sidebar({ expanded, onToggle }) {
             const active = isActive(item)
             return (
               <button
-                key={item.label}
+                key={item.path}
                 onClick={() => navigate(item.path)}
                 className={`
                   w-full flex items-center gap-3 min-h-touch

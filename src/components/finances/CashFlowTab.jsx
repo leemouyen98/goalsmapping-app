@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useLanguage } from '../../hooks/useLanguage'
 import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
@@ -147,6 +148,7 @@ function CheckRow({ active, onToggle, iconBg, icon, title, subtitle, onRemove })
 // ── MAIN COMPONENT ─────────────────────────────────────────────────────────
 
 export default function CashFlowTab({ financials, contact, onEditFinancialInfo = null, onDone = null }) {
+  const { t } = useLanguage()
 
   // ── Planning assumptions ────────────────────────────────────────────────
   const [localRetirementAge, setLocalRetirementAge] = useState(contact?.retirementAge ?? 55)
@@ -426,7 +428,7 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-hig-footnote text-hig-blue hover:bg-blue-50 transition-colors whitespace-nowrap"
               >
                 <Edit size={13} />
-                Add/Edit
+                {t('cashflow.editFinancialInfo')}
               </button>
             )}
             <button
@@ -445,15 +447,15 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
         {showSettings && (
           <div className="hig-card p-4">
             <div className="text-hig-caption2 font-semibold text-hig-text-secondary uppercase tracking-wide mb-3">
-              Planning Assumptions
+              {t('cashflow.assumptions')}
             </div>
             <div className="grid grid-cols-5 gap-4">
               {[
-                { label: 'Retirement Age',   value: localRetirementAge, set: setLocalRetirementAge, min: currentAge + 1, max: 80,  step: 1,   suffix: '' },
-                { label: 'Expected Age',     value: expectedAge,        set: setExpectedAge,        min: 60,            max: 100, step: 1,   suffix: '' },
-                { label: 'Savings Growth',   value: savingsRate,        set: setSavingsRate,        min: 0,             max: 20,  step: 0.5, suffix: '%' },
-                { label: 'EPF Dividend',     value: epfDividendRate,    set: setEpfDividendRate,    min: 0,             max: 10,  step: 0.5, suffix: '%' },
-                { label: 'Inflation Rate',   value: inflationRate,      set: setInflationRate,      min: 0,             max: 15,  step: 0.5, suffix: '%' },
+                { label: t('cashflow.retirementAge'),   value: localRetirementAge, set: setLocalRetirementAge, min: currentAge + 1, max: 80,  step: 1,   suffix: '' },
+                { label: t('cashflow.expectedAge'),     value: expectedAge,        set: setExpectedAge,        min: 60,            max: 100, step: 1,   suffix: '' },
+                { label: t('cashflow.savingsGrowth'),   value: savingsRate,        set: setSavingsRate,        min: 0,             max: 20,  step: 0.5, suffix: '%' },
+                { label: t('cashflow.epfDividend'),     value: epfDividendRate,    set: setEpfDividendRate,    min: 0,             max: 10,  step: 0.5, suffix: '%' },
+                { label: t('cashflow.inflationRate'),   value: inflationRate,      set: setInflationRate,      min: 0,             max: 15,  step: 0.5, suffix: '%' },
               ].map(({ label, value, set, min, max, step, suffix }) => (
                 <div key={label}>
                   <label className="hig-label">{label}</label>
@@ -844,17 +846,17 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
         {/* Existing Plans */}
         <div className="hig-card p-4">
           <PanelHeader
-            title="Existing Plans"
-            actionLabel={insurancePlans.length ? 'Deactivate All' : null}
+            title={t('cashflow.existingPlans')}
+            actionLabel={insurancePlans.length ? t('cashflow.deactivateAll') : null}
             onAction={deactivateAllPlans}
             onAdd={() => onEditFinancialInfo?.()}
           />
           {insurancePlans.length === 0 ? (
             <div className="text-center py-4">
-              <div className="text-hig-footnote text-hig-text-secondary mb-2">No insurance plans added</div>
+              <div className="text-hig-footnote text-hig-text-secondary mb-2">{t('cashflow.noPlans')}</div>
               {onEditFinancialInfo && (
                 <button onClick={onEditFinancialInfo} className="text-hig-caption2 text-hig-blue hover:opacity-70">
-                  + Add plans
+                  {t('cashflow.addPlans')}
                 </button>
               )}
             </div>
@@ -881,7 +883,7 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
       {onDone && (
         <div className="flex justify-end mt-4">
           <button onClick={onDone} className="hig-btn-primary gap-2">
-            <CheckCircle2 size={16} /> Done
+            <CheckCircle2 size={16} /> {t('cashflow.done')}
           </button>
         </div>
       )}
