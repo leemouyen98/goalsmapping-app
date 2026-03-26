@@ -3,7 +3,7 @@ import {
 } from '@react-pdf/renderer'
 import { formatRMFull } from '../../lib/calculations'
 
-const getLogo = () => `${window.location.origin}/assets/colourful-llh-logo.jpg`
+const getLogo = () => `${window.location.origin}/assets/sora-logo.png`
 
 // ─── Colour palette ───────────────────────────────────────────────────────────
 const C = {
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1.5,
     borderBottomColor: C.blue,
   },
-  logo: { width: 80, height: 28, objectFit: 'contain' },
+  logo: { width: 100, height: 45, objectFit: 'contain' },
   headerRight: { alignItems: 'flex-end' },
   headerTitle: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: C.blue },
   headerSub:   { fontSize: 8, color: C.gray2, marginTop: 2 },
