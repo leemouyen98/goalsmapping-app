@@ -6,7 +6,7 @@ import { useLanguage } from '../../hooks/useLanguage'
 
 export default function TopBar({ onMenuToggle }) {
   const { agent, logout } = useAuth()
-  const { lang, toggle: toggleLang } = useLanguage()
+  const { lang, toggle: toggleLang, t } = useLanguage()
   const location = useLocation()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
