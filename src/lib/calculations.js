@@ -1,5 +1,5 @@
 /**
- * GoalsMapping — Financial Calculation Engine
+ * HLA — Financial Calculation Engine
  * All calculations are pure functions. No side effects. Fully testable.
  */
 
@@ -375,6 +375,15 @@ export function generateRetirementProjection({
       provBal *= (1 + avgProvReturn / 100)
       provBalNoRec *= (1 + avgProvReturn / 100)
       recBal *= (1 + avgRecRate / 100)
+      // At retirement, EPF is released and converted into Cash Savings.
+      // Each bucket has already grown at its own rate for the retirement year;
+      // now merge EPF into provisions so drawdown uses a single unified pool.
+      if (includeEPF) {
+        provBal += epfBal
+        provBalNoRec += epfBalNoRec
+        epfBal = 0
+        epfBalNoRec = 0
+      }
 
     } else {
       // ── Drawdown Phase (age > retirementAge) ──
@@ -384,18 +393,13 @@ export function generateRetirementProjection({
         Math.pow(1 + inflationRate / 100, yearsIntoRetirement)
 
       // Step 1: All buckets grow at post-retirement return
-      epfBal *= (1 + postRetirementReturn / 100)
+      // (epfBal is 0 post-retirement — merged into provBal at retirement year)
       provBal *= (1 + postRetirementReturn / 100)
       recBal *= (1 + postRetirementReturn / 100)
-      epfBalNoRec *= (1 + postRetirementReturn / 100)
       provBalNoRec *= (1 + postRetirementReturn / 100)
 
-      // Step 2: Deduct expenses sequentially — EPF first, then provisions, then recommendations
-      let toDeduct = Math.min(annualExpense, epfBal + provBal + recBal)
-
-      const epfDraw = Math.min(epfBal, toDeduct)
-      epfBal = Math.max(0, epfBal - epfDraw)
-      toDeduct -= epfDraw
+      // Step 2: Deduct expenses — provisions first, then recommendations
+      let toDeduct = Math.min(annualExpense, provBal + recBal)
 
       const provDraw = Math.min(provBal, toDeduct)
       provBal = Math.max(0, provBal - provDraw)
@@ -404,15 +408,9 @@ export function generateRetirementProjection({
       const recDraw = Math.min(recBal, toDeduct)
       recBal = Math.max(0, recBal - recDraw)
 
-      // No-rec scenario: EPF first, then provisions
-      let toDeductNoRec = Math.min(annualExpense, epfBalNoRec + provBalNoRec)
-
-      const epfDrawNoRec = Math.min(epfBalNoRec, toDeductNoRec)
-      epfBalNoRec = Math.max(0, epfBalNoRec - epfDrawNoRec)
-      toDeductNoRec -= epfDrawNoRec
-
-      const provDrawNoRec = Math.min(provBalNoRec, toDeductNoRec)
-      provBalNoRec = Math.max(0, provBalNoRec - provDrawNoRec)
+      // No-rec scenario
+      let toDeductNoRec = Math.min(annualExpense, provBalNoRec)
+      provBalNoRec = Math.max(0, provBalNoRec - toDeductNoRec)
     }
 
     const totalFund = epfBal + provBal + recBal

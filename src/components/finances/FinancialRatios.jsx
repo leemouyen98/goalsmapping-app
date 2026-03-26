@@ -106,8 +106,8 @@ export default function FinancialRatios({ financials, contact }) {
       totalLiabilities = liabilities.reduce((s, r) => s + (Number(r.principal) || 0), 0)
 
       const savingsRow  = assets.find(r => r.id === 'savings-cash')
-      const fleksiRow   = assets.find(r => r.id === 'epf-fleksibel')
-      liquidAssets      = (Number(savingsRow?.amount) || 0) + (Number(fleksiRow?.amount) || 0)
+      const epfRow      = assets.find(r => r.id === 'epf-all')
+      liquidAssets      = (Number(savingsRow?.amount) || 0) + (Number(epfRow?.amount) || 0)
 
       const grossRow    = income.find(r => r.id === 'gross-income')
       const bonusRow    = income.find(r => r.id === 'bonus')
