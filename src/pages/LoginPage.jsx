@@ -123,6 +123,24 @@ export default function LoginPage() {
               />
             </div>
 
+            {/* App identity */}
+            <div style={{ marginBottom: 20 }}>
+              <p style={{
+                color: 'rgba(255,255,255,0.5)',
+                fontSize: 12, fontWeight: 600,
+                letterSpacing: '1.5px', textTransform: 'uppercase',
+                marginBottom: 2,
+              }}>
+                Sora by LLH Group
+              </p>
+              <p style={{
+                color: 'rgba(255,255,255,0.28)',
+                fontSize: 11, letterSpacing: '0.4px',
+              }}>
+                Insurance, Risk &amp; Benefits Advisory
+              </p>
+            </div>
+
             {/* Tagline */}
             <h1 style={{
               color: 'white',
@@ -204,7 +222,7 @@ export default function LoginPage() {
               style={{ height: 50, width: 'auto', maxWidth: 220, objectFit: 'contain' }}
             />
           </div>
-          <p style={{ color: '#AEAEB2', fontSize: 13 }}>Agent Portal</p>
+          <p style={{ color: '#AEAEB2', fontSize: 13 }}>Insurance, Risk &amp; Benefits Advisory</p>
         </div>
 
         <div style={{ width: '100%', maxWidth: 364, display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center' }}>
