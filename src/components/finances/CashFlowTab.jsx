@@ -222,7 +222,7 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
       annualIncome:   income.reduce((s, r) => s + toAnnual(r.amount, r.frequency), 0),
       annualExpenses: expenses.reduce((s, r) => s + toAnnual(r.amount, r.frequency), 0),
       initialSavings: Number(assets.find((a) => a.id === 'savings-cash')?.amount)     || 0,
-      initialEpf:     Number(assets.find((a) => a.id === 'epf-persaraan')?.amount)    || 0,
+      initialEpf:     Number(assets.find((a) => a.id === 'epf-all')?.amount)           || 0,
     }
   }, [financials])
 
