@@ -11,6 +11,82 @@ export function toAnnual(amount, frequency) {
   return (Number(amount) || 0) * (ANNUAL_MULTIPLIER[frequency] ?? 12)
 }
 
+
+export function toMonthly(amount, frequency) {
+  const annual = toAnnual(amount, frequency)
+  return annual / 12
+}
+
+function safeNumber(value) {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+export function buildLinkedPlanningCommitments(contact, currentAge, retirementAge) {
+  const protectionRecs = Array.isArray(contact?.protectionPlan?.recommendations)
+    ? contact.protectionPlan.recommendations.filter((item) => item?.isSelected)
+    : []
+  const retirementRecs = Array.isArray(contact?.retirementPlan?.recommendations)
+    ? contact.retirementPlan.recommendations.filter((item) => item?.isSelected)
+    : []
+
+  const schedules = []
+
+  protectionRecs.forEach((rec, index) => {
+    const monthlyAmount = toMonthly(rec?.premiumAmount, rec?.frequency || 'Monthly')
+    const years = Math.max(1, safeNumber(rec?.periodYears || rec?.termYears || 20))
+    if (monthlyAmount <= 0) return
+    schedules.push({
+      id: `protection-${rec?.id || index}`,
+      source: 'protection',
+      label: rec?.name || rec?.policyType || 'Protection premium',
+      monthlyAmount,
+      annualAmount: monthlyAmount * 12,
+      startAge: currentAge,
+      endAge: currentAge + years - 1,
+    })
+  })
+
+  retirementRecs.forEach((rec, index) => {
+    const monthlyAmount = safeNumber(rec?.monthlyAmount)
+    const years = Math.max(1, safeNumber(rec?.periodYears || Math.max(retirementAge - currentAge, 1)))
+    if (monthlyAmount > 0) {
+      schedules.push({
+        id: `retirement-${rec?.id || index}`,
+        source: 'retirement',
+        label: rec?.name || `Retirement contribution ${index + 1}`,
+        monthlyAmount,
+        annualAmount: monthlyAmount * 12,
+        startAge: currentAge,
+        endAge: Math.min(retirementAge - 1, currentAge + years - 1),
+      })
+    }
+  })
+
+  const oneOffRetirementNeeds = retirementRecs
+    .map((rec, index) => ({
+      id: `retirement-lump-${rec?.id || index}`,
+      source: 'retirement',
+      label: rec?.name || `Retirement lump sum ${index + 1}`,
+      amount: safeNumber(rec?.lumpSum),
+      age: currentAge,
+    }))
+    .filter((item) => item.amount > 0)
+
+  const protectionMonthly = schedules.filter((item) => item.source === 'protection').reduce((sum, item) => sum + item.monthlyAmount, 0)
+  const retirementMonthly = schedules.filter((item) => item.source === 'retirement').reduce((sum, item) => sum + item.monthlyAmount, 0)
+  const oneOffToday = oneOffRetirementNeeds.reduce((sum, item) => sum + item.amount, 0)
+
+  return {
+    schedules,
+    oneOffRetirementNeeds,
+    protectionMonthly,
+    retirementMonthly,
+    totalMonthly: protectionMonthly + retirementMonthly,
+    oneOffToday,
+  }
+}
+
 export function formatRMCompact(value) {
   if (value === undefined || value === null || Number.isNaN(Number(value))) return '—'
   const numeric = Number(value)
@@ -43,6 +119,8 @@ export function projectCashFlow({
   epfDividendRate,
   goals,
   scenarios,
+  linkedCommitments = [],
+  oneOffNeeds = [],
 }) {
   const rows = []
   let pool = Number(initialSavings) || 0
@@ -65,7 +143,13 @@ export function projectCashFlow({
     const goalLumpSum = goals
       .filter((goal) => goal.active && goal.age === age)
       .reduce((sum, goal) => sum + (Number(goal.amount) || 0), 0)
-    const inflatedExpenses = annualExpenses * Math.pow(1 + inflation, yearIndex) + goalLumpSum
+    const linkedAnnualCommitments = linkedCommitments
+      .filter((item) => age >= item.startAge && age <= item.endAge)
+      .reduce((sum, item) => sum + (Number(item.annualAmount) || 0), 0)
+    const linkedOneOff = oneOffNeeds
+      .filter((item) => item.age === age)
+      .reduce((sum, item) => sum + (Number(item.amount) || 0), 0)
+    const inflatedExpenses = annualExpenses * Math.pow(1 + inflation, yearIndex) + goalLumpSum + linkedAnnualCommitments + linkedOneOff
 
     let takeHomeIncomeUsed = 0
     let cashUsed = 0
@@ -96,6 +180,8 @@ export function projectCashFlow({
       cashUsed: Math.round(cashUsed),
       shortfall: Math.round(shortfall),
       cashSavingsEOY: Math.round(pool),
+      linkedAnnualCommitments: Math.round(linkedAnnualCommitments),
+      linkedOneOff: Math.round(linkedOneOff),
     })
   }
 
@@ -134,7 +220,7 @@ export function buildInsurancePlans(financials) {
   }))
 }
 
-export function buildCashFlowRecommendations({ financials, scenarios, shortfallSummary, t }) {
+export function buildCashFlowRecommendations({ financials, scenarios, shortfallSummary, linkedPlans = null, t }) {
   const policies = Array.isArray(financials?.insurance) ? financials.insurance : []
   const hasPolicy = (...keywords) =>
     policies.some((policy) =>
@@ -195,5 +281,14 @@ export function buildCashFlowRecommendations({ financials, scenarios, shortfallS
     })
   }
 
+
+  if (linkedPlans && linkedPlans.totalMonthly > 0) {
+    recommendations.unshift({
+      id: 'linked-plans',
+      label: 'Linked planning load',
+      desc: `Selected retirement and protection recommendations add ${formatRMCompact(linkedPlans.totalMonthly * 12)} per year before any new advice is layered on.`,
+      priority: linkedPlans.totalMonthly * 12 > ((shortfallSummary?.total || 0) / Math.max((shortfallSummary?.end || 1) - (shortfallSummary?.start || 0) + 1, 1)),
+    })
+  }
   return recommendations.sort((a, b) => Number(b.priority) - Number(a.priority))
 }
