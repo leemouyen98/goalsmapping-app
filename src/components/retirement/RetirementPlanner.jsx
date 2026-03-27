@@ -68,6 +68,10 @@ export default function RetirementPlanner({ plan, currentAge, contactName, linke
       ))
     : 0
 
+  // shortfallAmount drives recommendation tiers and the TVM modal shortcut.
+  // Must be declared BEFORE the recommendationTiers useMemo that depends on it.
+  const shortfallAmount = projection.shortfall || 0
+
   const statusColor = projection.isFullyFunded
     ? 'hig-green'
     : projection.coveragePercent >= 75
