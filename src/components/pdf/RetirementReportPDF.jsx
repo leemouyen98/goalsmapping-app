@@ -275,7 +275,7 @@ export function RetirementReportDocument({ plan, projection, contact, agentName 
   const provisions      = plan.provisions    || []
   const recommendations = (plan.recommendations || []).filter((r) => r.isSelected)
   const currentAge      = contact?.currentAge || projection.currentAge || 30
-  const retireAge       = plan.retirementAge  || 60
+  const retireAge       = plan.retirementAge  || 55
   const lifeExp         = plan.lifeExpectancy || 100
 
   const today = new Date().toLocaleDateString('en-MY', {

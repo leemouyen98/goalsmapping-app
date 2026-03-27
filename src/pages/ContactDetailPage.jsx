@@ -122,7 +122,7 @@ export default function ContactDetailPage() {
       dob: contact.dob,
       mobile: contact.mobile || '',
       employment: contact.employment || '',
-      retirementAge: contact.retirementAge ?? 60,
+      retirementAge: contact.retirementAge ?? 55,
       reviewDate: contact.reviewDate || '',
       reviewFrequency: contact.reviewFrequency || '',
       notes: contact.notes || '',

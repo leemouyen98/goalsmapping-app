@@ -81,7 +81,7 @@ export default function BasicInfo({
               <div className="flex items-center gap-3">
                 <input
                   type="range"
-                  min={currentAge + 1} max={75}
+                  min={50} max={75}
                   value={plan.retirementAge}
                   onChange={set('retirementAge')}
                   className="flex-1 accent-hig-blue"

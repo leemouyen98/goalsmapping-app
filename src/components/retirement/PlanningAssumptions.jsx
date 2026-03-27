@@ -28,7 +28,7 @@ export default function PlanningAssumptions({ plan, currentAge, onChange, onClos
               <div>
                 <label className="hig-label">{t('retirement.retirementAge')}</label>
                 <div className="flex items-center gap-3">
-                  <input type="range" min={55} max={70} value={plan.retirementAge} onChange={set('retirementAge')} className="flex-1 accent-hig-blue" />
+                  <input type="range" min={50} max={75} value={plan.retirementAge} onChange={set('retirementAge')} className="flex-1 accent-hig-blue" />
                   <span className="text-hig-headline text-hig-blue w-8 text-right">{plan.retirementAge}</span>
                 </div>
               </div>
