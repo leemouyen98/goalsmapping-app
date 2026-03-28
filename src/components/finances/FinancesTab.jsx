@@ -148,11 +148,11 @@ function EmptyFinancials({ onEdit }) {
     }}>
       <div style={{
         width: 52, height: 52, borderRadius: '50%',
-        background: 'rgba(0,122,255,0.08)',
+        background: 'rgba(46,150,255,0.08)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         marginBottom: 14,
       }}>
-        <Wallet size={22} style={{ color: '#007AFF' }} />
+        <Wallet size={22} style={{ color: '#2E96FF' }} />
       </div>
       <p style={{ fontSize: 16, fontWeight: 600, color: '#1C1C1E', marginBottom: 6 }}>
         No financial info yet
@@ -164,7 +164,7 @@ function EmptyFinancials({ onEdit }) {
         onClick={onEdit}
         style={{
           display: 'flex', alignItems: 'center', gap: 6,
-          background: '#007AFF', color: 'white',
+          background: '#2E96FF', color: 'white',
           border: 'none', borderRadius: 10,
           padding: '10px 20px',
           fontSize: 14, fontWeight: 600, cursor: 'pointer',
@@ -404,10 +404,10 @@ export default function FinancesTab({ contact, onUpdateFinancials }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{
                     width: 32, height: 32, borderRadius: 9,
-                    background: 'rgba(0,122,255,0.08)',
+                    background: 'rgba(46,150,255,0.08)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
-                    <Pencil size={14} style={{ color: '#007AFF' }} />
+                    <Pencil size={14} style={{ color: '#2E96FF' }} />
                   </div>
                   <div style={{ textAlign: 'left' }}>
                     <p style={{ fontSize: 14, fontWeight: 600, color: '#1C1C1E', marginBottom: 1 }}>

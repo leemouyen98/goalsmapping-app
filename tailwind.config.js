@@ -4,8 +4,9 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Apple HIG System Colors
-        'hig-blue': '#007AFF',
+        // Sora brand palette
+        'hig-blue': '#2E96FF',   // Sora sky blue (extracted from logo) — replaces stock iOS #007AFF
+        'hig-navy': '#040E1C',   // Sora dark navy — sidebar, login panel
         'hig-green': '#34C759',
         'hig-orange': '#FF9500',
         'hig-red': '#FF3B30',

@@ -12,7 +12,7 @@ import {
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 const QUICK_LINKS = [
-  { label: 'Agency Portal',      icon: Building2,     url: 'https://portal.tokiomarinelife.com.my',                                            color: '#007AFF' },
+  { label: 'Agency Portal',      icon: Building2,     url: 'https://portal.tokiomarinelife.com.my',                                            color: '#2E96FF' },
   { label: 'Sales Illustration', icon: FileText,       url: 'https://tmarinepro.tokiomarinelife.com.my/standalone/',                            color: '#34C759' },
   { label: 'T-Marine Pro',       icon: Shield,         url: 'https://tmarinepro.tokiomarinelife.com.my/',                                       color: '#FF9500' },
   { label: 'Insurance Portals',  icon: Globe,          url: 'https://portals.llhgroup.co',                                                      color: '#AF52DE' },
@@ -75,7 +75,7 @@ function UrgencyBadge({ days, type }) {
     if (days <= 3) return { bg: 'rgba(255,149,0,0.1)', color: '#FF9500', label: `${days}d` }
     if (type === 'birthday') return { bg: 'rgba(255,45,85,0.08)', color: '#FF2D55', label: `${days}d` }
     if (type === 'review') return { bg: 'rgba(175,82,222,0.08)', color: '#AF52DE', label: `${days}d` }
-    return { bg: 'rgba(0,122,255,0.08)', color: '#007AFF', label: `${days}d` }
+    return { bg: 'rgba(46,150,255,0.08)', color: '#2E96FF', label: `${days}d` }
   })()
   return (
     <span style={{
@@ -105,7 +105,7 @@ function Avatar({ name, color }) {
 
 // Type pill for unified feed
 const TYPE_CFG = {
-  task:    { color: '#007AFF', label: 'Task',    Icon: CheckSquare },
+  task:    { color: '#2E96FF', label: 'Task',    Icon: CheckSquare },
   review:  { color: '#AF52DE', label: 'Review',  Icon: CalendarClock },
   birthday:{ color: '#FF2D55', label: 'Birthday',Icon: Cake },
 }
@@ -266,7 +266,7 @@ export default function DashboardPage() {
         {/* ── Stats ───────────────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: 12, marginBottom: 24 }}>
           <StatCard
-            icon={Users} label={t('dashboard.statContacts')} color="#007AFF" loading={contactsLoading}
+            icon={Users} label={t('dashboard.statContacts')} color="#2E96FF" loading={contactsLoading}
             value={stats.total}
             sub={stats.total === 1 ? t('dashboard.statClientProfile') : t('dashboard.statClientProfiles')}
             onClick={() => navigate('/contacts')}
@@ -302,7 +302,7 @@ export default function DashboardPage() {
               {feed.length > 0 && (
                 <button
                   onClick={() => navigate('/contacts')}
-                  style={{ fontSize: 13, color: '#007AFF', fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer' }}
+                  style={{ fontSize: 13, color: '#2E96FF', fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer' }}
                 >
                   {t('dashboard.viewAllContacts')}
                 </button>

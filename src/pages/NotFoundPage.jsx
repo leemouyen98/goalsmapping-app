@@ -11,7 +11,7 @@ export default function NotFoundPage() {
     }}>
       {/* Large 404 */}
       <p style={{
-        fontSize: 96, fontWeight: 800, color: 'rgba(0,122,255,0.08)',
+        fontSize: 96, fontWeight: 800, color: 'rgba(46,150,255,0.08)',
         lineHeight: 1, letterSpacing: -4, marginBottom: 8, userSelect: 'none',
       }}>
         404

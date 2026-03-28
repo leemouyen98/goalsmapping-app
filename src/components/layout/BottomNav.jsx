@@ -27,7 +27,7 @@ export default function BottomNav() {
             onClick={() => navigate(path)}
             className="flex-1 flex flex-col items-center justify-center gap-0.5
                        transition-colors duration-150"
-            style={{ color: active ? '#007AFF' : '#8E8E93' }}
+            style={{ color: active ? '#2E96FF' : '#8E8E93' }}
           >
             <Icon size={22} strokeWidth={active ? 2.2 : 1.8} />
             <span style={{ fontSize: 10, fontWeight: active ? 600 : 500, lineHeight: 1.2 }}>
@@ -35,7 +35,7 @@ export default function BottomNav() {
             </span>
             {active && (
               <span className="absolute top-0 left-1/2 -translate-x-1/2"
-                    style={{ width: 28, height: 2, background: '#007AFF', borderRadius: 1 }} />
+                    style={{ width: 28, height: 2, background: '#2E96FF', borderRadius: 1 }} />
             )}
           </button>
         )

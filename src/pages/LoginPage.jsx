@@ -59,9 +59,9 @@ export default function LoginPage() {
           transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
         }
         .lp-field:focus-within {
-          border-color: #007AFF;
+          border-color: #2E96FF;
           background: white;
-          box-shadow: 0 0 0 3.5px rgba(0,122,255,0.11);
+          box-shadow: 0 0 0 3.5px rgba(46,150,255,0.14);
         }
         .lp-input {
           border: none; outline: none; background: transparent;
@@ -114,12 +114,12 @@ export default function LoginPage() {
         <div style={{
           position: 'absolute', top: '-12%', right: '-14%', pointerEvents: 'none',
           width: 580, height: 580, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(0,122,255,0.14) 0%, transparent 68%)',
+          background: 'radial-gradient(circle, rgba(46,150,255,0.18) 0%, transparent 68%)',
         }} />
         <div style={{
           position: 'absolute', bottom: '-10%', left: '-10%', pointerEvents: 'none',
           width: 460, height: 460, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(10,90,220,0.08) 0%, transparent 68%)',
+          background: 'radial-gradient(circle, rgba(46,150,255,0.09) 0%, transparent 68%)',
         }} />
 
         {/* ── Inner layout ── */}
@@ -278,7 +278,7 @@ export default function LoginPage() {
                         fontSize: 26, fontWeight: 600,
                         letterSpacing: '0.52em',
                         fontFamily: 'ui-monospace, "SF Mono", monospace',
-                        caretColor: '#007AFF',
+                        caretColor: '#2E96FF',
                       }}
                     />
                     {/* Live fill indicator */}
@@ -287,7 +287,7 @@ export default function LoginPage() {
                         <span key={i} style={{
                           width: 6, height: 6, borderRadius: '50%',
                           background: i < agentCode.length
-                            ? (agentCode.length === 6 ? '#30D158' : '#007AFF')
+                            ? (agentCode.length === 6 ? '#30D158' : '#2E96FF')
                             : '#E5E5EA',
                           transition: 'background 0.18s ease',
                         }} />
@@ -357,7 +357,7 @@ export default function LoginPage() {
                     width: '100%', height: 52,
                     borderRadius: 13, border: 'none',
                     background: canSubmit
-                      ? 'linear-gradient(135deg, #1A80FF 0%, #0050CC 100%)'
+                      ? 'linear-gradient(135deg, #2E96FF 0%, #1060D0 100%)'
                       : '#F2F2F7',
                     color: canSubmit ? 'white' : '#AEAEB2',
                     fontSize: 16, fontWeight: 600,

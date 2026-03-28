@@ -15,7 +15,7 @@ import { ProtectionExportButton } from '../components/pdf/ProtectionReportPDF'
 import { uid } from '../lib/formatters'
 const RISKS = ['death', 'tpd', 'aci', 'eci']
 const RISK_SHORT = { death: 'Death', tpd: 'TPD', aci: 'ACI', eci: 'ECI' }
-const RISK_COLOUR = { death: '#007AFF', tpd: '#FF9500', aci: '#AF52DE', eci: '#FF3B30' }
+const RISK_COLOUR = { death: '#2E96FF', tpd: '#FF9500', aci: '#AF52DE', eci: '#FF3B30' }
 const roundUp50K = (val) => Math.ceil(Math.max(val, 1) / 50000) * 50000
 
 const ASSUMPTION_PRESETS = [
@@ -1052,7 +1052,7 @@ function ProtectionPlanner({ plan, currentAge, contactName, monthlyIncome, updat
                       {/* Header — click to expand/collapse */}
                       <div
                         className="flex items-center gap-2 px-3 py-2.5 cursor-pointer select-none"
-                        style={{ backgroundColor: rec.isSelected ? '#007AFF' : '#8E8E93' }}
+                        style={{ backgroundColor: rec.isSelected ? '#2E96FF' : '#8E8E93' }}
                         onClick={() => setExpandedRecId(isExpanded ? null : rec.id)}
                       >
                         <button
@@ -1626,7 +1626,7 @@ function CoverageNeedsTooltip({ active, payload, label, recColour }) {
   if (!d) return null
   const rows = [
     { key: 'existing',    label: 'Existing Coverage',     color: '#34C759' },
-    { key: 'recommended', label: 'Recommended Coverage',  color: recColour || '#007AFF' },
+    { key: 'recommended', label: 'Recommended Coverage',  color: recColour || '#2E96FF' },
     { key: 'shortfall',   label: 'Shortfall',             color: '#FF3B30' },
   ]
   return (
@@ -1664,7 +1664,7 @@ function CoverageGapTooltip({ active, payload, label }) {
   if (!d) return null
   const rows = [
     { key: 'existing',    label: 'Existing Coverage',    color: '#34C759' },
-    { key: 'recommended', label: 'Recommended Coverage', color: '#007AFF' },
+    { key: 'recommended', label: 'Recommended Coverage', color: '#2E96FF' },
     { key: 'shortfall',   label: 'Shortfall',            color: '#FF6B6B' },
   ].filter(({ key }) => (d[key] || 0) > 0)
   return (
@@ -1731,7 +1731,7 @@ function CoverageGapChart({ summary }) {
         )}
         {hasRecs && (
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: '#007AFF' }} />
+            <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: '#2E96FF' }} />
             <span className="text-hig-caption1 text-hig-text-secondary">Recommended</span>
           </div>
         )}
@@ -1770,7 +1770,7 @@ function CoverageGapChart({ summary }) {
             <Tooltip content={<CoverageGapTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
             {/* Bottom to top: existing → recommended → shortfall */}
             <Bar dataKey="existing"    stackId="a" fill="#34C759" name="Existing Coverage"    radius={[0, 0, 0, 0]} />
-            <Bar dataKey="recommended" stackId="a" fill="#007AFF" name="Recommended Coverage" radius={[0, 0, 0, 0]} />
+            <Bar dataKey="recommended" stackId="a" fill="#2E96FF" name="Recommended Coverage" radius={[0, 0, 0, 0]} />
             <Bar dataKey="shortfall"   stackId="a" fill="#FF6B6B" name="Shortfall"             radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>

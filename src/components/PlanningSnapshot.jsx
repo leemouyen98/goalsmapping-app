@@ -22,7 +22,7 @@ function fmtRM(n) {
 const SEVERITY = {
   critical: { bg: '#FFF1F0', border: '#FFCCC7', text: '#FF3B30', icon: XCircle },
   warning:  { bg: '#FFFBE6', border: '#FFE58F', text: '#FF9500', icon: AlertTriangle },
-  info:     { bg: '#F0F5FF', border: '#ADC6FF', text: '#007AFF', icon: AlertTriangle },
+  info:     { bg: '#F0F5FF', border: '#ADC6FF', text: '#2E96FF', icon: AlertTriangle },
   ok:       { bg: '#F6FFED', border: '#B7EB8F', text: '#34C759', icon: CheckCircle2 },
 }
 
@@ -126,7 +126,7 @@ export default function PlanningSnapshot({ contact, onNavigate }) {
         padding: '12px 14px', borderRadius: 12,
         background: '#F0F5FF', border: '1px solid #ADC6FF',
       }}>
-        <div style={{ fontSize: 12, fontWeight: 600, color: '#007AFF', marginBottom: 3 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: '#2E96FF', marginBottom: 3 }}>
           Planning Snapshot
         </div>
         <div style={{ fontSize: 11, color: '#636366' }}>
@@ -183,7 +183,7 @@ export default function PlanningSnapshot({ contact, onNavigate }) {
       {/* Retirement block */}
       <PlanBlock
         icon={TrendingUp}
-        iconColor="#007AFF"
+        iconColor="#2E96FF"
         title="Retirement"
         flag={retFlag}
         onNavigate={onNavigate ? () => onNavigate('retirement') : undefined}

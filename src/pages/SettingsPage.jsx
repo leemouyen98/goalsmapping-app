@@ -95,17 +95,17 @@ export default function SettingsPage() {
       {/* ── Profile ───────────────────────────────────────────────────────────── */}
       <SectionCard
         icon={User}
-        iconColor="#007AFF"
-        iconBg="rgba(0,122,255,0.1)"
+        iconColor="#2E96FF"
+        iconBg="rgba(46,150,255,0.1)"
         title={t('settings.profile')}
       >
         {/* Avatar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
           <div style={{
             width: 56, height: 56, borderRadius: '50%',
-            background: 'rgba(0,122,255,0.1)',
+            background: 'rgba(46,150,255,0.1)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 20, fontWeight: 700, color: '#007AFF', flexShrink: 0,
+            fontSize: 20, fontWeight: 700, color: '#2E96FF', flexShrink: 0,
           }}>
             {initials}
           </div>

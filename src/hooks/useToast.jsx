@@ -6,7 +6,7 @@ const ToastContext = createContext(null)
 const CONFIGS = {
   success: { icon: CheckCircle2, color: '#34C759', bg: 'rgba(52,199,89,0.1)' },
   error:   { icon: XCircle,      color: '#FF3B30', bg: 'rgba(255,59,48,0.1)' },
-  info:    { icon: Info,         color: '#007AFF', bg: 'rgba(0,122,255,0.1)' },
+  info:    { icon: Info,         color: '#2E96FF', bg: 'rgba(46,150,255,0.1)' },
   warning: { icon: AlertTriangle,color: '#FF9500', bg: 'rgba(255,149,0,0.1)' },
 }
 

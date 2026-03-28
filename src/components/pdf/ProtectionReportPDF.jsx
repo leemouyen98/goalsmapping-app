@@ -8,7 +8,7 @@ const getLogo = () => `${window.location.origin}/assets/sora-logo.png`
 // ─── Palette ─────────────────────────────────────────────────────────────────
 const C = {
   navy:   '#060F1E',
-  blue:   '#007AFF',
+  blue:   '#2E96FF',
   green:  '#34C759',
   orange: '#FF9500',
   red:    '#FF3B30',

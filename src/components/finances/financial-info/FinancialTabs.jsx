@@ -504,14 +504,14 @@ export function IncomeTab({ rows, onUpdateFixed, onEdit, onRemove, onAdd }) {
                         display: 'inline-flex', alignItems: 'center', gap: 4,
                         padding: '2px 8px', borderRadius: 20, border: 'none', cursor: 'pointer',
                         fontSize: 11, fontWeight: 600, lineHeight: '16px',
-                        background: epfOn ? 'rgba(0,122,255,0.10)' : 'rgba(142,142,147,0.12)',
-                        color: epfOn ? '#007AFF' : '#8E8E93',
+                        background: epfOn ? 'rgba(46,150,255,0.10)' : 'rgba(142,142,147,0.12)',
+                        color: epfOn ? '#2E96FF' : '#8E8E93',
                         transition: 'all 0.15s',
                       }}
                     >
                       <span style={{
                         width: 8, height: 8, borderRadius: '50%',
-                        background: epfOn ? '#007AFF' : '#C7C7CC',
+                        background: epfOn ? '#2E96FF' : '#C7C7CC',
                         flexShrink: 0,
                         transition: 'background 0.15s',
                       }} />
