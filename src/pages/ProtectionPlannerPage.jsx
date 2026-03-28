@@ -741,6 +741,7 @@ function ProtectionPlanner({ plan, currentAge, contactName, monthlyIncome, updat
   const [activeTab, setActiveTab] = useState('recommendations')
   const [expandedRecId, setExpandedRecId] = useState(null)
   const [savedFlash, setSavedFlash] = useState(false)
+  const [showGapChart, setShowGapChart] = useState(false)
   const saveTimer = useRef(null)
   const flashSaved = useCallback(() => {
     setSavedFlash(true)
@@ -908,8 +909,20 @@ function ProtectionPlanner({ plan, currentAge, contactName, monthlyIncome, updat
             </div>
           </div>
 
-          {/* Coverage Gap Analysis — stacked bar chart across all 4 risks */}
-          <CoverageGapChart summary={summary} />
+          {/* Coverage by Age chart — expenses bar chart */}
+          {plan.needs[activeRisk]?.period > 0 && (
+            <CoverageAgeChart
+              risk={activeRisk}
+              currentAge={currentAge}
+              lumpSum={plan.needs[activeRisk]?.lumpSum || 0}
+              monthly={plan.needs[activeRisk]?.monthly || 0}
+              period={plan.needs[activeRisk]?.period || 0}
+              existing={plan.existing[activeRisk] || 0}
+              withRecs={active.totalCovered || 0}
+              inflationRate={plan.inflationRate}
+              returnRate={plan.returnRate}
+            />
+          )}
 
           {/* Needs breakdown */}
           {(plan.needs[activeRisk]?.lumpSum > 0 || plan.needs[activeRisk]?.monthly > 0) && (
@@ -932,20 +945,17 @@ function ProtectionPlanner({ plan, currentAge, contactName, monthlyIncome, updat
             </div>
           )}
 
-          {/* Coverage by Age chart */}
-          {plan.needs[activeRisk]?.period > 0 && (
-            <CoverageAgeChart
-              risk={activeRisk}
-              currentAge={currentAge}
-              lumpSum={plan.needs[activeRisk]?.lumpSum || 0}
-              monthly={plan.needs[activeRisk]?.monthly || 0}
-              period={plan.needs[activeRisk]?.period || 0}
-              existing={plan.existing[activeRisk] || 0}
-              withRecs={active.totalCovered || 0}
-              inflationRate={plan.inflationRate}
-              returnRate={plan.returnRate}
-            />
-          )}
+          {/* Coverage Gap Analysis — toggled via button */}
+          <div>
+            <button
+              onClick={() => setShowGapChart((v) => !v)}
+              className="hig-btn-ghost gap-1.5"
+            >
+              Coverage Gap Analysis
+              {showGapChart ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            </button>
+            {showGapChart && <CoverageGapChart summary={summary} />}
+          </div>
 
           {/* Back navigation */}
           <div className="flex">
