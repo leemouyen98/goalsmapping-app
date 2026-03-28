@@ -400,6 +400,147 @@ export function ProtectionReportDocument({ plan, summaryData, contact, agentName
         </View>
 
       </Page>
+
+      {/* ── Page 2: Advisory Action Summary ── */}
+      <Page size="A4" style={styles.page}>
+
+        {/* Header — same branding */}
+        <View style={styles.header}>
+          <View style={styles.logoCard}>
+            <Image src={getLogo()} style={styles.logo} />
+          </View>
+          <View style={styles.headerRight}>
+            <Text style={styles.headerTitle}>Advisory Action Summary</Text>
+            <Text style={styles.headerSub}>Prepared by {agentName || 'Henry Lee'} · {today}</Text>
+            <Text style={[styles.headerSub, { marginTop: 1 }]}>PRIVATE &amp; CONFIDENTIAL</Text>
+          </View>
+        </View>
+
+        <View style={styles.content}>
+
+          {/* Client strip */}
+          <View style={styles.clientStrip}>
+            {[
+              { label: 'Client',              value: contact?.name || '—' },
+              { label: 'Protection Readiness', value: `${overallPct}%`,          color: coverageColor(overallPct) },
+              { label: 'Total Gap',            value: fmtRM(totalGap),            color: totalGap > 0 ? C.red : C.green },
+              { label: 'Monthly Premium',      value: (() => {
+                const pm = recommendations.reduce((s, r) => s + (Number(r.premium || r.monthly) || 0), 0)
+                return pm > 0 ? `${fmtRM(pm)}/mo` : '—'
+              })() },
+            ].map(({ label, value, color }) => (
+              <View key={label} style={styles.clientItem}>
+                <Text style={styles.clientLabel}>{label}</Text>
+                <Text style={[styles.clientValue, color ? { color } : {}]}>{value}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Priority gaps — ranked */}
+          <SectionHead title="Priority Action Items" />
+          {(() => {
+            const active = summaryData
+              .filter(r => r.targetCoverage > 0 && r.shortfall > 0)
+              .sort((a, b) => a.coveragePercent - b.coveragePercent)
+            if (active.length === 0) {
+              return (
+                <View style={{ backgroundColor: C.green + '18', borderRadius: 8, padding: 12, marginBottom: 12 }}>
+                  <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: C.green }}>
+                    ✓ All protection gaps are closed
+                  </Text>
+                  <Text style={{ fontSize: 8, color: C.gray2, marginTop: 3 }}>
+                    All 4 risk categories are at 100% or above target coverage.
+                  </Text>
+                </View>
+              )
+            }
+            return active.map((r, i) => {
+              const sev = r.coveragePercent < 30 ? 'CRITICAL' : r.coveragePercent < 70 ? 'HIGH' : 'MODERATE'
+              const sevColor = r.coveragePercent < 30 ? C.red : r.coveragePercent < 70 ? C.orange : C.yellow
+              return (
+                <View key={r.risk} style={{ backgroundColor: C.gray6, borderRadius: 8, padding: 11, marginBottom: 8, borderLeftWidth: 3, borderLeftColor: sevColor }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Text style={{ fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: C.gray3 }}>#{i + 1}</Text>
+                      <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: RISK_COLOR[r.risk] }} />
+                      <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: C.gray1 }}>{RISK_LABEL[r.risk]}</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Text style={{ fontSize: 7, color: C.gray2 }}>{r.coveragePercent}% covered</Text>
+                      <View style={{ backgroundColor: sevColor + '22', borderRadius: 10, paddingHorizontal: 6, paddingVertical: 2 }}>
+                        <Text style={{ fontSize: 6.5, fontFamily: 'Helvetica-Bold', color: sevColor }}>{sev}</Text>
+                      </View>
+                    </View>
+                  </View>
+                  <View style={{ flexDirection: 'row', gap: 18 }}>
+                    <View>
+                      <Text style={{ fontSize: 6.5, color: C.gray3, marginBottom: 1, textTransform: 'uppercase', letterSpacing: 0.3 }}>Target</Text>
+                      <Text style={{ fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: C.gray1 }}>{fmtRM(r.targetCoverage)}</Text>
+                    </View>
+                    <View>
+                      <Text style={{ fontSize: 6.5, color: C.gray3, marginBottom: 1, textTransform: 'uppercase', letterSpacing: 0.3 }}>Existing</Text>
+                      <Text style={{ fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: C.green }}>{fmtRM(r.existingCoverage)}</Text>
+                    </View>
+                    <View>
+                      <Text style={{ fontSize: 6.5, color: C.gray3, marginBottom: 1, textTransform: 'uppercase', letterSpacing: 0.3 }}>Gap to Close</Text>
+                      <Text style={{ fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: C.red }}>{fmtRM(r.shortfall)}</Text>
+                    </View>
+                  </View>
+                </View>
+              )
+            })
+          })()}
+
+          {/* Recommended solutions — compact */}
+          {recommendations.length > 0 && (
+            <>
+              <SectionHead title="Recommended Solutions" />
+              <View style={{ gap: 6, marginBottom: 12 }}>
+                {recommendations.map((rec, i) => {
+                  const pm = Number(rec.premium || rec.monthly) || 0
+                  return (
+                    <View key={rec.id || i} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: C.white, borderRadius: 7, padding: 10, borderWidth: 1, borderColor: C.gray5 }}>
+                      <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: C.blue + '18', alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
+                        <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: C.blue }}>{i + 1}</Text>
+                      </View>
+                      <Text style={{ fontSize: 8.5, fontFamily: 'Helvetica-Bold', flex: 1 }}>{rec.label || `Solution ${i + 1}`}</Text>
+                      {pm > 0 && (
+                        <Text style={{ fontSize: 8, color: C.blue, fontFamily: 'Helvetica-Bold' }}>{fmtRM(pm)}/mo</Text>
+                      )}
+                    </View>
+                  )
+                })}
+              </View>
+            </>
+          )}
+
+          {/* Adviser note */}
+          <SectionHead title="Adviser Notes" />
+          <View style={{ backgroundColor: C.navy + '08', borderRadius: 8, padding: 12, borderWidth: 1, borderColor: C.gray5 }}>
+            <Text style={{ fontSize: 8, color: C.gray2, lineHeight: 1.6 }}>
+              This action summary is based on the information provided during our financial review session.
+              Coverage needs are calculated using current income, dependents, outstanding liabilities, and lifestyle assumptions.
+              {'\n\n'}
+              All amounts are in Malaysian Ringgit (RM). Actual policy premiums are subject to medical underwriting and insurer terms.
+              This document does not constitute a contract of insurance.
+            </Text>
+            <View style={{ marginTop: 12, paddingTop: 10, borderTopWidth: 0.5, borderTopColor: C.gray5 }}>
+              <Text style={{ fontSize: 7, color: C.gray3 }}>Prepared by: {agentName || 'Henry Lee'} · Date: {today}</Text>
+            </View>
+          </View>
+
+        </View>
+
+        {/* Footer */}
+        <View style={styles.footer} fixed>
+          <Text style={styles.footerText}>
+            This report is prepared by {agentName || 'Henry Lee'} of LLH Group for planning purposes only and does not constitute financial advice.
+            Coverage needs are estimates based on information provided and assumed rates. Actual policy terms and conditions apply.
+          </Text>
+          <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
+        </View>
+
+      </Page>
     </Document>
   )
 }

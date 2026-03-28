@@ -9,7 +9,7 @@ import { uid } from '../../lib/formatters'
 
 const PROVISION_FREQUENCIES = ['One-Time', 'Monthly', 'Quarterly', 'Semi-annually', 'Yearly']
 
-export default function RetirementPlanner({ plan, currentAge, contactName, linkedGrossMonthly = 0, onChange, onEditAssumptions, showAssumptions, onToggleAssumptions, activeTab, onActiveTabChange }) {
+export default function RetirementPlanner({ plan, currentAge, contactName, linkedGrossMonthly = 0, onChange, onEditAssumptions, showAssumptions, onToggleAssumptions, activeTab, onActiveTabChange, meetingMode = false }) {
   const { t } = useLanguage()
   const setActiveTab = onActiveTabChange
   const [expandedRec, setExpandedRec] = useState(null)
@@ -447,6 +447,7 @@ export default function RetirementPlanner({ plan, currentAge, contactName, linke
                 </div>
               )}
 
+              {!meetingMode && (
               <div className="border border-hig-gray-5 rounded-hig-sm p-3 space-y-2">
                 <p className="text-hig-subhead font-medium">Sensitivity check</p>
                 <p className="text-hig-caption1 text-hig-text-secondary">Stress-test the result before you present it. Small assumption changes should be visible.</p>
@@ -462,6 +463,7 @@ export default function RetirementPlanner({ plan, currentAge, contactName, linke
                   ))}
                 </div>
               </div>
+              )}
 
               {/* Added recommendations */}
               {(plan.recommendations || []).map((rec, idx) => (
@@ -536,8 +538,8 @@ export default function RetirementPlanner({ plan, currentAge, contactName, linke
       />
     )}
 
-    {/* Planning Assumptions Modal */}
-    {showAssumptions && (
+    {/* Planning Assumptions Modal — hidden in meeting mode */}
+    {showAssumptions && !meetingMode && (
       <PlanningAssumptions
         plan={plan}
         currentAge={currentAge}

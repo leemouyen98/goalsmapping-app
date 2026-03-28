@@ -4,7 +4,7 @@ import { useContacts } from '../hooks/useContacts'
 import { useLanguage } from '../hooks/useLanguage'
 import { getAge } from '../lib/formatters'
 import { formatRMFull, protectionNeed, generateProtectionSummary } from '../lib/calculations'
-import { ArrowLeft, X, Plus, Trash2, Settings, ChevronDown, ChevronUp, AlertTriangle, CheckCircle, TrendingDown, ShieldAlert } from 'lucide-react'
+import { ArrowLeft, X, Plus, Trash2, Settings, ChevronDown, ChevronUp, AlertTriangle, CheckCircle, TrendingDown, ShieldAlert, Presentation } from 'lucide-react'
 import NumberInput from '../components/ui/NumberInput'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -84,6 +84,7 @@ export default function ProtectionPlannerPage() {
 
   const [step, setStep] = useState(1)
   const [showAssumptions, setShowAssumptions] = useState(false)
+  const [meetingMode, setMeetingMode] = useState(false)
 
   const [plan, setPlan] = useState(
     contact?.protectionPlan || {
@@ -180,22 +181,59 @@ export default function ProtectionPlannerPage() {
         ))}
       </div>
 
-      {/* Planning Assumptions — always visible */}
-      <button
-        onClick={() => { setStep(3); setShowAssumptions(true) }}
-        className="flex items-center gap-1.5 text-hig-caption1 font-medium text-hig-blue hover:text-blue-700 transition-colors"
-      >
-        <Settings size={14} /> {t('protection.planningAssumptions')}
-      </button>
+      <div className="flex items-center gap-3">
+        {/* Planning Assumptions — hidden in meeting mode */}
+        {!meetingMode && (
+          <button
+            onClick={() => { setStep(3); setShowAssumptions(true) }}
+            className="flex items-center gap-1.5 text-hig-caption1 font-medium text-hig-blue hover:text-blue-700 transition-colors"
+          >
+            <Settings size={14} /> {t('protection.planningAssumptions')}
+          </button>
+        )}
+        {/* Meeting Mode toggle — only on step 3 */}
+        {step === 3 && (
+          <button
+            onClick={() => setMeetingMode(m => !m)}
+            className={`flex items-center gap-1.5 text-hig-caption1 font-medium transition-colors px-2.5 py-1 rounded-full
+              ${meetingMode
+                ? 'bg-hig-blue text-white'
+                : 'text-hig-text-secondary hover:text-hig-blue border border-hig-gray-4 hover:border-hig-blue'
+              }`}
+          >
+            <Presentation size={13} />
+            {meetingMode ? 'Exit Presentation' : 'Presentation Mode'}
+          </button>
+        )}
+      </div>
     </div>
   )
 
   return (
     <div className="w-full">
-      {breadcrumb}
-      {stepIndicator}
+      {/* Meeting Mode: slim header only */}
+      {meetingMode ? (
+        <div className="flex items-center justify-between mb-4 px-1">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-hig-blue animate-pulse" />
+            <span className="text-hig-caption1 font-semibold text-hig-blue">Presentation Mode</span>
+            <span className="text-hig-caption2 text-hig-text-secondary">· {contact.name} · {t('protection.wealthProtection')}</span>
+          </div>
+          <button
+            onClick={() => setMeetingMode(false)}
+            className="text-hig-caption1 text-hig-text-secondary hover:text-hig-text transition-colors"
+          >
+            Exit ×
+          </button>
+        </div>
+      ) : (
+        <>
+          {breadcrumb}
+          {stepIndicator}
+        </>
+      )}
 
-      {step === 1 && (
+      {step === 1 && !meetingMode && (
         <ProtectionBasicInfo
           plan={plan}
           updatePlan={updatePlan}
@@ -204,7 +242,7 @@ export default function ProtectionPlannerPage() {
           onContinue={() => setStep(2)}
         />
       )}
-      {step === 2 && (
+      {step === 2 && !meetingMode && (
         <ProtectionExistingCoverage
           plan={plan}
           setExisting={setExisting}
@@ -214,17 +252,18 @@ export default function ProtectionPlannerPage() {
           onSyncFromInsurance={onSyncFromInsurance}
         />
       )}
-      {step === 3 && (
+      {(step === 3 || meetingMode) && (
         <ProtectionPlanner
           plan={plan}
           currentAge={currentAge}
           contactName={contact.name}
           monthlyIncome={monthlyIncomeFromFinancials}
           updatePlan={updatePlan}
-          showAssumptions={showAssumptions}
+          showAssumptions={meetingMode ? false : showAssumptions}
           onToggleAssumptions={setShowAssumptions}
-          onBack={() => setStep(2)}
+          onBack={() => { setMeetingMode(false); setStep(2) }}
           insuranceTotals={insuranceTotals}
+          meetingMode={meetingMode}
         />
       )}
     </div>
@@ -696,7 +735,7 @@ function buildUrgencyNarrative({ risk, active, plan, monthlyIncome, contactName 
 
 // ─── Step 3: Protection Planner ───────────────────────────────────────────────
 
-function ProtectionPlanner({ plan, currentAge, contactName, monthlyIncome, updatePlan, showAssumptions, onToggleAssumptions, onBack, insuranceTotals = {} }) {
+function ProtectionPlanner({ plan, currentAge, contactName, monthlyIncome, updatePlan, showAssumptions, onToggleAssumptions, onBack, insuranceTotals = {}, meetingMode = false }) {
   const { t } = useLanguage()
   const [activeRisk, setActiveRisk] = useState('death')
   const [activeTab, setActiveTab] = useState('recommendations')
@@ -944,6 +983,7 @@ function ProtectionPlanner({ plan, currentAge, contactName, monthlyIncome, updat
 
             {activeTab === 'recommendations' && (
               <div className="space-y-3">
+                {!meetingMode && (
                 <div className="flex items-center gap-2">
                   <button onClick={addRecommendation} className="hig-btn-primary flex-1 gap-2">
                     <Plus size={15} /> {t('protection.addRecommendation')}
@@ -954,8 +994,9 @@ function ProtectionPlanner({ plan, currentAge, contactName, monthlyIncome, updat
                     </span>
                   )}
                 </div>
+                )}
 
-                {policyMix.length > 0 && (
+                {!meetingMode && policyMix.length > 0 && (
                   <div className="rounded-hig-sm border border-hig-blue/20 bg-hig-blue/5 p-3">
                     <div className="flex items-start justify-between gap-3">
                       <div>

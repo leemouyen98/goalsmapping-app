@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useContacts } from '../hooks/useContacts'
 import { useLanguage } from '../hooks/useLanguage'
 import { getAge } from '../lib/formatters'
-import { ArrowLeft, Settings } from 'lucide-react'
+import { ArrowLeft, Settings, Presentation } from 'lucide-react'
 import BasicInfo from '../components/retirement/BasicInfo'
 import ExistingProvision from '../components/retirement/ExistingProvision'
 import RetirementPlanner from '../components/retirement/RetirementPlanner'
@@ -26,6 +26,7 @@ export default function RetirementPlannerPage() {
   const [step, setStep] = useState(1) // 1: Basic Info, 2: Existing Provision, 3: Planner
   const [showAssumptions, setShowAssumptions] = useState(false)
   const [activeTab, setActiveTab] = useState('recommendations') // recommendations | provisions
+  const [meetingMode, setMeetingMode] = useState(false)
 
   const currentAge = contact ? getAge(contact.dob) : 30
 
@@ -108,23 +109,59 @@ export default function RetirementPlannerPage() {
         ))}
       </div>
 
-      {/* Planning Assumptions — always visible */}
-      <button
-        onClick={() => { setStep(3); setShowAssumptions(true) }}
-        className="flex items-center gap-1.5 text-hig-caption1 font-medium text-hig-blue hover:text-blue-700 transition-colors"
-      >
-        <Settings size={14} /> {t('retirement.planningAssumptions')}
-      </button>
+      <div className="flex items-center gap-3">
+        {/* Planning Assumptions — visible when not in meeting mode */}
+        {!meetingMode && (
+          <button
+            onClick={() => { setStep(3); setShowAssumptions(true) }}
+            className="flex items-center gap-1.5 text-hig-caption1 font-medium text-hig-blue hover:text-blue-700 transition-colors"
+          >
+            <Settings size={14} /> {t('retirement.planningAssumptions')}
+          </button>
+        )}
+        {/* Meeting Mode toggle — only show once on step 3 */}
+        {step === 3 && (
+          <button
+            onClick={() => setMeetingMode(m => !m)}
+            className={`flex items-center gap-1.5 text-hig-caption1 font-medium transition-colors px-2.5 py-1 rounded-full
+              ${meetingMode
+                ? 'bg-hig-blue text-white'
+                : 'text-hig-text-secondary hover:text-hig-blue border border-hig-gray-4 hover:border-hig-blue'
+              }`}
+          >
+            <Presentation size={13} />
+            {meetingMode ? 'Exit Presentation' : 'Presentation Mode'}
+          </button>
+        )}
+      </div>
     </div>
   )
 
   return (
     <div className="w-full">
-      {breadcrumb}
+      {/* Meeting Mode: slim header only */}
+      {meetingMode ? (
+        <div className="flex items-center justify-between mb-4 px-1">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-hig-blue animate-pulse" />
+            <span className="text-hig-caption1 font-semibold text-hig-blue">Presentation Mode</span>
+            <span className="text-hig-caption2 text-hig-text-secondary">· {contact.name} · {t('contactDetail.retirementPlanner')}</span>
+          </div>
+          <button
+            onClick={() => setMeetingMode(false)}
+            className="text-hig-caption1 text-hig-text-secondary hover:text-hig-text transition-colors"
+          >
+            Exit ×
+          </button>
+        </div>
+      ) : (
+        <>
+          {breadcrumb}
+          {stepIndicator}
+        </>
+      )}
 
-      {stepIndicator}
-
-      {step === 1 && (
+      {step === 1 && !meetingMode && (
         <BasicInfo
           plan={plan}
           currentAge={currentAge}
@@ -136,7 +173,7 @@ export default function RetirementPlannerPage() {
         />
       )}
 
-      {step === 2 && (
+      {step === 2 && !meetingMode && (
         <ExistingProvision
           plan={plan}
           currentAge={currentAge}
@@ -146,18 +183,19 @@ export default function RetirementPlannerPage() {
         />
       )}
 
-      {step === 3 && (
+      {(step === 3 || meetingMode) && (
         <RetirementPlanner
           plan={plan}
           currentAge={currentAge}
           contactName={contact.name}
           linkedGrossMonthly={linkedGrossMonthly}
           onChange={updatePlan}
-          onEditAssumptions={() => setStep(1)}
+          onEditAssumptions={() => { setMeetingMode(false); setStep(1) }}
           showAssumptions={showAssumptions}
           onToggleAssumptions={setShowAssumptions}
           activeTab={activeTab}
           onActiveTabChange={setActiveTab}
+          meetingMode={meetingMode}
         />
       )}
     </div>

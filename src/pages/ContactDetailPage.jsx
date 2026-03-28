@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useLanguage } from '../hooks/useLanguage'
 import FinancesTab from '../components/finances/FinancesTab'
 import CashFlowTab from '../components/finances/CashFlowTab'
+import PlanningSnapshot from '../components/PlanningSnapshot'
 import {
   ArrowLeft, Phone, Calendar, Briefcase, Target, Shield,
   Plus, Check, FileText, PhoneCall, Users, MessageSquare, Clock, Pencil,
@@ -494,6 +495,18 @@ export default function ContactDetailPage() {
               )}
             </div>
           )}
+
+          {/* Planning Snapshot — advisory readiness card */}
+          <div className="hig-card p-4">
+            <PlanningSnapshot
+              contact={contact}
+              onNavigate={(planner) => {
+                if (planner === 'retirement') navigate(`/contacts/${id}/retirement`)
+                else if (planner === 'insurance') navigate(`/contacts/${id}/protection`)
+                else if (planner === 'cashflow') launchCashFlow()
+              }}
+            />
+          </div>
         </div>
 
         {/* Right: Tabs */}
