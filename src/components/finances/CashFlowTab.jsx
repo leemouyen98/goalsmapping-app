@@ -195,6 +195,8 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
             chartData={chartData}
             showCashSavings={showCashSavings}
             onToggleCashSavings={() => setShowCashSavings((value) => !value)}
+            shortfallSummary={shortfallSummary}
+            currentAge={currentAge}
           />
 
           <GoalsPanel

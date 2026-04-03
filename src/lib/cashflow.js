@@ -153,33 +153,49 @@ export function projectCashFlow({
 
     let takeHomeIncomeUsed = 0
     let cashUsed = 0
+    let passiveIncomeUsed = 0
     let shortfall = 0
 
     const surplus = activeIncome - inflatedExpenses
     if (surplus >= 0) {
       takeHomeIncomeUsed = inflatedExpenses
       pool = pool * (1 + savingsGrowth) + surplus
+      if (epfLocked > 0) epfLocked *= 1 + epfGrowth
     } else {
       takeHomeIncomeUsed = activeIncome
       const deficit = inflatedExpenses - activeIncome
+
+      // Step 1: cover from cash pool
       if (pool >= deficit) {
         cashUsed = deficit
         pool = pool * (1 + savingsGrowth) - deficit
+        if (epfLocked > 0) epfLocked *= 1 + epfGrowth
       } else {
         cashUsed = pool
-        shortfall = deficit - pool
         pool = 0
+        const afterCash = deficit - cashUsed
+
+        // Step 2: cover remaining from EPF / passive income
+        const grownEpf = epfLocked * (1 + epfGrowth)
+        if (grownEpf >= afterCash) {
+          passiveIncomeUsed = afterCash
+          epfLocked = grownEpf - afterCash
+        } else {
+          passiveIncomeUsed = grownEpf
+          shortfall = afterCash - grownEpf
+          epfLocked = 0
+        }
       }
     }
-
-    if (epfLocked > 0) epfLocked *= 1 + epfGrowth
 
     rows.push({
       age,
       takeHomeIncomeUsed: Math.round(takeHomeIncomeUsed),
       cashUsed: Math.round(cashUsed),
+      passiveIncomeUsed: Math.round(passiveIncomeUsed),
       shortfall: Math.round(shortfall),
       cashSavingsEOY: Math.round(pool),
+      epfEOY: Math.round(epfLocked),
       linkedAnnualCommitments: Math.round(linkedAnnualCommitments),
       linkedOneOff: Math.round(linkedOneOff),
     })
