@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Plus, Pencil, Trash2, Shield, X, ChevronDown, ChevronUp } from 'lucide-react'
 import { formatRMFull } from '../../lib/calculations'
+import { InsuranceExportButton } from '../pdf/InsurancePoliciesPDF'
 
 const POLICY_TYPES = [
   'Life',
@@ -47,7 +48,7 @@ const EMPTY_POLICY = {
   },
 }
 
-export default function InsuranceTab({ financials, onSave }) {
+export default function InsuranceTab({ financials, onSave, contact }) {
   const policies = financials.insurance || []
   const [editingIdx, setEditingIdx] = useState(null) // null | 'new' | index
   const [form, setForm] = useState(null)
@@ -246,8 +247,9 @@ export default function InsuranceTab({ financials, onSave }) {
         ))}
       </div>
 
-      {/* Add Button */}
-      <div className="flex justify-end">
+      {/* Actions */}
+      <div className="flex justify-end gap-2">
+        <InsuranceExportButton policies={policies} contact={contact} />
         <button onClick={openAdd} className="hig-btn-ghost gap-1.5"><Plus size={14} /> Add Policy</button>
       </div>
 

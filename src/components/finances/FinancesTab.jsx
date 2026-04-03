@@ -427,7 +427,7 @@ export default function FinancesTab({ contact, onUpdateFinancials }) {
 
       {/* ── Insurance tab ── */}
       {subTab === 'insurance' && (
-        <InsuranceTab financials={financials} onSave={handleSave} />
+        <InsuranceTab financials={financials} onSave={handleSave} contact={contact} />
       )}
 
       {/* ── Ratios tab ── */}
