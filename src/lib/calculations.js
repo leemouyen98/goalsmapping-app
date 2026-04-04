@@ -476,11 +476,22 @@ export function generateRetirementProjection({
   // Guard all numeric outputs
   const safeNum = (v) => (Number.isFinite(v) ? v : 0)
 
+  // Dynamic simulation is the source of truth.
+  // If the year-by-year model shows existing funds (no recs) last to life expectancy,
+  // the gap is genuinely zero — no recommendation needed.
+  // If the year-by-year model WITH recommendations covers to life expectancy, plan is fully funded.
+  const dynamicNoRecOk  = (fundsRunOutAge  || 0) >= lifeExpectancy
+  const dynamicWithRecOk = (fundsRunOutWithRec || 0) >= lifeExpectancy
+
+  const reconciledShortfall = dynamicNoRecOk ? 0 : Math.max(0, safeNum(shortfall))
+  const reconciledSurplus   = dynamicNoRecOk && shortfall < 0 ? Math.abs(safeNum(shortfall)) : 0
+  const reconciledFullyFunded = dynamicWithRecOk || totalCovered >= targetAmount
+
   return {
     targetAmount: safeNum(targetAmount),
     totalCovered: safeNum(totalCovered),
-    shortfall: Math.max(0, safeNum(shortfall)),
-    surplus: shortfall < 0 ? Math.abs(safeNum(shortfall)) : 0,
+    shortfall: reconciledShortfall,
+    surplus: reconciledSurplus,
     coveragePercent: safeNum(coveragePercent),
     monthlyAtRetirement: safeNum(monthlyAtRetirement),
     epfAtRetirement: safeNum(epfAtRetirement),
@@ -489,7 +500,7 @@ export function generateRetirementProjection({
     provisionDetails,
     fundsRunOutAge: Math.min(safeNum(fundsRunOutAge) || lifeExpectancy, lifeExpectancy),
     fundsRunOutWithRec: Math.min(safeNum(fundsRunOutWithRec) || lifeExpectancy, lifeExpectancy),
-    isFullyFunded: totalCovered >= targetAmount,
+    isFullyFunded: reconciledFullyFunded,
     chartData,
     yearsToRetirement: safeNum(yearsToRetirement),
     retirementDuration: safeNum(retirementDuration),

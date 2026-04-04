@@ -140,8 +140,6 @@ export default function RetirementPlanner({ plan, currentAge, contactName, linke
 
   const recommendationTiers = useMemo(() => {
     const yearsToRet = Math.max(1, (plan.retirementAge || 55) - currentAge)
-    const moderateYears = Math.min(12, yearsToRet)
-    const comfortYears = Math.min(20, yearsToRet)
     const accumulationRate = 5 // standard accumulation assumption for new investment recommendations
 
     const buildMonthly = (targetShortfall, years) => {
@@ -149,70 +147,37 @@ export default function RetirementPlanner({ plan, currentAge, contactName, linke
       return Math.max(0, Math.round(tvmSolve({ fv: targetShortfall, pv: 0, rate: accumulationRate, n: years, frequency: 12 }, 'pmt')) || 0)
     }
 
-    const buildLumpSum = (targetShortfall) => {
-      if (!targetShortfall) return 0
-      return Math.max(0, Math.round(tvmSolve({ fv: targetShortfall, pmt: 0, rate: accumulationRate, n: yearsToRet, frequency: 12 }, 'pv')) || 0)
-    }
+    const y20 = Math.min(20, yearsToRet)
+    const y10 = Math.min(10, yearsToRet)
 
     return [
       {
-        key: 'minimum',
-        label: 'Minimum path',
-        description: 'Close about 70% of the current shortfall with a more behaviourally realistic contribution.',
-        monthlyAmount: buildMonthly(shortfallAmount * 0.7, yearsToRet),
+        key: 'until-retirement',
+        label: `Monthly until retirement`,
+        description: `Contribute monthly from now until age ${plan.retirementAge || 55} — ${yearsToRet} year${yearsToRet !== 1 ? 's' : ''} at 5% p.a.`,
+        monthlyAmount: buildMonthly(shortfallAmount, yearsToRet),
         periodYears: yearsToRet,
         lumpSum: 0,
       },
       {
-        key: 'target',
-        label: 'Target path',
-        description: 'Aim to fully close the shortfall across a moderate accumulation period.',
-        monthlyAmount: buildMonthly(shortfallAmount, moderateYears),
-        periodYears: moderateYears,
+        key: '20-year',
+        label: '20-year plan',
+        description: `Spread over ${y20} years at 5% p.a. — lower monthly, longer runway.`,
+        monthlyAmount: buildMonthly(shortfallAmount, y20),
+        periodYears: y20,
         lumpSum: 0,
       },
       {
-        key: 'stronger',
-        label: 'Stronger path',
-        description: 'Blend a one-off lump sum with a longer monthly plan to reduce pressure on monthly cash flow.',
-        monthlyAmount: buildMonthly(shortfallAmount * 0.65, comfortYears),
-        periodYears: comfortYears,
-        lumpSum: buildLumpSum(shortfallAmount * 0.35),
+        key: '10-year',
+        label: '10-year plan',
+        description: `Higher monthly over ${y10} years at 5% p.a. — clears the gap faster.`,
+        monthlyAmount: buildMonthly(shortfallAmount, y10),
+        periodYears: y10,
+        lumpSum: 0,
       },
     ]
   }, [shortfallAmount, plan.retirementAge, currentAge])
 
-  const sensitivityCards = useMemo(() => {
-    const scenarios = [
-      { label: 'Retire 2 years later', overrides: { retirementAge: Math.min((plan.retirementAge || 55) + 2, plan.lifeExpectancy - 1) } },
-      { label: 'Inflation +1%', overrides: { inflationRate: Number(plan.inflationRate || 0) + 1 } },
-      { label: 'Return -1%', overrides: { postRetirementReturn: Math.max(0, Number(plan.postRetirementReturn || 0) - 1) } },
-    ]
-
-    return scenarios.map((scenario) => {
-      const variant = generateRetirementProjection({
-        currentAge,
-        retirementAge: (scenario.overrides.retirementAge ?? plan.retirementAge) || 55,
-        lifeExpectancy: plan.lifeExpectancy || 80,
-        monthlyExpenses: plan.monthlyExpenses || 0,
-        inflationRate: scenario.overrides.inflationRate ?? (plan.inflationRate ?? 4),
-        postRetirementReturn: scenario.overrides.postRetirementReturn ?? (plan.postRetirementReturn ?? 1),
-        includeEPF: plan.includeEPF || false,
-        epfBalance: plan.epfBalance || 0,
-        epfGrowthRate: plan.epfGrowthRate ?? 6,
-        annualIncome: Math.max(plan.annualIncome || 0, linkedGrossMonthly * 12),
-        incomeGrowthRate: plan.incomeGrowthRate ?? 3,
-        provisions: plan.provisions || [],
-        recommendations: plan.recommendations || [],
-      })
-
-      return {
-        label: scenario.label,
-        shortfall: variant.shortfall || 0,
-        coveragePercent: variant.coveragePercent || 0,
-      }
-    })
-  }, [plan, currentAge, linkedGrossMonthly])
 
   return (
     <>
@@ -389,23 +354,26 @@ export default function RetirementPlanner({ plan, currentAge, contactName, linke
 
           {activeTab === 'recommendations' && (
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setShowCustomForm(true)}
-                  className="hig-btn-primary flex-1 gap-2"
-                >
-                  <Plus size={16} /> {t('retirement.addNewRecommendation')}
-                </button>
-                {savedFlash && (
-                  <span className="text-hig-caption1 text-hig-green font-medium flex items-center gap-1 shrink-0">
-                    <CheckCircle2 size={13} /> {t('retirement.savedFlash')}
-                  </span>
-                )}
-              </div>
-              {shortfallAmount > 0 && (plan.recommendations || []).length === 0 && (
-                <p className="text-hig-caption1 text-hig-text-secondary">
-                  {t('retirement.toAchieveObjective')}
-                </p>
+              {/* Show "Add custom" shortcut only when fully funded (no preset tiers visible) */}
+              {shortfallAmount === 0 && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowCustomForm(true)}
+                    className="hig-btn-primary flex-1 gap-2"
+                  >
+                    <Plus size={16} /> {t('retirement.addNewRecommendation')}
+                  </button>
+                  {savedFlash && (
+                    <span className="text-hig-caption1 text-hig-green font-medium flex items-center gap-1 shrink-0">
+                      <CheckCircle2 size={13} /> {t('retirement.savedFlash')}
+                    </span>
+                  )}
+                </div>
+              )}
+              {savedFlash && shortfallAmount > 0 && (
+                <span className="text-hig-caption1 text-hig-green font-medium flex items-center gap-1">
+                  <CheckCircle2 size={13} /> {t('retirement.savedFlash')}
+                </span>
               )}
 
               <div className="rounded-hig-sm bg-hig-gray-6 p-3 space-y-2">
@@ -420,7 +388,6 @@ export default function RetirementPlanner({ plan, currentAge, contactName, linke
 
               {shortfallAmount > 0 && (
                 <div className="space-y-2">
-                  <p className="text-hig-caption1 text-hig-text-secondary">Use a tiered recommendation instead of a single harsh number. That makes the plan easier to explain and easier for a client to accept.</p>
                   {recommendationTiers.map((tier) => (
                     <button
                       key={tier.key}
@@ -432,35 +399,26 @@ export default function RetirementPlanner({ plan, currentAge, contactName, linke
                           <p className="text-hig-subhead font-medium">{tier.label}</p>
                           <p className="text-hig-caption1 text-hig-text-secondary mt-0.5">{tier.description}</p>
                         </div>
-                        <span className="text-[10px] px-2 py-1 rounded-full bg-hig-gray-6 text-hig-text-secondary">Add</span>
+                        <span className="text-[10px] px-2 py-1 rounded-full bg-hig-blue/10 text-hig-blue font-medium">Add</span>
                       </div>
-                      <div className="mt-2 space-y-1">
-                        <p className="text-hig-caption1 text-hig-text">Monthly: <strong>{formatRMFull(tier.monthlyAmount)}</strong> for {tier.periodYears} years</p>
-                        {tier.lumpSum > 0 && (
-                          <p className="text-hig-caption1 text-hig-text">One-off today: <strong>{formatRMFull(tier.lumpSum)}</strong></p>
-                        )}
-                      </div>
+                      <p className="text-hig-title3 text-hig-blue mt-2">{formatRMFull(tier.monthlyAmount)}<span className="text-hig-caption1 text-hig-text-secondary font-normal"> / month</span></p>
                     </button>
                   ))}
-                </div>
-              )}
 
-              {!meetingMode && (
-              <div className="border border-hig-gray-5 rounded-hig-sm p-3 space-y-2">
-                <p className="text-hig-subhead font-medium">Sensitivity check</p>
-                <p className="text-hig-caption1 text-hig-text-secondary">Stress-test the result before you present it. Small assumption changes should be visible.</p>
-                <div className="space-y-2">
-                  {sensitivityCards.map((card) => (
-                    <div key={card.label} className="rounded-hig-sm bg-hig-gray-6 p-2.5 flex items-center justify-between gap-3">
+                  {/* Custom plan */}
+                  <button
+                    onClick={() => setShowCustomForm(true)}
+                    className="w-full text-left p-3 rounded-hig-sm border border-dashed border-hig-gray-3 hover:border-hig-blue hover:bg-blue-50/20 transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-2">
                       <div>
-                        <p className="text-hig-caption1 font-medium text-hig-text">{card.label}</p>
-                        <p className="text-hig-caption2 text-hig-text-secondary">Coverage {card.coveragePercent}%</p>
+                        <p className="text-hig-subhead font-medium">Custom plan</p>
+                        <p className="text-hig-caption1 text-hig-text-secondary mt-0.5">Use the TVM calculator to build any combination of monthly, lump sum, rate or duration.</p>
                       </div>
-                      <p className={`text-hig-caption1 font-medium ${card.shortfall > shortfallAmount ? 'text-hig-red' : 'text-hig-green'}`}>{formatRMFull(card.shortfall)}</p>
+                      <span className="text-[10px] px-2 py-1 rounded-full bg-hig-gray-6 text-hig-text-secondary font-medium shrink-0">Build</span>
                     </div>
-                  ))}
+                  </button>
                 </div>
-              </div>
               )}
 
               {/* Added recommendations */}
