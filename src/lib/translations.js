@@ -331,6 +331,8 @@ const translations = {
     planningParams:        { en: 'Planning Parameters',           zh: '规划参数'           },
     retirementExpense:     { en: 'Retirement Expense',            zh: '退休支出'           },
     epfInfo:               { en: 'EPF Payout Information',        zh: '公积金信息'         },
+    epfInfoDesc:           { en: 'See how EPF supports your monthly retirement income.', zh: '了解公积金如何支持您的退休收入。' },
+    epfEstimatedBalance:   { en: 'Estimated EPF Balance at payout age', zh: '估计公积金结余（退休时）' },
     summaryHeader:         { en: 'Summary',                       zh: '摘要'               },
     retirementDuration:    { en: 'Retirement Duration',           zh: '退休年数'           },
 
@@ -423,7 +425,12 @@ const translations = {
     removeRecConfirm:      { en: 'Remove this recommendation? This cannot be undone.', zh: '删除此建议？此操作无法撤销。' },
 
     // ── Inline provision panel ───────────────────────────────────────────────
-    addEntry:              { en: 'Entry',                                     zh: '添加'               },
+    addEntry:              { en: 'Add Entry',                                 zh: '添加记录'           },
+    entryN:                { en: 'Entry {n}',                                 zh: '记录 {n}'           },
+    atAge:                 { en: 'At Age {age}',                              zh: '{age} 岁时'         },
+    increaseOverYears:     { en: '+{amount} increase over {years} years',     zh: '{years} 年增长 +{amount}' },
+    noChangeOverYears:     { en: 'No change over {years} years',              zh: '{years} 年无变化'   },
+    noProvisionsHint:      { en: 'Click "Add Entry" to add your first entry.',zh: '点击「添加记录」以添加第一条记录。' },
     amountRM:              { en: 'Amount (RM)',                               zh: '金额 (RM)'          },
     noExistingProvisions:  { en: 'No existing provisions.',                   zh: '暂无储备。'         },
     projectedAtAge:        { en: 'Projected at age {age}',                   zh: '{age} 岁时预测额'   },

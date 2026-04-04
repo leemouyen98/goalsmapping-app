@@ -113,7 +113,7 @@ export function tvmSolve(params, solveFor) {
  */
 export function getEPFRate(annualIncome) {
   const monthlySalary = (annualIncome || 0) / 12
-  return monthlySalary > 5000 ? 0.23 : 0.24
+  return monthlySalary >= 5000 ? 0.23 : 0.24
 }
 
 export function projectEPF({ currentBalance, growthRate, annualIncome, incomeGrowthRate, currentAge, retirementAge }) {
@@ -160,10 +160,8 @@ function getFrequencyMultiplier(freq) {
 
 /**
  * Project a single provision's value at retirement.
- * Recurring contributions use annuity-due (beginning-of-period payments):
- *   FV_due = FV_ordinary × (1 + periodicRate)
- * This matches standard Malaysian financial-planning practice where contributions
- * are made at the START of each period (e.g. salary deduction on day 1 of month).
+ * Uses ordinary annuity (end-of-period payments) — matches GoalsMapper's convention.
+ * Any existing balance compounds as a lump sum to retirement.
  */
 export function projectProvision(provision, yearsToRetirement) {
   const { amount, frequency, preRetirementReturn: rate = 1, currentBalance = 0 } = provision
@@ -173,9 +171,7 @@ export function projectProvision(provision, yearsToRetirement) {
     return balanceFV + fvLumpSum(amount, rate, yearsToRetirement)
   }
   const freq = getFrequencyMultiplier(frequency)
-  const periodicRate = rate / 100 / freq
-  // Annuity due: multiply ordinary FV by (1 + periodic rate)
-  return balanceFV + fvAnnuity(amount, rate, yearsToRetirement, freq) * (1 + periodicRate)
+  return balanceFV + fvAnnuity(amount, rate, yearsToRetirement, freq)
 }
 
 /**

@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useLanguage } from '../../hooks/useLanguage'
-import { formatRMFull, formatPercent, retirementCorpusNeeded, projectEPF, getEPFRate } from '../../lib/calculations'
-import { Info, ExternalLink } from 'lucide-react'
+import { formatRMFull, retirementCorpusNeeded, projectEPF } from '../../lib/calculations'
+import { ExternalLink } from 'lucide-react'
 import NumberInput from '../ui/NumberInput'
 
 export default function BasicInfo({
@@ -127,21 +127,27 @@ export default function BasicInfo({
 
         {/* EPF */}
         <div className="hig-card p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-hig-headline">{t('retirement.epfInfo')}</h3>
-            <div
-              className="flex items-center gap-2 cursor-pointer select-none"
-              onClick={() => onChange({ includeEPF: !plan.includeEPF })}
-            >
-              <span className={`text-hig-subhead transition-colors ${plan.includeEPF ? 'text-hig-text' : 'text-hig-text-secondary'}`}>
-                {t('retirement.includeEPF')}
-              </span>
-              <div className={`w-12 h-7 rounded-full transition-colors duration-hig relative
-                ${plan.includeEPF ? 'bg-hig-green' : 'bg-hig-gray-3'}`}
+          <h3 className="text-hig-headline mb-1">{t('retirement.epfInfo')}</h3>
+          <p className="text-hig-subhead text-hig-text-secondary mb-4">{t('retirement.epfInfoDesc')}</p>
+          <div className="mb-4">
+            <label className="hig-label">{t('retirement.includeEPF')} <span className="text-hig-text-secondary font-normal">{t('common.optional')}</span></label>
+            <div className="flex rounded-hig-sm border border-hig-gray-4 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => onChange({ includeEPF: true })}
+                className={`flex-1 py-2 text-hig-subhead font-medium transition-colors
+                  ${plan.includeEPF ? 'bg-hig-blue text-white' : 'bg-white text-hig-text-secondary hover:bg-hig-gray-6'}`}
               >
-                <span className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform duration-hig
-                  ${plan.includeEPF ? 'translate-x-[22px]' : 'translate-x-[3px]'}`} />
-              </div>
+                {t('common.yes')}
+              </button>
+              <button
+                type="button"
+                onClick={() => onChange({ includeEPF: false })}
+                className={`flex-1 py-2 text-hig-subhead font-medium transition-colors border-l border-hig-gray-4
+                  ${!plan.includeEPF ? 'bg-hig-blue text-white' : 'bg-white text-hig-text-secondary hover:bg-hig-gray-6'}`}
+              >
+                {t('common.no')}
+              </button>
             </div>
           </div>
 
@@ -202,8 +208,8 @@ export default function BasicInfo({
                   <p className="text-hig-caption1 text-hig-text-secondary mt-1">
                     {(() => {
                       const monthly = effectiveAnnualIncome / 12
-                      const er = monthly > 5000 ? 12 : 13
-                      const suffix = monthly > 5000 ? t('retirement.epfSalaryHighSuffix') : ''
+                      const er = monthly >= 5000 ? 12 : 13
+                      const suffix = monthly >= 5000 ? t('retirement.epfSalaryHighSuffix') : ''
                       return t('retirement.epfContribNote', { total: 11 + er, er, suffix })
                     })()}
                   </p>
@@ -270,9 +276,9 @@ export default function BasicInfo({
             const erRate = isHighEarner ? 12 : 13
             const totalRate = empRate + erRate
             return (
-              <div className="bg-green-50 rounded-hig-sm p-4 space-y-2">
+              <div className="bg-green-50 rounded-hig-sm p-4 space-y-1">
                 <p className="text-hig-caption1 text-hig-green font-medium">
-                  {t('retirement.epfAtAge', { age: plan.retirementAge })}
+                  {t('retirement.epfEstimatedBalance')}
                 </p>
                 <p className="text-hig-title3 text-hig-green">
                   {formatRMFull(epfProjection.finalBalance)}
@@ -280,16 +286,6 @@ export default function BasicInfo({
                 <p className="text-hig-caption2 text-hig-text-secondary">
                   {t('retirement.atGrowthRate', { rate: plan.epfGrowthRate })}
                 </p>
-                <div className="border-t border-green-200 pt-2 flex items-start gap-1.5 text-hig-caption2 text-hig-text-secondary">
-                  <Info size={11} className="mt-0.5 shrink-0 text-hig-green" />
-                  <span>
-                    {t('retirement.epfContribPrefix', { emp: empRate, er: erRate })} <strong>{totalRate}%</strong>
-                    {isHighEarner
-                      ? t('retirement.epfSalaryHighNote')
-                      : t('retirement.epfSalaryLowNote')}
-                    {t('retirement.epfRateAdjusts')}
-                  </span>
-                </div>
               </div>
             )
           })()}
