@@ -271,15 +271,17 @@ export function generateRetirementProjection({
   selectedRecs.forEach((r) => {
     if (r.type === 'custom') {
       recommendationsAtRetirement += r.futureValue || 0
-    } else {
-      // Preset recommendation
-      const fv = tvmSolve({
-        pv: r.lumpSum || 0,
-        pmt: r.monthlyAmount || 0,
-        rate: r.growthRate || 5,
-        n: r.periodYears || 10,
-        frequency: 12,
-      }, 'fv')
+    } else if (r.monthlyAmount > 0) {
+      // Preset monthly recommendation — two-phase: contribute then coast
+      recommendationsAtRetirement += recMonthlyFV(
+        r.monthlyAmount,
+        r.growthRate || 5,
+        r.periodYears || 10,
+        yearsToRetirement,
+      )
+    } else if (r.lumpSum > 0) {
+      // Preset lump sum — annual compounding to retirement
+      const fv = r.lumpSum * Math.pow(1 + (r.growthRate || 5) / 100, yearsToRetirement)
       recommendationsAtRetirement += Math.round(fv)
     }
   })
@@ -538,6 +540,65 @@ export function generateRetirementProjection({
     yearsToRetirement: safeNum(yearsToRetirement),
     retirementDuration: safeNum(retirementDuration),
   }
+}
+
+// ─── Recommendation Solve Functions (GoalsMapper-verified) ───────────────────
+
+/**
+ * Solve for the monthly PMT needed to cover a retirement shortfall.
+ *
+ * GoalsMapper two-phase approach:
+ *   Phase 1 — monthly contributions at annualRate for contribYears
+ *   Phase 2 — the accumulated FV grows (no new contributions) for remainingYears
+ *
+ *   denom  = fvOrd_monthly(1, r, n_months) × (1 + R)^remainingYears
+ *   PMT    = Math.round(shortfall / denom)
+ *
+ * Verified exact matches: 10yr → 9,590 | 20yr → 5,901
+ */
+export function recMonthlyPMT(shortfall, annualRate, contribYears, totalYears) {
+  if (!shortfall || contribYears <= 0 || totalYears <= 0) return 0
+  const r = annualRate / 100 / 12
+  const n = contribYears * 12
+  const fvOrd = r === 0 ? n : (Math.pow(1 + r, n) - 1) / r
+  const remainingYears = Math.max(0, totalYears - contribYears)
+  const growthFactor = Math.pow(1 + annualRate / 100, remainingYears)
+  return Math.round(shortfall / (fvOrd * growthFactor))
+}
+
+/**
+ * Compute the FV of a monthly-contribution plan at retirement age.
+ *
+ * GoalsMapper display formula:
+ *   Phase 1 — annuity-DUE (contributions grow one extra period)
+ *   Phase 2 — annual growth for remaining years
+ *
+ *   fvDue = fvOrd × (1 + r_monthly)
+ *   FV    = fvDue × (1 + R)^remainingYears
+ *
+ * Verified exact match: pmt=9,590 → FV = 3,778,705
+ */
+export function recMonthlyFV(pmt, annualRate, contribYears, totalYears) {
+  if (!pmt || contribYears <= 0 || totalYears <= 0) return 0
+  const r = annualRate / 100 / 12
+  const n = contribYears * 12
+  const fvOrd = r === 0 ? pmt * n : pmt * ((Math.pow(1 + r, n) - 1) / r)
+  const fvDue = fvOrd * (1 + r)                            // annuity-due adjustment
+  const remainingYears = Math.max(0, totalYears - contribYears)
+  return Math.round(fvDue * Math.pow(1 + annualRate / 100, remainingYears))
+}
+
+/**
+ * Solve for the lump sum needed today to cover a retirement shortfall.
+ *
+ * GoalsMapper: annual discounting only (no monthly compounding).
+ *   LS = Math.round(shortfall / (1 + R)^totalYears)
+ *
+ * Verified exact match: ls = 914,185
+ */
+export function recLumpSum(shortfall, annualRate, totalYears) {
+  if (!shortfall || totalYears <= 0) return 0
+  return Math.round(shortfall / Math.pow(1 + annualRate / 100, totalYears))
 }
 
 // ─── Protection Calculations ─────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef } from 'react'
-import { formatRMFull, generateRetirementProjection, tvmSolve, generateBreakdown, projectProvision } from '../../lib/calculations'
+import { formatRMFull, generateRetirementProjection, tvmSolve, generateBreakdown, projectProvision, recMonthlyPMT, recLumpSum } from '../../lib/calculations'
 import { Plus, ChevronDown, ChevronUp, Trash2, CheckCircle2, AlertTriangle, XCircle, Maximize2, ArrowLeft } from 'lucide-react'
 import RetirementChart from './RetirementChart'
 import PlanningAssumptions from './PlanningAssumptions'
@@ -72,24 +72,21 @@ export default function RetirementPlanner({
   const statusColor = projection.isFullyFunded ? '#34C759' : projection.coveragePercent >= 75 ? '#FF9500' : '#FF3B30'
   const statusLabel = projection.isFullyFunded ? t('retirement.onTrack') : projection.coveragePercent >= 75 ? t('retirement.progressing') : t('retirement.atRisk')
 
-  // ── Recommendation tiers ───────────────────────────────────────────────────
+  // ── Recommendation tiers (GoalsMapper-verified formulas) ──────────────────
+  // Default investment rate matches GoalsMapper hardcoded default: 5% p.a.
+  // Option 1: contribute for min(10, yearsToRet) years, FV grows for remaining years
+  // Option 2: contribute for min(20, yearsToRet) years, FV grows for remaining years
+  // Option 3: lump sum today, annual discounting only (no monthly compounding)
   const tiers = useMemo(() => {
+    const DEFAULT_RATE = 5
     const yearsToRet = Math.max(1, (plan.retirementAge || 55) - currentAge)
     const y10 = Math.min(10, yearsToRet)
-
-    const pmt = (shortfall, years) => {
-      if (!shortfall || years <= 0) return 0
-      return Math.max(0, Math.round(tvmSolve({ fv: shortfall, pv: 0, rate: 5, n: years, frequency: 12 }, 'pmt')) || 0)
-    }
-    const lump = (shortfall, years) => {
-      if (!shortfall || years <= 0) return 0
-      return Math.abs(Math.round(tvmSolve({ fv: shortfall, pmt: 0, rate: 5, n: years, frequency: 12 }, 'pv')) || 0)
-    }
+    const y20 = Math.min(20, yearsToRet)
 
     return {
-      tenYear:        { monthly: pmt(shortfallAmount, y10),       years: y10,       lumpSum: 0 },
-      untilRetirement:{ monthly: pmt(shortfallAmount, yearsToRet), years: yearsToRet, lumpSum: 0 },
-      oneTime:        { monthly: 0,                               years: yearsToRet, lumpSum: lump(shortfallAmount, yearsToRet) },
+      tenYear:        { monthly: recMonthlyPMT(shortfallAmount, DEFAULT_RATE, y10, yearsToRet), years: y10,  lumpSum: 0 },
+      twentyYear:     { monthly: recMonthlyPMT(shortfallAmount, DEFAULT_RATE, y20, yearsToRet), years: y20,  lumpSum: 0 },
+      oneTime:        { monthly: 0, years: yearsToRet, lumpSum: recLumpSum(shortfallAmount, DEFAULT_RATE, yearsToRet) },
       yearsToRet,
     }
   }, [shortfallAmount, plan.retirementAge, currentAge])
@@ -333,15 +330,15 @@ export default function RetirementPlanner({
                         </div>
                       </button>
 
-                      {/* Monthly until retirement */}
+                      {/* 20-year monthly */}
                       <button
-                        onClick={() => addPreset(tiers.untilRetirement.monthly, tiers.untilRetirement.years)}
+                        onClick={() => addPreset(tiers.twentyYear.monthly, tiers.twentyYear.years)}
                         className="w-full text-left p-3 rounded-hig-sm border border-hig-gray-4 hover:border-hig-blue hover:bg-blue-50/30 transition-colors"
                       >
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-hig-title3 text-hig-blue">Invest {formatRMFull(tiers.untilRetirement.monthly)}/mth</p>
-                            <p className="text-hig-caption1 text-hig-text-secondary mt-0.5">for {tiers.untilRetirement.years} years</p>
+                            <p className="text-hig-title3 text-hig-blue">Invest {formatRMFull(tiers.twentyYear.monthly)}/mth</p>
+                            <p className="text-hig-caption1 text-hig-text-secondary mt-0.5">for {tiers.twentyYear.years} years</p>
                           </div>
                           <span className="text-[10px] px-2 py-1 rounded-full bg-hig-blue/10 text-hig-blue font-medium shrink-0">Add</span>
                         </div>
