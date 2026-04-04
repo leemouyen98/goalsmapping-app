@@ -159,7 +159,11 @@ function getFrequencyMultiplier(freq) {
 }
 
 /**
- * Project a single provision's value at retirement
+ * Project a single provision's value at retirement.
+ * Recurring contributions use annuity-due (beginning-of-period payments):
+ *   FV_due = FV_ordinary × (1 + periodicRate)
+ * This matches standard Malaysian financial-planning practice where contributions
+ * are made at the START of each period (e.g. salary deduction on day 1 of month).
  */
 export function projectProvision(provision, yearsToRetirement) {
   const { amount, frequency, preRetirementReturn: rate = 1, currentBalance = 0 } = provision
@@ -169,28 +173,40 @@ export function projectProvision(provision, yearsToRetirement) {
     return balanceFV + fvLumpSum(amount, rate, yearsToRetirement)
   }
   const freq = getFrequencyMultiplier(frequency)
-  return balanceFV + fvAnnuity(amount, rate, yearsToRetirement, freq)
+  const periodicRate = rate / 100 / freq
+  // Annuity due: multiply ordinary FV by (1 + periodic rate)
+  return balanceFV + fvAnnuity(amount, rate, yearsToRetirement, freq) * (1 + periodicRate)
 }
 
 /**
- * Calculate total retirement corpus needed
- * Monthly expenses at retirement (inflation-adjusted), sustained for retirement duration
- * Using PV of annuity at post-retirement return rate
+ * Calculate total retirement corpus needed.
+ *
+ * Uses an annual growing-annuity-due formula (first withdrawal AT retirement age,
+ * inclusive count) to match standard Malaysian financial-planning practice:
+ *
+ *   n  = retirementDuration + 1   (e.g. retire 60, live to 75 → 16 annual withdrawals)
+ *   q  = (1 + inflationRate%) / (1 + postRetirementReturn%)
+ *
+ *   corpus = (monthlyAtRetirement × 12) × Σ_{t=0}^{n-1} q^t
+ *          = (monthlyAtRetirement × 12) × (q^n − 1) / (q − 1)   [q ≠ 1]
+ *          = (monthlyAtRetirement × 12) × n                       [q = 1]
  */
 export function retirementCorpusNeeded({ monthlyExpenses, inflationRate, postRetirementReturn, yearsToRetirement, retirementDuration }) {
-  // Monthly expenses at retirement (future value)
+  // Monthly expenses at retirement (inflation-adjusted future value)
   const monthlyAtRetirement = monthlyExpenses * Math.pow(1 + inflationRate / 100, yearsToRetirement)
 
-  // Corpus needed: PV of inflation-adjusted annuity during retirement
-  // Using real rate = post-retirement return - inflation
-  const realRate = (postRetirementReturn - inflationRate) / 100 / 12
-  const months = retirementDuration * 12
+  // Annual growing annuity due — inclusive retirement duration (+1 to include retirement year)
+  const n = retirementDuration + 1
+  const annualExpense = monthlyAtRetirement * 12
+  const g = inflationRate / 100
+  const r = postRetirementReturn / 100
+  const q = (1 + g) / (1 + r)
 
   let corpus
-  if (Math.abs(realRate) < 0.0001) {
-    corpus = monthlyAtRetirement * months
+  if (Math.abs(q - 1) < 0.0001) {
+    corpus = annualExpense * n
   } else {
-    corpus = monthlyAtRetirement * (1 - Math.pow(1 + realRate, -months)) / realRate
+    corpus = annualExpense * (Math.pow(q, n) - 1) / (q - 1)
   }
 
   return {
@@ -354,16 +370,14 @@ export function generateRetirementProjection({
       recBal = (recBal + recContrib) * (1 + avgRecRate / 100)
 
     } else if (isRetirementYear) {
-      // ── Retirement Year Snapshot ──
-      // The person just retired. Balances are at their peak — no new contributions,
-      // no deductions yet. Just a final growth tick so the peak lands exactly at retirementAge.
+      // ── Retirement Year (annuity-due: first withdrawal happens AT retirement age) ──
+      // Step 1: Final accumulation growth tick
       const avgRecRate = selectedRecs.length > 0
         ? selectedRecs.reduce((s, r) => s + (r.growthRate || 5), 0) / selectedRecs.length
         : 5
       const avgProvReturn = (provisions || []).length > 0
         ? provisions.reduce((s, p) => s + (p.preRetirementReturn || 1), 0) / provisions.length
         : 1
-      // EPF still earns its dividend rate in the retirement year (not yet withdrawn)
       if (includeEPF) {
         epfBal *= (1 + (epfGrowthRate || 6) / 100)
         epfBalNoRec *= (1 + (epfGrowthRate || 6) / 100)
@@ -372,9 +386,30 @@ export function generateRetirementProjection({
       provBalNoRec *= (1 + avgProvReturn / 100)
       recBal *= (1 + avgRecRate / 100)
 
+      // Step 2: First annual withdrawal at retirement age (yearsIntoRetirement = 0, no inflation yet)
+      const annualExpenseRet = monthlyAtRetirement * 12
+
+      let toDeductRet = Math.min(annualExpenseRet, epfBal + provBal + recBal)
+      const epfDrawRet = Math.min(epfBal, toDeductRet)
+      epfBal = Math.max(0, epfBal - epfDrawRet)
+      toDeductRet -= epfDrawRet
+      const provDrawRet = Math.min(provBal, toDeductRet)
+      provBal = Math.max(0, provBal - provDrawRet)
+      toDeductRet -= provDrawRet
+      const recDrawRet = Math.min(recBal, toDeductRet)
+      recBal = Math.max(0, recBal - recDrawRet)
+
+      // No-rec scenario
+      let toDeductRetNoRec = Math.min(annualExpenseRet, epfBalNoRec + provBalNoRec)
+      const epfDrawRetNoRec = Math.min(epfBalNoRec, toDeductRetNoRec)
+      epfBalNoRec = Math.max(0, epfBalNoRec - epfDrawRetNoRec)
+      toDeductRetNoRec -= epfDrawRetNoRec
+      const provDrawRetNoRec = Math.min(provBalNoRec, toDeductRetNoRec)
+      provBalNoRec = Math.max(0, provBalNoRec - provDrawRetNoRec)
+
     } else {
       // ── Drawdown Phase (age > retirementAge) ──
-      // Annual expense = monthly expense at retirement, inflated further each year into retirement
+      // Annual expense = year-0 expense inflated further each year into retirement
       const yearsIntoRetirement = age - retirementAge
       const annualExpense = monthlyAtRetirement * 12 *
         Math.pow(1 + inflationRate / 100, yearsIntoRetirement)
@@ -432,16 +467,18 @@ export function generateRetirementProjection({
     } else if (age === retirementAge) {
       idealCorpus = targetAmount
     } else {
-      // Post-retirement: PV of remaining withdrawals using real rate
-      const remainingYears = lifeExpectancy - age
-      const remainingMonths = remainingYears * 12
-      const realRate = (postRetirementReturn - inflationRate) / 100 / 12
+      // Post-retirement: annual growing annuity due — remaining withdrawals including current year
+      // n = remaining years inclusive (lifeExpectancy - age + 1)
       const yearsIntoRet = age - retirementAge
-      const monthlyNow = monthlyAtRetirement * Math.pow(1 + inflationRate / 100, yearsIntoRet)
-      if (Math.abs(realRate) < 0.0001) {
-        idealCorpus = monthlyNow * remainingMonths
+      const annualNow = monthlyAtRetirement * 12 * Math.pow(1 + inflationRate / 100, yearsIntoRet)
+      const nRem = lifeExpectancy - age + 1  // inclusive remaining years
+      const gR = inflationRate / 100
+      const rR = postRetirementReturn / 100
+      const qR = (1 + gR) / (1 + rR)
+      if (Math.abs(qR - 1) < 0.0001) {
+        idealCorpus = annualNow * nRem
       } else {
-        idealCorpus = monthlyNow * (1 - Math.pow(1 + realRate, -remainingMonths)) / realRate
+        idealCorpus = annualNow * (Math.pow(qR, nRem) - 1) / (qR - 1)
       }
     }
 
