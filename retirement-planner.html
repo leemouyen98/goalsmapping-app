@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retirement Planner — Henry Lee Advisory</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap">
+  <style>
+    /* ── RESET ──────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-font-smoothing: antialiased; }
+    body {
+      font-family: 'Open Sans', sans-serif;
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 1.5;
+      color: #585858;
+      background: #FAFAFA;
+    }
+    button { font-family: 'Open Sans', sans-serif; cursor: pointer; }
+    a { text-decoration: none; }
+
+    /* ── HEADER ─────────────────────────────────────────── */
+    .app-header {
+      position: fixed; top: 0; left: 0; right: 0; height: 56px;
+      background: #fff;
+      border-bottom: 1px solid #EEEEEE;
+      display: flex; align-items: center; padding: 0 16px;
+      z-index: 200;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+    .header-logo {
+      display: flex; align-items: center; gap: 8px; margin-right: 20px; cursor: pointer;
+    }
+    .logo-box {
+      width: 34px; height: 34px; background: #3A8DDE; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 0.5px;
+    }
+    .logo-text-wrap { display: flex; flex-direction: column; line-height: 1.1; }
+    .logo-name { font-size: 12px; font-weight: 700; color: #191919; }
+    .logo-sub  { font-size: 9px;  color: #999; letter-spacing: 1px; }
+
+    .header-nav { display: flex; align-items: center; gap: 2px; flex: 1; }
+    .hnav-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 12px; background: none; border: none; border-radius: 4px;
+      font-size: 13px; color: #585858; cursor: pointer; transition: background .12s;
+    }
+    .hnav-btn:hover { background: #F5F5F5; }
+    .hnav-icon { font-size: 15px; }
+
+    .header-actions { display: flex; align-items: center; gap: 2px; }
+    .hicon-btn {
+      width: 34px; height: 34px; border-radius: 50%; background: none; border: none;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; color: #585858; cursor: pointer; transition: background .12s;
+    }
+    .hicon-btn:hover { background: #F5F5F5; }
+    .header-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: #3A8DDE; color: #fff;
+      font-size: 12px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      margin-left: 4px;
+    }
+
+    /* ── LAYOUT ─────────────────────────────────────────── */
+    .app-layout { display: flex; padding-top: 56px; min-height: 100vh; }
+
+    /* ── SIDEBAR ─────────────────────────────────────────── */
+    .sidebar {
+      width: 60px; background: #1E2A3A;
+      min-height: calc(100vh - 56px);
+      position: fixed; left: 0; top: 56px; bottom: 0;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 8px 0; z-index: 100;
+    }
+    .sidebar-toggle {
+      width: 36px; height: 36px; background: none; border: none;
+      color: rgba(255,255,255,.6); font-size: 22px; border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; margin-bottom: 4px; transition: background .12s;
+    }
+    .sidebar-toggle:hover { background: rgba(255,255,255,.1); }
+    .sidebar-item {
+      width: 40px; height: 40px; border-radius: 8px; background: none; border: none;
+      color: rgba(255,255,255,.45); font-size: 17px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      margin: 2px 0; transition: background .12s, color .12s;
+    }
+    .sidebar-item:hover, .sidebar-item.active {
+      background: rgba(255,255,255,.12); color: rgba(255,255,255,.9);
+    }
+
+    /* ── MAIN CONTENT ─────────────────────────────────── */
+    .main-content { margin-left: 60px; flex: 1; min-height: calc(100vh - 56px); }
+
+    /* ── PAGE VISIBILITY ─────────────────────────────── */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ── STEP INDICATOR BAR ──────────────────────────── */
+    .step-bar {
+      background: #FAFAFA;
+      border-bottom: 1px solid #EEEEEE;
+      padding: 10px 24px;
+      display: flex; align-items: center; justify-content: center;
+      position: sticky; top: 56px; z-index: 90;
+    }
+    .back-link {
+      position: absolute; left: 24px;
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 13px; color: #3A8DDE; cursor: pointer;
+    }
+    .back-link:hover { text-decoration: underline; }
+    .step-row { display: flex; align-items: center; gap: 0; }
+    .step-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+    .step-circle {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: #C8C8C8; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; flex-shrink: 0;
+    }
+    .step-circle.active { background: #3A8DDE; }
+    .step-circle.done   { background: #3A8DDE; }
+    .step-label { color: #888; font-weight: 400; }
+    .step-label.active { color: #3A8DDE; font-weight: 600; }
+    .step-connector {
+      width: 56px; height: 2px; background: #D0D0D0; margin: 0 10px;
+    }
+    .step-connector.done { background: #3A8DDE; }
+
+    /* ── WIZARD LAYOUT ──────────────────────────────── */
+    .wizard-wrap { display: flex; min-height: calc(100vh - 56px - 47px); }
+    .wizard-left {
+      flex: 1; padding: 24px 32px 100px;
+      max-width: calc(100% - 360px);
+    }
+    .wizard-right {
+      width: 360px; min-width: 360px;
+      background: #fff;
+      border-left: 1px solid #EEEEEE;
+      position: sticky; top: 103px;
+      height: calc(100vh - 103px); overflow-y: auto;
+    }
+
+    /* ── SECTION CARDS ──────────────────────────────── */
+    .section-card {
+      background: #fff;
+      border: 1px solid #EEEEEE;
+      border-radius: 8px;
+      box-shadow: rgba(0,0,0,0.15) 0px 0px 6px 0px;
+      padding: 16px 24px;
+      margin-bottom: 16px;
+    }
+    .section-head {
+      display: flex; align-items: flex-start; gap: 12px; margin-bottom: 20px;
+    }
+    .section-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: #EEF4FD;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px; flex-shrink: 0;
+    }
+    .section-title { font-size: 14px; font-weight: 700; color: #191919; margin-bottom: 2px; }
+    .section-sub   { font-size: 13px; color: #999; }
+
+    /* ── FORM ELEMENTS ──────────────────────────────── */
+    .form-row { display: flex; gap: 16px; margin-bottom: 16px; }
+    .form-group { flex: 1; display: flex; flex-direction: column; }
+    .form-group.full { flex: 1 1 100%; }
+
+    .f-label {
+      font-size: 12.5px; font-weight: 600; color: #191919;
+      margin-bottom: 4px; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .f-tag {
+      font-size: 11px; font-weight: 400; color: #AAAAAA;
+    }
+    .input-wrap {
+      position: relative; display: flex; align-items: center;
+    }
+    .f-input {
+      width: 100%; height: 40px; padding: 8.5px 14px;
+      font-family: 'Open Sans', sans-serif; font-size: 15px;
+      color: #191919; background: transparent;
+      border: 1px solid #CCCCCC; border-radius: 4px;
+      outline: none; transition: border-color .15s;
+    }
+    .f-input:focus { border-color: #3A8DDE; }
+    .f-input.pfx { padding-left: 38px; }
+    .f-input.sfx { padding-right: 34px; }
+    .f-input.pfx.sfx { padding-left: 38px; padding-right: 34px; }
+
+    .i-prefix {
+      position: absolute; left: 12px; font-size: 14px; color: #585858;
+      pointer-events: none; user-select: none;
+    }
+    .i-suffix {
+      position: absolute; right: 11px; font-size: 14px; color: #585858;
+      pointer-events: none; user-select: none;
+    }
+    .f-helper { font-size: 11.5px; color: #AAAAAA; margin-top: 4px; }
+    .f-error  { font-size: 11.5px; color: #F54336; margin-top: 4px; display: none; }
+
+    /* ── YES / NO TOGGLE ────────────────────────────── */
+    .toggle-group {
+      display: flex; overflow: hidden;
+      border: 1px solid #CCCCCC; border-radius: 4px;
+    }
+    .toggle-btn {
+      flex: 1; height: 40px; background: #fff; border: none;
+      font-size: 14px; font-weight: 600; color: #585858; cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+    .toggle-btn:not(:last-child) { border-right: 1px solid #CCCCCC; }
+    .toggle-btn.active { background: #3A8DDE; color: #fff; }
+
+    /* ── RIGHT SUMMARY PANEL ─────────────────────────── */
+    .summary-section { padding: 20px 20px 0; }
+    .summary-title { font-size: 14px; font-weight: 700; color: #191919; margin-bottom: 14px; }
+    .sum-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 9px 0; border-bottom: 1px solid #F4F4F4;
+    }
+    .sum-row:last-child { border-bottom: none; }
+    .sum-label { font-size: 13px; color: #585858; }
+    .sum-value { font-size: 13.5px; font-weight: 700; color: #191919; }
+
+    .blue-card {
+      background: #3A8DDE; border-radius: 8px;
+      padding: 16px; margin: 16px 20px 0; color: #fff;
+    }
+    .bc-title    { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .bc-subtitle { font-size: 11px; color: rgba(255,255,255,.75); margin-bottom: 12px; }
+    .bc-amount   { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+    .bc-note     { font-size: 11px; color: rgba(255,255,255,.75); }
+
+    /* ── BOTTOM BAR ──────────────────────────────────── */
+    .bottom-bar {
+      position: fixed; bottom: 0; left: 60px; right: 0; height: 56px;
+      background: #fff; border-top: 1px solid #EEEEEE;
+      display: flex; align-items: center; justify-content: flex-end;
+      padding: 0 24px; gap: 8px; z-index: 90;
+    }
+
+    /* ── STEPPER DOTS ─────────────────────────────────── */
+    .stepper-dots {
+      position: fixed; bottom: 56px; left: 60px; right: 360px;
+      display: flex; justify-content: center; align-items: center;
+      gap: 6px; height: 24px; background: #FAFAFA; z-index: 80;
+    }
+    .sdot {
+      width: 8px; height: 8px; border-radius: 50%; background: #CCCCCC;
+      transition: background .2s;
+    }
+    .sdot.active { background: #3A8DDE; }
+
+    /* ── BUTTONS ─────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+      border-radius: 4px; font-weight: 600; font-size: 13.125px;
+      cursor: pointer; border: none; transition: background .15s;
+      white-space: nowrap;
+    }
+    .btn-primary  { background: #3A8DDE; color: #fff; padding: 4px 16px; height: 32px; }
+    .btn-primary:hover { background: #2E7CC5; }
+    .btn-text     { background: none; color: #3A8DDE; padding: 4px 8px; height: 32px; }
+    .btn-text:hover { background: rgba(58,141,222,.08); }
+    .btn-outlined {
+      background: none; color: #3A8DDE;
+      border: 1px solid rgba(58,141,222,.5);
+      padding: 5px 16px; height: 36px; font-size: 12.5px;
+    }
+    .btn-outlined:hover { background: rgba(58,141,222,.04); }
+    .btn-dashed {
+      background: none; color: #3A8DDE;
+      border: 1px dashed rgba(58,141,222,.5);
+      padding: 7px 21px; height: 42px; font-size: 13.125px;
+    }
+    .btn-dashed:hover { background: rgba(58,141,222,.04); }
+
+    /* ── EMPTY STATE ─────────────────────────────────── */
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 48px 20px; text-align: center;
+    }
+    .empty-icon  { font-size: 44px; color: #D8D8D8; margin-bottom: 14px; }
+    .empty-title { font-size: 14px; color: #585858; max-width: 320px; margin-bottom: 22px; }
+
+    /* ═══════════════════════════════════════════════════
+       RESULTS PAGE
+    ═══════════════════════════════════════════════════ */
+    .results-wrap { display: flex; flex-direction: column; min-height: calc(100vh - 56px); }
+
+    .planning-bar {
+      background: #fff; border-bottom: 1px solid #EEEEEE;
+      padding: 10px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .breadcrumb {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 12px; color: #999;
+    }
+    .breadcrumb span.crumb { cursor: pointer; }
+    .breadcrumb span.crumb:hover { color: #3A8DDE; }
+    .breadcrumb span.sep  { color: #CCCCCC; }
+    .breadcrumb span.curr { color: #191919; font-weight: 600; }
+
+    .results-body { display: flex; flex: 1; }
+    .results-main { flex: 1; padding: 20px 24px 80px; overflow: hidden; }
+    .results-right {
+      width: 360px; min-width: 360px;
+      border-left: 1px solid #EEEEEE; background: #fff;
+      display: flex; flex-direction: column;
+    }
+
+    /* Stats bar */
+    .stats-bar {
+      background: #fff; border: 1px solid #EEEEEE; border-radius: 8px;
+      box-shadow: rgba(0,0,0,0.12) 0 0 6px;
+      padding: 16px 20px;
+      display: flex; align-items: flex-start; gap: 24px;
+      margin-bottom: 16px;
+    }
+    .stat-block { display: flex; flex-direction: column; }
+    .stat-lbl { font-size: 12px; color: #999; margin-bottom: 4px; }
+    .stat-val { font-size: 18px; font-weight: 700; color: #191919; }
+    .stat-val.red { color: #F54336; }
+    .stat-note { font-size: 12px; color: #585858; margin-top: 4px; }
+    .stat-note .lnk { color: #3A8DDE; font-weight: 600; cursor: pointer; }
+    .stat-divider { width: 1px; background: #EEEEEE; align-self: stretch; }
+
+    /* Progress legend + bar */
+    .legend-row {
+      display: flex; align-items: center; gap: 16px; margin-bottom: 8px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; }
+    .ldot {
+      width: 10px; height: 10px; border-radius: 2px;
+    }
+    .ldot.achieved   { background: #4CAF50; }
+    .ldot.at-risk    { background: #F54336; }
+    .ldot.existing   { background: #AAAAAA; }
+    .ldot.recommended{ background: #3A8DDE; }
+
+    .progress-bar-bg {
+      height: 26px; background: #F54336; border-radius: 4px;
+      overflow: hidden; position: relative; margin-bottom: 6px;
+    }
+    .progress-bar-fill {
+      height: 100%; background: #4CAF50;
+      transition: width .5s; position: absolute; left: 0; top: 0;
+    }
+    .progress-bar-existing {
+      height: 100%; background: #AAAAAA;
+      transition: width .5s; position: absolute; top: 0;
+    }
+    .progress-bar-rec {
+      height: 100%; background: #3A8DDE;
+      transition: width .5s; position: absolute; top: 0;
+    }
+
+    /* Alert */
+    .alert-warn {
+      background: #FFF3E0; border: 1px solid #FFB74D; border-radius: 4px;
+      padding: 10px 14px; font-size: 13px; color: #E65100; margin-bottom: 16px;
+    }
+
+    /* Situation cards */
+    .situation-row { display: flex; gap: 16px; margin-bottom: 16px; }
+    .sit-card {
+      flex: 1; background: #fff; border: 1px solid #EEEEEE; border-radius: 8px;
+      box-shadow: rgba(0,0,0,0.08) 0 0 4px; padding: 16px;
+    }
+    .sit-title { font-size: 13px; font-weight: 700; color: #191919; margin-bottom: 6px; }
+    .sit-sub   { font-size: 12px; color: #999; margin-bottom: 8px; }
+    .sit-value { font-size: 22px; font-weight: 700; color: #F54336; margin-bottom: 6px; }
+    .sit-value.green { color: #4CAF50; }
+    .sit-note  { font-size: 12px; color: #585858; }
+    .sit-empty { font-size: 13px; color: #BBBBBB; }
+
+    /* Chart area */
+    .chart-area {
+      background: #fff; border: 1px solid #EEEEEE; border-radius: 8px;
+      box-shadow: rgba(0,0,0,0.1) 0 0 6px;
+      padding: 16px 20px; margin-bottom: 16px;
+    }
+    .chart-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .view-toggle {
+      display: flex; border: 1px solid #E0E0E0; border-radius: 4px; overflow: hidden;
+    }
+    .vtbtn {
+      padding: 4px 14px; background: #fff; border: none;
+      font-size: 12.5px; font-weight: 600; color: #585858; cursor: pointer;
+      transition: background .15s;
+    }
+    .vtbtn.active { background: #3A8DDE; color: #fff; }
+
+    /* Donut SVG */
+    .donut-wrap {
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 12px;
+    }
+
+    /* Tabs */
+    .tabs-bar { border-bottom: 1px solid #EEEEEE; }
+    .tabs-row { display: flex; }
+    .tab-btn {
+      padding: 12px 20px; background: none; border: none;
+      border-bottom: 2px solid transparent;
+      font-size: 13.5px; font-weight: 600; color: #999;
+      cursor: pointer; transition: color .15s, border-color .15s;
+    }
+    .tab-btn.active { color: #3A8DDE; border-bottom-color: #3A8DDE; }
+
+    .tab-panel { display: none; padding: 16px; }
+    .tab-panel.active { display: block; }
+
+    /* Rec panel */
+    .rec-panel {
+      background: #fff; border: 1px solid #EEEEEE; border-radius: 8px;
+      box-shadow: rgba(0,0,0,0.08) 0 0 4px; overflow: hidden;
+    }
+    .rec-panel-header {
+      padding: 14px 18px; border-bottom: 1px solid #EEEEEE;
+    }
+    .rec-panel-title { font-size: 13.5px; font-weight: 700; color: #191919; margin-bottom: 3px; }
+    .rec-panel-sub   { font-size: 12px; color: #888; }
+    .rec-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px; border-bottom: 1px solid #F5F5F5;
+      transition: background .12s;
+    }
+    .rec-row:last-child { border-bottom: none; }
+    .rec-row:hover { background: #F9FBFF; }
+    .rec-amount { font-size: 14.5px; font-weight: 700; color: #191919; }
+    .rec-period { font-size: 12px; color: #888; margin-top: 2px; }
+    .rec-add {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: rgba(58,141,222,.12); border: none;
+      color: #3A8DDE; font-size: 20px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .12s;
+    }
+    .rec-add:hover { background: rgba(58,141,222,.22); }
+
+    .rec-simulate {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px; border-top: 1px solid #EEEEEE;
+    }
+    .rec-simulate-lbl { font-size: 13px; font-weight: 600; color: #3A8DDE; }
+
+    /* Bottom summary in results right */
+    .res-sum { padding: 16px 20px; border-top: 1px solid #EEEEEE; }
+
+    /* ── UTILITY ─────────────────────────────────────── */
+    .mt4  { margin-top: 4px; }
+    .mt8  { margin-top: 8px; }
+    .mt12 { margin-top: 12px; }
+    .mt16 { margin-top: 16px; }
+    .mb16 { margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════
+     HEADER
+════════════════════════════════════════════════════ -->
+<header class="app-header">
+  <div class="header-logo" onclick="goTo(1)">
+    <div class="logo-box">GM</div>
+    <div class="logo-text-wrap">
+      <span class="logo-name">HENRY LEE</span>
+      <span class="logo-sub">ADVISORY</span>
+    </div>
+  </div>
+  <nav class="header-nav">
+    <button class="hnav-btn"><span class="hnav-icon">👤</span> Contact Summary</button>
+    <button class="hnav-btn"><span class="hnav-icon">⚡</span> Quick Planner</button>
+    <button class="hnav-btn"><span class="hnav-icon">↗️</span> Engage</button>
+    <button class="hnav-btn"><span class="hnav-icon">📋</span> Report</button>
+  </nav>
+  <div class="header-actions">
+    <button class="hicon-btn" title="Help">❓</button>
+    <button class="hicon-btn" title="Updates">🔄</button>
+    <button class="hicon-btn" title="Documents">📁</button>
+    <button class="hicon-btn" title="Products">⊞</button>
+    <button class="hicon-btn" title="Notifications">🔔</button>
+    <div class="header-avatar">HL</div>
+  </div>
+</header>
+
+<!-- ════════════════════════════════════════════════════
+     APP LAYOUT
+════════════════════════════════════════════════════ -->
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <button class="sidebar-toggle" title="Expand">›</button>
+    <button class="sidebar-item" title="Dashboard">🏠</button>
+    <button class="sidebar-item active" title="Contacts">👥</button>
+    <button class="sidebar-item" title="Leads">📌</button>
+    <button class="sidebar-item" title="Links">🔗</button>
+    <button class="sidebar-item" title="Testimonials">⭐</button>
+    <button class="sidebar-item" title="GM Connect">📡</button>
+    <button class="sidebar-item" title="MediAssist">🏥</button>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <!-- ══════════════════════════════════════════════
+         PAGE 1 — STEP 1: BASIC INFORMATION
+    ══════════════════════════════════════════════ -->
+    <div id="page-1" class="page active">
+
+      <!-- Step bar -->
+      <div class="step-bar">
+        <span class="back-link" onclick="goTo(1)">‹ Back to Dashboard</span>
+        <div class="step-row">
+          <div class="step-item">
+            <div class="step-circle active" id="s1-circle-1">1</div>
+            <span class="step-label active">Basic Information</span>
+          </div>
+          <div class="step-connector" id="s1-connector"></div>
+          <div class="step-item">
+            <div class="step-circle" id="s1-circle-2">2</div>
+            <span class="step-label">Existing Provision</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="wizard-wrap">
+        <!-- LEFT FORM -->
+        <div class="wizard-left">
+
+          <!-- Planning Parameters -->
+          <div class="section-card">
+            <div class="section-head">
+              <div class="section-icon">⚙️</div>
+              <div>
+                <div class="section-title">Planning Parameters</div>
+                <div class="section-sub">Adjust these settings to match your retirement plan.</div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="f-label">Retirement Age <span class="f-tag">Required</span></label>
+                <div class="input-wrap">
+                  <input class="f-input" id="retAge" type="text" value="60"
+                    oninput="clampInput(this,55,70); updateSummary()">
+                </div>
+                <span class="f-helper">Min: 55 years, Max: 70 years</span>
+                <span class="f-error" id="err-retAge">Value must be between 55 and 70.</span>
+              </div>
+              <div class="form-group">
+                <label class="f-label">Life Expectancy <span class="f-tag">Required</span></label>
+                <div class="input-wrap">
+                  <input class="f-input" id="lifeExp" type="text" value="75"
+                    oninput="clampInput(this,61,120); updateSummary()">
+                </div>
+                <span class="f-helper">Min: 61 years, Max: 120 years</span>
+                <span class="f-error" id="err-lifeExp">Value must be between 61 and 120.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Retirement Expense -->
+          <div class="section-card">
+            <div class="section-head">
+              <div class="section-icon">💰</div>
+              <div>
+                <div class="section-title">Retirement Expense</div>
+                <div class="section-sub">Estimate how much you'll need for daily living and lifestyle in retirement.</div>
+              </div>
+            </div>
+
+            <div class="form-group mb16">
+              <label class="f-label">Monthly Expenses at today's value <span class="f-tag">Required</span></label>
+              <div class="input-wrap">
+                <span class="i-prefix">RM</span>
+                <input class="f-input pfx sfx" id="monthlyExp" type="text" placeholder=""
+                  oninput="updateSummary()">
+                <span class="i-suffix">/mth</span>
+              </div>
+              <span class="f-error" id="err-monthly">Please enter a monthly expense amount.</span>
+            </div>
+
+            <div class="form-group mb16">
+              <label class="f-label">Inflation Rate <span class="f-tag">Required</span></label>
+              <div class="input-wrap">
+                <input class="f-input sfx" id="inflRate" type="text" value="4"
+                  oninput="clampInput(this,0,10); updateSummary()">
+                <span class="i-suffix">%</span>
+              </div>
+              <span class="f-helper">Min: 0%, Max: 10%</span>
+            </div>
+
+            <div class="form-group">
+              <label class="f-label">Post-Retirement Return <span class="f-tag">Required</span></label>
+              <div class="input-wrap">
+                <input class="f-input sfx" id="postReturn" type="text" value="1"
+                  placeholder="Post-retirement rate of return" oninput="updateSummary()">
+                <span class="i-suffix">%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- EPF Payout Information -->
+          <div class="section-card">
+            <div class="section-head">
+              <div class="section-icon">🏦</div>
+              <div>
+                <div class="section-title">EPF Payout Information</div>
+                <div class="section-sub">See how EPF supports your monthly retirement income.</div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="f-label">Include EPF Projection <span class="f-tag">Optional</span></label>
+              <div class="toggle-group" id="epf-toggle">
+                <button class="toggle-btn" onclick="selectToggle('epf-toggle',0,this)">Yes</button>
+                <button class="toggle-btn active" onclick="selectToggle('epf-toggle',1,this)">No</button>
+              </div>
+            </div>
+            <div class="mt12" id="epf-alert"
+              style="font-size:13px;color:#888;padding:8px 12px;background:#F9F9F9;border-radius:4px;border:1px solid #EEEEEE;">
+              EPF Projection is disabled
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT SUMMARY PANEL -->
+        <div class="wizard-right">
+          <div class="summary-section">
+            <div class="summary-title">Summary</div>
+            <div class="sum-row">
+              <span class="sum-label">Current Age</span>
+              <span class="sum-value" id="s-curAge">31</span>
+            </div>
+            <div class="sum-row">
+              <span class="sum-label">Years To Retirement</span>
+              <span class="sum-value" id="s-ytr">29 years</span>
+            </div>
+            <div class="sum-row">
+              <span class="sum-label">Retirement Duration</span>
+              <span class="sum-value" id="s-dur">15 years</span>
+            </div>
+          </div>
+          <div class="blue-card">
+            <div class="bc-title">Projected Monthly Expense</div>
+            <div class="bc-subtitle" id="s-proj-label">At Age 60</div>
+            <div class="bc-amount" id="s-proj-amount">—</div>
+            <div class="bc-note" id="s-proj-note">Adjusted for 4% inflation over 29 years</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom bar -->
+      <div class="bottom-bar">
+        <button class="btn btn-primary" onclick="submitStep1()">Continue</button>
+      </div>
+      <div class="stepper-dots">
+        <div class="sdot active"></div>
+        <div class="sdot"></div>
+      </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════
+         PAGE 2 — STEP 2: EXISTING PROVISION
+    ══════════════════════════════════════════════ -->
+    <div id="page-2" class="page">
+
+      <!-- Step bar -->
+      <div class="step-bar">
+        <span class="back-link" onclick="goTo(1)">‹ Back to Dashboard</span>
+        <div class="step-row">
+          <div class="step-item">
+            <div class="step-circle done">✓</div>
+            <span class="step-label">Basic Information</span>
+          </div>
+          <div class="step-connector done"></div>
+          <div class="step-item">
+            <div class="step-circle active">2</div>
+            <span class="step-label active">Existing Provision</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="wizard-wrap">
+        <!-- LEFT -->
+        <div class="wizard-left">
+          <div class="section-card">
+            <div class="section-head">
+              <div>
+                <div class="section-title">Existing Provision</div>
+                <div class="section-sub">Include what you already have in place (Savings, Insurance, Investment) for a more accurate estimate</div>
+              </div>
+            </div>
+            <div class="empty-state">
+              <div class="empty-icon">📋</div>
+              <div class="empty-title">No existing information yet. Click "Add Entry" to add your first entry.</div>
+              <button class="btn btn-dashed" onclick="showAddEntry()">+ Add Entry</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="wizard-right">
+          <div class="blue-card" style="margin:20px;">
+            <div class="bc-title">Provision Summary</div>
+            <div class="bc-subtitle" id="p-at-age">At Age 60</div>
+            <div class="bc-amount">RM 0</div>
+            <div class="bc-note" id="p-note">No change over 29 years</div>
+          </div>
+          <div class="summary-section">
+            <div class="sum-row">
+              <span class="sum-label">Provisions</span>
+              <span class="sum-value"></span>
+            </div>
+            <div class="sum-row">
+              <span class="sum-label">Total Capital</span>
+              <span class="sum-value">RM 0</span>
+            </div>
+            <div class="sum-row">
+              <span class="sum-label">Today's Value</span>
+              <span class="sum-value">RM 0</span>
+            </div>
+            <div class="sum-row">
+              <span class="sum-label">Years to Target</span>
+              <span class="sum-value" id="p-ytr">29 years</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom bar -->
+      <div class="bottom-bar">
+        <button class="btn btn-text" onclick="goTo(1)">Back</button>
+        <button class="btn btn-primary" onclick="goTo(3); buildResults()">Continue</button>
+      </div>
+      <div class="stepper-dots">
+        <div class="sdot"></div>
+        <div class="sdot active"></div>
+      </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════
+         PAGE 3 — RESULTS: LIFETIME NEEDS ANALYSIS
+    ══════════════════════════════════════════════ -->
+    <div id="page-3" class="page">
+      <div class="results-wrap">
+
+        <!-- Breadcrumb + planning assumptions -->
+        <div class="planning-bar">
+          <div class="breadcrumb">
+            <span class="crumb" onclick="goTo(1)">Henry Lee Advisory</span>
+            <span class="sep">/</span>
+            <span class="crumb">Dashboard</span>
+            <span class="sep">/</span>
+            <span style="color:#585858;">Retirement Planner</span>
+            <span class="sep">/</span>
+            <span class="curr">Lifetime Needs Analysis</span>
+          </div>
+          <button class="btn btn-outlined" onclick="goTo(1)">⚙ Planning Assumptions</button>
+        </div>
+
+        <div class="results-body">
+          <!-- MAIN LEFT -->
+          <div class="results-main">
+
+            <!-- Stats bar -->
+            <div class="stats-bar">
+              <div class="stat-block">
+                <span class="stat-lbl">Target Amount</span>
+                <span class="stat-val" id="r-target">RM 0</span>
+              </div>
+              <div class="stat-divider"></div>
+              <div class="stat-block">
+                <span class="stat-lbl">Covered</span>
+                <span class="stat-val">RM 0</span>
+              </div>
+              <div class="stat-divider"></div>
+              <div class="stat-block" style="flex:1;">
+                <span class="stat-lbl">Shortfall</span>
+                <span class="stat-val red" id="r-shortfall">RM 0</span>
+                <span class="stat-note mt4">
+                  <span class="lnk">Retirement Expense</span>: <span id="r-desc">—</span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Legend + progress bar -->
+            <div class="mb16">
+              <div class="legend-row">
+                <div class="legend-item"><div class="ldot achieved"></div>Achieved</div>
+                <div class="legend-item"><div class="ldot at-risk"></div>At Risk</div>
+                <div class="legend-item"><div class="ldot existing"></div>Existing</div>
+                <div class="legend-item"><div class="ldot recommended"></div>Recommended</div>
+              </div>
+              <div class="progress-bar-bg" id="r-progress">
+                <!-- filled dynamically -->
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:#999;margin-top:3px;">
+                <span>0%</span>
+                <span id="r-pct-label">Achieved: 0% &nbsp;|&nbsp; At Risk: 100%</span>
+              </div>
+            </div>
+
+            <!-- Alert -->
+            <div class="alert-warn">
+              ⚠ Immediate action is needed. Your current provisions are significantly below what is required.
+            </div>
+
+            <!-- Situation cards -->
+            <div class="situation-row">
+              <div class="sit-card">
+                <div class="sit-title">Current Situation</div>
+                <div class="sit-sub">Funds will run out at</div>
+                <div class="sit-value" id="r-runout">60 yo</div>
+                <div class="sit-note" id="r-runout-note">At current levels, your funds will run out at age 60. You are at 0% of your retirement goal.</div>
+              </div>
+              <div class="sit-card">
+                <div class="sit-title">With Recommendation</div>
+                <div class="sit-sub" style="color:#BBBBBB;">No Recommendation Selected</div>
+                <div class="sit-empty">Add a recommendation to see how it improves your situation.</div>
+              </div>
+            </div>
+
+            <!-- Chart area -->
+            <div class="chart-area">
+              <div class="chart-header">
+                <span style="font-size:13px;font-weight:600;color:#191919;">Retirement Capital Chart</span>
+                <div class="view-toggle">
+                  <button class="vtbtn active" onclick="switchView('charts',this)">Charts</button>
+                  <button class="vtbtn" onclick="switchView('plans',this)">Plans</button>
+                </div>
+              </div>
+
+              <!-- Donut chart -->
+              <div class="donut-wrap">
+                <svg width="200" height="200" viewBox="0 0 200 200">
+                  <!-- background ring -->
+                  <circle cx="100" cy="100" r="75" fill="none" stroke="#EEEEEE" stroke-width="32"/>
+                  <!-- at-risk ring (full = shortfall) -->
+                  <circle cx="100" cy="100" r="75" fill="none" stroke="#F54336" stroke-width="32"
+                    stroke-dasharray="471" stroke-dashoffset="0"
+                    transform="rotate(-90 100 100)" id="donut-risk"/>
+                  <!-- achieved ring -->
+                  <circle cx="100" cy="100" r="75" fill="none" stroke="#4CAF50" stroke-width="32"
+                    stroke-dasharray="0 471"
+                    transform="rotate(-90 100 100)" id="donut-achieved"/>
+                  <!-- Centre label -->
+                  <text x="100" y="93" text-anchor="middle" font-size="11" fill="#999"
+                    font-family="Open Sans, sans-serif">Amount Required</text>
+                  <text x="100" y="112" text-anchor="middle" font-size="11" font-weight="700" fill="#191919"
+                    font-family="Open Sans, sans-serif" id="donut-label">RM 0</text>
+                </svg>
+              </div>
+
+              <!-- Legend for donut -->
+              <div style="display:flex;gap:16px;justify-content:center;font-size:12px;color:#888;margin-bottom:12px;">
+                <span><span style="display:inline-block;width:10px;height:10px;background:#F54336;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Shortfall</span>
+                <span><span style="display:inline-block;width:10px;height:10px;background:#EEEEEE;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Required Amount</span>
+              </div>
+
+              <!-- X-axis labels -->
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:#BBBBBB;padding:0 4px;" id="donut-axis">
+                <span>RM0</span>
+                <span>RM 1 M</span>
+                <span>RM 2 M</span>
+                <span>RM 3 M</span>
+                <span>RM 4 M</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- RIGHT: Tabs -->
+          <div class="results-right">
+            <div class="tabs-bar">
+              <div class="tabs-row">
+                <button class="tab-btn active" data-tab="rec">Recommendations</button>
+                <button class="tab-btn" data-tab="prov">Provisions</button>
+              </div>
+            </div>
+
+            <div id="tab-rec" class="tab-panel active">
+              <div class="rec-panel">
+                <div class="rec-panel-header">
+                  <div class="rec-panel-title">Add New Recommendation</div>
+                  <div class="rec-panel-sub">To achieve your objective, you could get on track by creating a plan with one of the following:</div>
+                </div>
+                <div class="rec-row" id="rec-row-1">
+                  <div>
+                    <div class="rec-amount" id="rec-opt-1">Invest RM 9,590 /mth</div>
+                    <div class="rec-period">for 10 years</div>
+                  </div>
+                  <button class="rec-add" title="Add">+</button>
+                </div>
+                <div class="rec-row" id="rec-row-2">
+                  <div>
+                    <div class="rec-amount" id="rec-opt-2">Invest RM 5,901 /mth</div>
+                    <div class="rec-period">for 20 years</div>
+                  </div>
+                  <button class="rec-add" title="Add">+</button>
+                </div>
+                <div class="rec-row">
+                  <div>
+                    <div class="rec-amount" id="rec-opt-3">Invest RM 914,185 one-time</div>
+                    <div class="rec-period">Today</div>
+                  </div>
+                  <button class="rec-add" title="Add">+</button>
+                </div>
+                <div class="rec-simulate">
+                  <span class="rec-simulate-lbl">Simulate Custom Recommendation</span>
+                  <button class="rec-add" title="Simulate">+</button>
+                </div>
+              </div>
+            </div>
+
+            <div id="tab-prov" class="tab-panel">
+              <div style="text-align:center;padding:40px 16px;color:#BBBBBB;font-size:13px;">
+                No provisions added yet.
+              </div>
+            </div>
+
+            <!-- Bottom summary repeat -->
+            <div class="res-sum" style="margin-top:auto;">
+              <div class="sum-row">
+                <span class="sum-label">Target Amount</span>
+                <span class="sum-value" id="r-target2">RM 0</span>
+              </div>
+              <div class="sum-row">
+                <span class="sum-label">Covered</span>
+                <span class="sum-value">RM 0</span>
+              </div>
+              <div class="sum-row">
+                <span class="sum-label">Shortfall</span>
+                <span class="sum-value" style="color:#F54336;" id="r-shortfall2">RM 0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════════════ -->
+<script>
+  /* ── constants ─────────────────────── */
+  const CURRENT_AGE = 31;
+
+  /* ── navigation ────────────────────── */
+  function goTo(n) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + n).classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  /* ── toggle (Yes / No) ─────────────── */
+  function selectToggle(groupId, idx) {
+    const grp = document.getElementById(groupId);
+    grp.querySelectorAll('.toggle-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+    if (groupId === 'epf-toggle') {
+      const alert = document.getElementById('epf-alert');
+      if (alert) alert.style.display = idx === 1 ? 'block' : 'none';
+    }
+  }
+
+  /* ── tabs (results page) ───────────── */
+  document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.tab;
+      document.querySelectorAll('.tab-btn[data-tab]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-rec').classList.toggle('active', key === 'rec');
+      document.getElementById('tab-prov').classList.toggle('active', key === 'prov');
+    });
+  });
+
+  /* ── view toggle ───────────────────── */
+  function switchView(view, el) {
+    el.parentElement.querySelectorAll('.vtbtn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  /* ── input clamp ───────────────────── */
+  function clampInput(el, min, max) {
+    const v = parseFloat(el.value);
+    if (!isNaN(v)) {
+      if (v < min) el.style.borderColor = '#F54336';
+      else if (v > max) el.style.borderColor = '#F54336';
+      else el.style.borderColor = '';
+    }
+  }
+
+  /* ── calculations ──────────────────── */
+  function getInputs() {
+    return {
+      retAge    : parseInt(document.getElementById('retAge').value)    || 60,
+      lifeExp   : parseInt(document.getElementById('lifeExp').value)   || 75,
+      monthly   : parseFloat(document.getElementById('monthlyExp').value) || 0,
+      inflation : parseFloat(document.getElementById('inflRate').value)   || 4,
+      postReturn: parseFloat(document.getElementById('postReturn').value) || 1,
+    };
+  }
+
+  function fmtRM(n) {
+    return 'RM ' + Math.round(n).toLocaleString('en-MY');
+  }
+
+  function fmtRMneg(n) {
+    return '-RM ' + Math.round(n).toLocaleString('en-MY');
+  }
+
+  function calcTargetAmount(projMonthly, retDuration, postReturn) {
+    const monthlyRate = (postReturn / 100) / 12;
+    const numPayments = retDuration * 12;
+    if (monthlyRate === 0) return projMonthly * numPayments;
+    return projMonthly * (1 - Math.pow(1 + monthlyRate, -numPayments)) / monthlyRate;
+  }
+
+  /* ── Step 1 summary ─────────────────── */
+  function updateSummary() {
+    const { retAge, lifeExp, monthly, inflation } = getInputs();
+    const ytr  = retAge - CURRENT_AGE;
+    const dur  = lifeExp - retAge;
+
+    document.getElementById('s-ytr').textContent    = ytr  + ' years';
+    document.getElementById('s-dur').textContent    = dur  + ' years';
+    document.getElementById('s-proj-label').textContent = 'At Age ' + retAge;
+    document.getElementById('s-proj-note').textContent  =
+      'Adjusted for ' + inflation + '% inflation over ' + ytr + ' years';
+
+    if (monthly > 0) {
+      const proj = monthly * Math.pow(1 + inflation / 100, ytr);
+      document.getElementById('s-proj-amount').textContent = fmtRM(proj);
+    } else {
+      document.getElementById('s-proj-amount').textContent = '—';
+    }
+
+    // Step 2 side panel
+    document.getElementById('p-at-age').textContent = 'At Age ' + retAge;
+    document.getElementById('p-ytr').textContent    = ytr + ' years';
+    document.getElementById('p-note').textContent   = 'No change over ' + ytr + ' years';
+  }
+
+  /* ── Step 1 validation ─────────────── */
+  function submitStep1() {
+    const monthly = parseFloat(document.getElementById('monthlyExp').value);
+    const errEl   = document.getElementById('err-monthly');
+    if (!monthly || monthly <= 0) {
+      errEl.style.display = 'block';
+      document.getElementById('monthlyExp').style.borderColor = '#F54336';
+      return;
+    }
+    errEl.style.display = 'none';
+    document.getElementById('monthlyExp').style.borderColor = '';
+    goTo(2);
+  }
+
+  /* ── Results builder ───────────────── */
+  function buildResults() {
+    const { retAge, lifeExp, monthly, inflation, postReturn } = getInputs();
+    const ytr  = retAge - CURRENT_AGE;
+    const dur  = lifeExp - retAge;
+    const m    = monthly > 0 ? monthly : 5000;
+
+    const projMonthly  = m * Math.pow(1 + inflation / 100, ytr);
+    const targetAmount = calcTargetAmount(projMonthly, dur, postReturn);
+    const shortfall    = targetAmount; // covered = 0
+
+    // Stats bar
+    document.getElementById('r-target').textContent    = fmtRM(targetAmount);
+    document.getElementById('r-target2').textContent   = fmtRM(targetAmount);
+    document.getElementById('r-shortfall').textContent = fmtRMneg(shortfall);
+    document.getElementById('r-shortfall2').textContent= fmtRMneg(shortfall);
+    document.getElementById('r-desc').textContent      =
+      fmtRM(projMonthly) + ' per month from age ' + retAge +
+      ' @ ' + inflation + '% for ' + dur + ' years';
+
+    // Run-out
+    document.getElementById('r-runout').textContent =
+      retAge + ' yo';
+    document.getElementById('r-runout-note').textContent =
+      'At current levels, your funds will run out at age ' + retAge +
+      '. You are at 0% of your retirement goal.';
+
+    // Donut label + axis
+    document.getElementById('donut-label').textContent = fmtRM(targetAmount);
+    updateDonutAxis(targetAmount);
+
+    // Recommendation options
+    const annualReturn = 0.07;
+    const mRate = annualReturn / 12;
+
+    // Option 1: 10 years
+    const n1 = 10 * 12;
+    const pmt1 = targetAmount * mRate / (Math.pow(1 + mRate, n1) - 1);
+    document.getElementById('rec-opt-1').textContent =
+      'Invest ' + fmtRM(pmt1) + ' /mth';
+
+    // Option 2: 20 years
+    const n2 = 20 * 12;
+    const pmt2 = targetAmount * mRate / (Math.pow(1 + mRate, n2) - 1);
+    document.getElementById('rec-opt-2').textContent =
+      'Invest ' + fmtRM(pmt2) + ' /mth';
+
+    // Option 3: lump sum today (FV in ytr years @ 7%)
+    const lump = targetAmount / Math.pow(1 + annualReturn, ytr);
+    document.getElementById('rec-opt-3').textContent =
+      'Invest ' + fmtRM(lump) + ' one-time';
+  }
+
+  function updateDonutAxis(target) {
+    const millions = Math.ceil(target / 1000000);
+    const axis = document.getElementById('donut-axis');
+    const labels = ['RM0'];
+    for (let i = 1; i <= Math.max(millions, 4); i++) {
+      labels.push('RM ' + i + ' M');
+    }
+    axis.innerHTML = labels.map(l => `<span>${l}</span>`).join('');
+  }
+
+  /* ── Add Entry placeholder ─────────── */
+  function showAddEntry() {
+    alert('Add Entry — connect to your provision data source here.');
+  }
+
+  /* ── Init ───────────────────────────── */
+  updateSummary();
+</script>
+
+</body>
+</html>
