@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { formatRMFull, generateRetirementProjection, tvmSolve, projectProvision, recMonthlyPMT, recLumpSum, recMonthlyFV } from '../../lib/calculations'
-import { Plus, ChevronDown, ChevronUp, Trash2, CheckCircle2, AlertTriangle, XCircle, ArrowLeft, MoreVertical, X } from 'lucide-react'
+import { Plus, ChevronDown, ChevronUp, Trash2, CheckCircle2, ArrowLeft, MoreVertical, X } from 'lucide-react'
 import RetirementChart from './RetirementChart'
 import PlanningAssumptions from './PlanningAssumptions'
 import { useLanguage } from '../../hooks/useLanguage'
@@ -67,7 +67,6 @@ export default function RetirementPlanner({
   const selectedRecs    = (plan.recommendations || []).filter((r) => r.isSelected)
 
   // Status colour / label
-  const statusBg    = projection.isFullyFunded ? 'bg-green-50 text-hig-green' : projection.coveragePercent >= 75 ? 'bg-orange-50 text-hig-orange' : 'bg-red-50 text-hig-red'
   const statusColor = projection.isFullyFunded ? '#34C759' : projection.coveragePercent >= 75 ? '#FF9500' : '#FF3B30'
   const statusLabel = projection.isFullyFunded ? t('retirement.onTrack') : projection.coveragePercent >= 75 ? t('retirement.progressing') : t('retirement.atRisk')
 
@@ -192,13 +191,15 @@ export default function RetirementPlanner({
             </span>
           </div>
 
-          <div className={`mt-2.5 px-3 py-2 rounded-hig-sm flex items-center gap-2 text-hig-caption1 ${statusBg}`}>
+          <p className={`mt-2.5 text-hig-caption1 ${
+            projection.isFullyFunded ? 'text-hig-blue' : projection.coveragePercent >= 75 ? 'text-hig-orange' : 'text-hig-red'
+          }`}>
             {projection.isFullyFunded
-              ? <><CheckCircle2 size={14} /> {projection.coveragePercent}% Achieved · {statusLabel}</>
+              ? 'You have more than enough to meet your goal. Consider reallocating the surplus to other financial objectives.'
               : projection.coveragePercent >= 75
-                ? <><AlertTriangle size={14} /> {projection.coveragePercent}% Achieved · {statusLabel}</>
-                : <><XCircle size={14} /> {projection.coveragePercent}% Achieved · {statusLabel}</>}
-          </div>
+                ? 'You are making progress, but there is still a gap to address. Consider increasing your contributions.'
+                : 'Your current funding is below target. We recommend reviewing your plan to bridge the gap.'}
+          </p>
         </div>
 
         {/* Chart */}
@@ -218,19 +219,21 @@ export default function RetirementPlanner({
           {/* Current Situation */}
           <div className="hig-card p-4">
             <h4 className="text-hig-subhead font-semibold mb-2">Current Situation</h4>
-            <div className="flex items-center gap-2 mb-1.5">
-              {projection.fundsRunOutAge >= plan.lifeExpectancy
-                ? <CheckCircle2 size={18} className="text-hig-green" />
-                : <AlertTriangle size={18} className="text-hig-red" />}
-              <span className={`text-hig-title3 ${projection.fundsRunOutAge >= plan.lifeExpectancy ? 'text-hig-green' : 'text-hig-red'}`}>
-                {projection.fundsRunOutAge >= plan.lifeExpectancy ? `${plan.lifeExpectancy}+ yo` : `${projection.fundsRunOutAge} yo`}
-              </span>
-            </div>
-            <p className="text-hig-caption1 text-hig-text-secondary">
-              {projection.fundsRunOutAge >= plan.lifeExpectancy
-                ? 'Funds will last through to your life expectancy.'
-                : `Funds will run out at age ${projection.fundsRunOutAge}.`}
-            </p>
+            {projection.fundsRunOutAge >= plan.lifeExpectancy ? (
+              <>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <CheckCircle2 size={18} className="text-hig-green" />
+                  <span className="text-hig-title3 text-hig-green">{plan.lifeExpectancy}+ yo</span>
+                </div>
+                <p className="text-hig-caption1 text-hig-text-secondary">Funds will last through to your life expectancy.</p>
+              </>
+            ) : (
+              <>
+                <p className="text-hig-caption1 text-hig-text-secondary mb-1">Funds will run out at</p>
+                <p className="text-hig-title3 text-hig-red mb-1.5">{projection.fundsRunOutAge} yo</p>
+                <p className="text-hig-caption1 text-hig-red">At current levels, your funds will run out at age {projection.fundsRunOutAge}. You are at 0% of your retirement goal.</p>
+              </>
+            )}
           </div>
 
           {/* With Recommendation */}
@@ -238,26 +241,21 @@ export default function RetirementPlanner({
             <h4 className="text-hig-subhead font-semibold mb-2">With Recommendation</h4>
             {selectedRecs.length === 0 ? (
               <>
-                <p className="text-hig-subhead text-hig-text-secondary font-medium mb-1">No Recommendation Selected</p>
+                <p className="text-hig-caption1 text-hig-text-secondary font-medium mb-1">No Recommendation Selected</p>
                 <p className="text-hig-caption1 text-hig-text-secondary">Add a recommendation to see how it improves your situation.</p>
               </>
             ) : projection.isFullyFunded || projection.fundsRunOutWithRec >= plan.lifeExpectancy ? (
               <>
-                <div className="flex items-center gap-2 mb-1.5">
-                  <CheckCircle2 size={18} className="text-hig-green" />
-                  <span className="text-hig-subhead font-semibold text-hig-green">Fully Funded</span>
-                </div>
-                <p className="text-hig-caption1 text-hig-green bg-green-50 rounded-hig-sm p-2">
-                  Your retirement is fully funded. You will have sufficient funds for retirement.
+                <p className="text-hig-caption1 text-hig-text-secondary font-medium mb-1.5">Fully Funded</p>
+                <p className="text-hig-caption1 text-hig-green">
+                  Your retirement is fully funded. You will have sufficient funds throughout your retirement years.
                 </p>
               </>
             ) : (
               <>
-                <div className="flex items-center gap-2 mb-1.5">
-                  <AlertTriangle size={18} className="text-hig-orange" />
-                  <span className="text-hig-title3">{projection.fundsRunOutWithRec} yo</span>
-                </div>
-                <p className="text-hig-caption1 text-hig-text-secondary">
+                <p className="text-hig-caption1 text-hig-text-secondary mb-1">Funds will run out at</p>
+                <p className="text-hig-title3 text-hig-red mb-1.5">{projection.fundsRunOutWithRec} yo</p>
+                <p className="text-hig-caption1 text-hig-red">
                   At current levels, your funds will run out at age {projection.fundsRunOutWithRec}. You are at {projection.coveragePercent}% of your retirement goal.
                 </p>
               </>
