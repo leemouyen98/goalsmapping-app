@@ -1183,9 +1183,12 @@
   }
 
   function runCustomSim() {
-    const amt     = parseFloat(document.getElementById('csp-amount').value) || 0;
-    const years   = parseFloat(document.getElementById('csp-years').value)  || 0;
-    const ret     = parseFloat(document.getElementById('csp-return').value) || 7;
+    const _a = parseFloat(document.getElementById('csp-amount').value);
+    const _y = parseFloat(document.getElementById('csp-years').value);
+    const _r = parseFloat(document.getElementById('csp-return').value);
+    const amt   = isNaN(_a) ? 0   : _a;
+    const years = isNaN(_y) ? 0   : _y;
+    const ret   = isNaN(_r) ? 7   : _r;
     const result  = document.getElementById('csp-result');
     if (!amt || !years) { result.classList.remove('show'); return; }
 
@@ -1228,8 +1231,8 @@
       retAge    : parseInt(document.getElementById('retAge').value)    || 60,
       lifeExp   : parseInt(document.getElementById('lifeExp').value)   || 75,
       monthly   : parseFloat(document.getElementById('monthlyExp').value) || 0,
-      inflation : parseFloat(document.getElementById('inflRate').value)   || 4,
-      postReturn: parseFloat(document.getElementById('postReturn').value) || 1,
+      inflation : (v => isNaN(v) ? 4 : v)(parseFloat(document.getElementById('inflRate').value)),
+      postReturn: (v => isNaN(v) ? 1 : v)(parseFloat(document.getElementById('postReturn').value)),
     };
   }
 
