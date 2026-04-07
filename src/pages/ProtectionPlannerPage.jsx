@@ -15,7 +15,8 @@ import { ProtectionExportButton } from '../components/pdf/ProtectionReportPDF'
 import { uid } from '../lib/formatters'
 const RISKS = ['death', 'tpd', 'aci', 'eci']
 const RISK_SHORT = { death: 'Death', tpd: 'TPD', aci: 'ACI', eci: 'ECI' }
-const RISK_COLOUR = { death: '#2E96FF', tpd: '#FF9500', aci: '#AF52DE', eci: '#FF3B30' }
+const RISK_COLOUR = { death: '#6366f1', tpd: '#0891b2', aci: '#dc2626', eci: '#f59e0b' }
+const RISK_HEADER_BG = { death: 'rgba(99,102,241,0.10)', tpd: 'rgba(8,145,178,0.10)', aci: 'rgba(220,38,38,0.10)', eci: 'rgba(245,158,11,0.10)' }
 const roundUp50K = (val) => Math.ceil(Math.max(val, 1) / 50000) * 50000
 
 const ASSUMPTION_PRESETS = [
@@ -150,39 +151,51 @@ export default function ProtectionPlannerPage() {
     </div>
   )
 
-  // Step indicator — compact pill style (matches RetirementPlannerPage)
+  // Step indicator — GoalsMapper horizontal stepper style
   const stepIndicator = (
     <div className="flex items-center justify-between mb-5">
-      <div className="flex items-center gap-1.5">
-        {[
-          { n: 1, label: t('protection.stepNeeds') },
-          { n: 2, label: t('protection.stepCoverage') },
-          { n: 3, label: t('protection.stepPlanner') },
-        ].map((s, idx) => (
-          <div key={s.n} className="flex items-center gap-1.5">
-            {idx > 0 && <span className="w-5 h-px bg-hig-gray-4" />}
-            <button
-              onClick={() => setStep(s.n)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-hig-caption1 font-medium transition-colors
-                ${step === s.n
-                  ? 'bg-hig-blue text-white'
-                  : step > s.n
-                    ? 'bg-hig-green/10 text-hig-green'
-                    : 'bg-hig-gray-6 text-hig-text-secondary'
-                }`}
-            >
-              <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0
-                ${step === s.n ? 'bg-white/20 text-white' : step > s.n ? 'bg-hig-green text-white' : 'bg-hig-gray-4 text-hig-text-secondary'}`}>
-                {step > s.n ? '✓' : s.n}
-              </span>
-              {s.label}
-            </button>
-          </div>
-        ))}
+      {/* Centred stepper */}
+      <div className="flex-1 flex items-center justify-center">
+        <div className="flex items-center">
+          {[
+            { n: 1, label: t('protection.stepNeeds') },
+            { n: 2, label: t('protection.stepCoverage') },
+            { n: 3, label: t('protection.stepPlanner') },
+          ].map((s, idx) => (
+            <div key={s.n} className="flex items-center">
+              {idx > 0 && (
+                <div className="w-12 h-px mx-1" style={{ backgroundColor: '#bdbdbd' }} />
+              )}
+              <button
+                onClick={() => setStep(s.n)}
+                className="flex items-center gap-2 transition-colors"
+              >
+                <span
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 transition-colors"
+                  style={
+                    step === s.n
+                      ? { backgroundColor: '#1976d2', color: '#fff' }
+                      : step > s.n
+                        ? { backgroundColor: '#1976d2', color: '#fff' }
+                        : { backgroundColor: 'transparent', color: '#9e9e9e', border: '2px solid #9e9e9e' }
+                  }
+                >
+                  {step > s.n ? '✓' : s.n}
+                </span>
+                <span
+                  className="text-sm font-medium"
+                  style={{ color: step === s.n ? '#1976d2' : step > s.n ? '#1976d2' : '#9e9e9e' }}
+                >
+                  {s.label}
+                </span>
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        {/* Planning Assumptions — hidden in meeting mode */}
+      {/* Right controls */}
+      <div className="flex items-center gap-3 shrink-0">
         {!meetingMode && (
           <button
             onClick={() => { setStep(3); setShowAssumptions(true) }}
@@ -191,7 +204,6 @@ export default function ProtectionPlannerPage() {
             <Settings size={14} /> {t('protection.planningAssumptions')}
           </button>
         )}
-        {/* Meeting Mode toggle — only on step 3 */}
         {step === 3 && (
           <button
             onClick={() => setMeetingMode(m => !m)}
@@ -313,51 +325,92 @@ function ProtectionBasicInfo({ plan, updatePlan, setNeed, onContinue, monthlyInc
     <div className="flex gap-6">
       {/* Left: Form */}
       <div className="flex-1 space-y-4">
-        <div className="hig-card p-5">
-          <h3 className="text-hig-headline mb-1">{t('protection.needsAnalysisTitle')}</h3>
-          <p className="text-hig-subhead text-hig-text-secondary mb-5">
-            {t('protection.needsAnalysisDesc')}
-          </p>
+        <div className="bg-white rounded p-5" style={{ border: '1px solid rgba(0,0,0,0.12)' }}>
+          {/* GoalsMapper-style page header with icon */}
+          <div className="flex items-start gap-3 mb-5">
+            <div
+              className="w-9 h-9 rounded flex items-center justify-center shrink-0"
+              style={{ background: 'linear-gradient(135deg,#a78bfa,#6366f1)' }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-[16px] font-bold text-gray-900">{t('protection.needsAnalysisTitle')}</h3>
+              <p className="text-[13px] text-gray-500 mt-0.5">{t('protection.needsAnalysisDesc')}</p>
+            </div>
+          </div>
 
           <div className="space-y-4">
             {RISKS.map((risk) => (
-              <div key={risk} className="border border-hig-gray-5 rounded-hig-sm p-4">
-                <div className="flex items-center gap-2 mb-1">
+              <div key={risk} className="rounded overflow-hidden bg-white" style={{ border: '1px solid rgba(0,0,0,0.12)' }}>
+                {/* GoalsMapper-style coloured header band */}
+                <div
+                  className="flex items-center gap-3 px-4 py-3"
+                  style={{ backgroundColor: RISK_HEADER_BG[risk] }}
+                >
                   <span
-                    className="w-2.5 h-2.5 rounded-full shrink-0"
-                    style={{ backgroundColor: RISK_COLOUR[risk] }}
+                    className="w-4 h-4 rounded-full shrink-0"
+                    style={{ backgroundColor: RISK_COLOUR[risk], opacity: 0.85 }}
                   />
-                  <h4 className="text-hig-subhead font-semibold">{riskLabels[risk]}</h4>
+                  <h4 className="text-[15px] font-semibold text-gray-900">{riskLabels[risk]}</h4>
                 </div>
-                <p className="text-hig-caption1 text-hig-text-secondary mb-3">{riskDesc[risk]}</p>
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <label className="hig-label">{t('protection.lumpSumRM')}</label>
-                    <NumberInput
-                      value={plan.needs[risk].lumpSum}
-                      onChange={(num) => setNeed(risk, 'lumpSum', num)}
-                      className="hig-input"
-                      placeholder="0"
-                    />
-                  </div>
-                  <div>
-                    <label className="hig-label">{t('protection.monthlyExpensesRM')}</label>
-                    <NumberInput
-                      value={plan.needs[risk].monthly}
-                      onChange={(num) => setNeed(risk, 'monthly', num)}
-                      className="hig-input"
-                      placeholder="0"
-                    />
-                  </div>
-                  <div>
-                    <label className="hig-label">{t('protection.periodYears')}</label>
-                    <input
-                      type="number"
-                      value={plan.needs[risk].period || ''}
-                      onChange={(e) => setNeed(risk, 'period', e.target.value)}
-                      className="hig-input"
-                      placeholder="0"
-                    />
+
+                {/* Form body */}
+                <div className="px-4 pt-3 pb-4">
+                  <div className="grid grid-cols-3 gap-4">
+                    {/* Lump Sum */}
+                    <div>
+                      <label className="block text-[13px] font-semibold text-gray-800 mb-1.5">
+                        {t('protection.lumpSum')}{' '}
+                        <span className="font-normal text-gray-400">Required</span>
+                      </label>
+                      <div className="flex items-center h-10 rounded px-3 bg-white" style={{ border: '1px solid #c4c4c4' }}>
+                        <span className="text-gray-500 text-sm mr-1.5 shrink-0">RM</span>
+                        <NumberInput
+                          value={plan.needs[risk].lumpSum}
+                          onChange={(num) => setNeed(risk, 'lumpSum', num)}
+                          className="border-0 p-0 flex-1 text-[15px] text-gray-900 bg-transparent focus:outline-none w-full"
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Monthly Expenses */}
+                    <div>
+                      <label className="block text-[13px] font-semibold text-gray-800 mb-1.5">
+                        {t('protection.monthlyExpenses')}{' '}
+                        <span className="font-normal text-gray-400">Required</span>
+                      </label>
+                      <div className="flex items-center h-10 rounded px-3 bg-white" style={{ border: '1px solid #c4c4c4' }}>
+                        <span className="text-gray-500 text-sm mr-1.5 shrink-0">RM</span>
+                        <NumberInput
+                          value={plan.needs[risk].monthly}
+                          onChange={(num) => setNeed(risk, 'monthly', num)}
+                          className="border-0 p-0 flex-1 text-[15px] text-gray-900 bg-transparent focus:outline-none w-full"
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Period */}
+                    <div>
+                      <label className="block text-[13px] font-semibold text-gray-800 mb-1.5">
+                        {t('protection.period')}{' '}
+                        <span className="font-normal text-gray-400">Required</span>
+                      </label>
+                      <div className="flex items-center h-10 rounded overflow-hidden bg-white" style={{ border: '1px solid #c4c4c4' }}>
+                        <input
+                          type="number"
+                          value={plan.needs[risk].period || ''}
+                          onChange={(e) => setNeed(risk, 'period', e.target.value)}
+                          className="flex-1 border-0 px-3 h-full text-[15px] text-gray-900 bg-transparent focus:outline-none"
+                          placeholder="0"
+                        />
+                        <span className="pr-3 text-gray-400 text-sm shrink-0">years</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -443,48 +496,24 @@ function ProtectionBasicInfo({ plan, updatePlan, setNeed, onContinue, monthlyInc
         </div>
       </div>
 
-      {/* Right: Summary */}
+      {/* Right: GoalsMapper Protection Progress panel */}
       <div className="w-72 shrink-0">
-        <div className="hig-card p-5 space-y-4 sticky top-4">
-          <h3 className="text-hig-headline">{t('protection.coverageSummary')}</h3>
+        <div className="bg-white rounded p-5 sticky top-4" style={{ border: '1px solid rgba(0,0,0,0.12)' }}>
+          <h3 className="text-[15px] font-semibold text-gray-900">Protection Progress</h3>
+          <p className="text-[13px] text-gray-500 mt-0.5 mb-5">Compare your existing coverage against what you need</p>
 
-          {!anyFilled ? (
-            <p className="text-hig-subhead text-hig-text-secondary">
-              {t('protection.fillNeedsPrompt')}
-            </p>
-          ) : (
-            <>
-              <div className="bg-blue-50 rounded-hig-sm p-4">
-                <p className="text-hig-caption1 text-hig-blue font-medium mb-1">{t('protection.totalCoverageNeeded')}</p>
-                <p className="text-hig-title2 text-hig-blue">{formatRMFull(grandTotal)}</p>
-                <p className="text-hig-caption2 text-hig-text-secondary mt-1">
-                  {t('protection.acrossAllCategories')}
+          <div className="space-y-5">
+            {needsSummary.map(({ risk, total }) => (
+              <div key={risk}>
+                <p className="text-[13px] font-bold text-gray-900 mb-2">{riskLabels[risk]}</p>
+                {/* Full-width solid colour bar — GoalsMapper style */}
+                <div className="h-2.5 rounded-full w-full" style={{ backgroundColor: RISK_COLOUR[risk] }} />
+                <p className="text-[13px] font-bold text-right mt-1" style={{ color: '#777' }}>
+                  Total Required Coverage: {formatRMFull(total)}
                 </p>
               </div>
-
-              <div className="space-y-2">
-                {needsSummary.map(({ risk, total }) => (
-                  <div key={risk} className="flex items-center justify-between py-2 border-b border-hig-gray-6 last:border-0">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="w-2.5 h-2.5 rounded-full shrink-0"
-                        style={{ backgroundColor: RISK_COLOUR[risk] }}
-                      />
-                      <span className="text-hig-subhead text-hig-text-secondary">{RISK_SHORT[risk]}</span>
-                    </div>
-                    <span className="text-hig-subhead font-semibold">{formatRMFull(total)}</span>
-                  </div>
-                ))}
-              </div>
-
-              <hr className="border-hig-gray-5" />
-
-              <div className="space-y-1.5 text-hig-caption1 text-hig-text-secondary">
-                <p>{t('protection.calcBasis')}</p>
-                <p>{t('protection.coverageRates', { inflation: plan.inflationRate, ret: plan.returnRate })}</p>
-              </div>
-            </>
-          )}
+            ))}
+          </div>
         </div>
       </div>
     </div>
