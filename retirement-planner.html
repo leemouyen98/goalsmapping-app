@@ -577,6 +577,53 @@
     .prov-disc-arrow.open { transform: rotate(180deg); }
     .prov-disc-body { display: none; padding: 4px 18px 16px; font-size: 13px; color: #BBBBBB; font-style: italic; }
     .prov-disc-body.open { display: block; }
+
+    /* Age steppers inside chart */
+    .age-steppers {
+      display: flex; gap: 24px; justify-content: center;
+      margin: 10px 0 4px; flex-wrap: wrap;
+    }
+    .age-stepper-group { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .age-stepper-label { font-size: 10.5px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: .4px; }
+    .age-stepper-row   { display: flex; align-items: center; gap: 0; border: 1px solid #E0E0E0; border-radius: 6px; overflow: hidden; }
+    .age-step-btn {
+      width: 30px; height: 30px; background: #F5F5F5; border: none;
+      font-size: 16px; font-weight: 700; color: #3A8DDE; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .12s; flex-shrink: 0; line-height: 1;
+    }
+    .age-step-btn:hover { background: #E8F0FB; }
+    .age-step-btn:active { background: #D6E6F8; }
+    .age-step-val {
+      min-width: 42px; text-align: center;
+      font-size: 14px; font-weight: 700; color: #191919;
+      border-left: 1px solid #E0E0E0; border-right: 1px solid #E0E0E0;
+      padding: 0 6px; height: 30px; line-height: 30px; background: #fff;
+    }
+
+    /* Rec rate bar */
+    .rec-rate-bar {
+      display: flex; align-items: center; gap: 10px;
+      background: #F7FAFF; border: 1px solid #DDE8F8; border-radius: 6px;
+      padding: 8px 14px; margin-bottom: 16px;
+      font-size: 12.5px; color: #585858;
+    }
+    .rec-rate-bar label { font-weight: 600; white-space: nowrap; }
+    .rate-stepper-row { display: flex; align-items: center; gap: 0; border: 1px solid #C8D8EE; border-radius: 5px; overflow: hidden; }
+    .rate-step-btn {
+      width: 28px; height: 28px; background: #E8F0FB; border: none;
+      font-size: 15px; font-weight: 700; color: #3A8DDE; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      transition: background .12s;
+    }
+    .rate-step-btn:hover { background: #D0E4F8; }
+    .rate-step-val {
+      min-width: 48px; text-align: center; height: 28px; line-height: 28px;
+      font-size: 13.5px; font-weight: 700; color: #191919;
+      border-left: 1px solid #C8D8EE; border-right: 1px solid #C8D8EE;
+      background: #fff; padding: 0 4px;
+    }
+    .rec-rate-note { font-size: 11.5px; color: #AAAAAA; margin-left: 4px; }
   </style>
 </head>
 <body>
@@ -943,31 +990,12 @@
                     <button class="vtbtn" onclick="switchView('plans',this)">Plans</button>
                   </div>
                 </div>
-                <div class="donut-wrap" style="margin:12px 0 8px;">
-                  <svg width="210" height="210" viewBox="0 0 200 200">
-                    <circle cx="100" cy="100" r="75" fill="none" stroke="#EEEEEE" stroke-width="30"/>
-                    <circle cx="100" cy="100" r="75" fill="none" stroke="#F54336" stroke-width="30"
-                      stroke-dasharray="471" stroke-dashoffset="0"
-                      transform="rotate(-90 100 100)" id="donut-risk"
-                      style="transition:stroke-dasharray .5s,stroke .3s;"/>
-                    <circle cx="100" cy="100" r="75" fill="none" stroke="#3A8DDE" stroke-width="30"
-                      stroke-dasharray="0 471"
-                      transform="rotate(-90 100 100)" id="donut-rec"
-                      style="transition:stroke-dasharray .5s;"/>
-                    <circle cx="100" cy="100" r="75" fill="none" stroke="#4CAF50" stroke-width="30"
-                      stroke-dasharray="0 471"
-                      transform="rotate(-90 100 100)" id="donut-achieved"
-                      style="transition:stroke-dasharray .5s;"/>
-                    <text x="100" y="91" text-anchor="middle" font-size="10.5" fill="#999"
-                      font-family="Open Sans,sans-serif">Amount Required</text>
-                    <text x="100" y="112" text-anchor="middle" font-size="12" font-weight="700" fill="#191919"
-                      font-family="Open Sans,sans-serif" id="donut-label">RM 0</text>
-                  </svg>
-                </div>
-                <div style="display:flex;gap:14px;justify-content:center;font-size:12px;color:#888;">
+                <!-- Age bar chart -->
+                <div id="age-chart-wrap" style="margin:10px 0 6px;width:100%;"></div>
+                <div style="display:flex;gap:14px;justify-content:center;font-size:11.5px;color:#888;margin-top:4px;">
                   <span><span style="display:inline-block;width:10px;height:10px;background:#F54336;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Shortfall</span>
-                  <span><span style="display:inline-block;width:10px;height:10px;background:#3A8DDE;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Recommended</span>
-                  <span><span style="display:inline-block;width:10px;height:10px;background:#4CAF50;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Achieved</span>
+                  <span><span style="display:inline-block;width:10px;height:10px;background:#3A8DDE;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>With Recommendation</span>
+                  <span><span style="display:inline-block;width:10px;height:10px;background:#4CAF50;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Funded</span>
                 </div>
               </div>
             </div>
@@ -995,8 +1023,22 @@
 
           <!-- ── RECOMMENDATIONS ─────────────────────────── -->
           <div class="rec-section">
-            <div class="rec-section-title">How to get on track</div>
-            <div class="rec-section-sub">Select a plan below to see how it closes the gap — then bring it to your client.</div>
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+              <div>
+                <div class="rec-section-title">How to get on track</div>
+                <div style="font-size:13px;color:#999;">Select a plan to see how it closes the gap.</div>
+              </div>
+              <!-- Assumed growth rate control -->
+              <div class="rec-rate-bar">
+                <label>Assumed growth rate</label>
+                <div class="rate-stepper-row">
+                  <button class="rate-step-btn" onclick="stepRate(-1)">−</button>
+                  <div class="rate-step-val" id="disp-rate">7%</div>
+                  <button class="rate-step-btn" onclick="stepRate(+1)">+</button>
+                </div>
+                <span class="rec-rate-note">p.a. · change to see impact</span>
+              </div>
+            </div>
 
             <div class="rec-cards-grid">
 
@@ -1005,7 +1047,7 @@
                 <div class="rc-badge">Monthly · 10 years</div>
                 <div class="rc-amount" id="rc-amount-0">RM —</div>
                 <div class="rc-unit">/month</div>
-                <div class="rc-return">Assumed growth: 7% p.a.</div>
+                <div class="rc-return rc-return-label">Assumed growth: 7% p.a.</div>
                 <button class="rc-btn" onclick="event.stopPropagation();selectRec(0)">Select Plan</button>
               </div>
 
@@ -1014,7 +1056,7 @@
                 <div class="rc-badge">Monthly · 20 years</div>
                 <div class="rc-amount" id="rc-amount-1">RM —</div>
                 <div class="rc-unit">/month</div>
-                <div class="rc-return">Assumed growth: 7% p.a.</div>
+                <div class="rc-return rc-return-label">Assumed growth: 7% p.a.</div>
                 <button class="rc-btn" onclick="event.stopPropagation();selectRec(1)">Select Plan</button>
               </div>
 
@@ -1023,7 +1065,7 @@
                 <div class="rc-badge">One-time · Today</div>
                 <div class="rc-amount" id="rc-amount-2">RM —</div>
                 <div class="rc-unit">lump sum</div>
-                <div class="rc-return">Assumed growth: 7% p.a.</div>
+                <div class="rc-return rc-return-label">Assumed growth: 7% p.a.</div>
                 <button class="rc-btn" onclick="event.stopPropagation();selectRec(2)">Select Plan</button>
               </div>
 
@@ -1111,6 +1153,46 @@
     el.classList.add('active');
   }
 
+  /* ── growth rate stepper (rec cards) ── */
+  let _growthRate = 7; // percent
+  function stepRate(delta) {
+    _growthRate = Math.max(0, Math.min(20, _growthRate + delta));
+    document.getElementById('disp-rate').textContent = _growthRate + '%';
+    // update label on all cards
+    document.querySelectorAll('.rc-return-label').forEach(el => {
+      el.textContent = 'Assumed growth: ' + _growthRate + '% p.a.';
+    });
+    updateRecCards();
+    // if a card is already selected, reselect to refresh the "With Rec" card
+    if (_selectedRec >= 0) selectRec(_selectedRec);
+  }
+
+  /* ── PMT helper (handles 0%) ─────────── */
+  function calcPMT(target, months, annualRate) {
+    const mRate = (annualRate / 100) / 12;
+    if (mRate === 0) return target / months;
+    return target * mRate / (Math.pow(1 + mRate, months) - 1);
+  }
+
+  function calcLumpSumNow(target, years, annualRate) {
+    if (annualRate === 0) return target;
+    return target / Math.pow(1 + annualRate / 100, years);
+  }
+
+  /* ── update rec cards with current rate ─ */
+  function updateRecCards() {
+    const { target, ytr } = _recData;
+    if (!target) return;
+
+    const pmt10  = calcPMT(target, 10 * 12, _growthRate);
+    const pmt20  = calcPMT(target, 20 * 12, _growthRate);
+    const lump   = calcLumpSumNow(target, ytr, _growthRate);
+
+    document.getElementById('rc-amount-0').textContent = fmtRM(pmt10);
+    document.getElementById('rc-amount-1').textContent = fmtRM(pmt20);
+    document.getElementById('rc-amount-2').textContent = fmtRM(lump);
+  }
+
   /* ── recommendation card selection ─── */
   let _recData = { target: 0, projMonthly: 0, retAge: 60, lifeExp: 75, ytr: 29 };
   let _selectedRec = -1;
@@ -1123,18 +1205,10 @@
     });
 
     const { target, projMonthly, retAge, lifeExp, ytr } = _recData;
-    const circ = 2 * Math.PI * 75;
-    const annualReturn = 0.07;
-    const mRate = annualReturn / 12;
     const covered = target; // full coverage when plan selected
 
-    // Update donut — show full coverage in blue (recommended)
-    const riskRing     = document.getElementById('donut-risk');
-    const recRing      = document.getElementById('donut-rec');
-    const achievedRing = document.getElementById('donut-achieved');
-    riskRing.setAttribute('stroke-dasharray', '0 ' + circ);
-    recRing.setAttribute('stroke-dasharray', circ + ' 0');
-    achievedRing.setAttribute('stroke-dasharray', '0 ' + circ);
+    // Rebuild age chart with rec selected
+    buildAgeChart();
 
     // Progress bar — full recommended
     const pBar = document.getElementById('r-progress');
@@ -1397,53 +1471,171 @@
       }
     }
 
-    // Donut label + axis
-    document.getElementById('donut-label').textContent = fmtRM(targetAmount);
-    updateDonutAxis(targetAmount);
+    // Age bar chart — baseline (no recommendation selected)
+    buildAgeChart();
 
-    // Donut ring — baseline (no recommendation selected)
-    const riskRing     = document.getElementById('donut-risk');
-    const recRing      = document.getElementById('donut-rec');
-    const achievedRing = document.getElementById('donut-achieved');
-    const circ = 2 * Math.PI * 75; // ≈ 471
-    if (isSurplus) {
-      riskRing.setAttribute('stroke-dasharray', '0 ' + circ);
-      recRing.setAttribute('stroke-dasharray', '0 ' + circ);
-      achievedRing.setAttribute('stroke-dasharray', circ + ' 0');
-    } else {
-      const achievedDash = (pctCovered / 100) * circ;
-      riskRing.setAttribute('stroke-dasharray', (circ - achievedDash) + ' ' + achievedDash);
-      recRing.setAttribute('stroke-dasharray', '0 ' + circ);
-      achievedRing.setAttribute('stroke-dasharray', achievedDash + ' ' + (circ - achievedDash));
-    }
-
-    // Recommendation cards
-    const annualReturn = 0.07;
-    const mRate = annualReturn / 12;
-
-    // Card 0: 10 years monthly
-    const n1   = 10 * 12;
-    const pmt1 = targetAmount * mRate / (Math.pow(1 + mRate, n1) - 1);
-    document.getElementById('rc-amount-0').textContent = fmtRM(pmt1);
-
-    // Card 1: 20 years monthly
-    const n2   = 20 * 12;
-    const pmt2 = targetAmount * mRate / (Math.pow(1 + mRate, n2) - 1);
-    document.getElementById('rc-amount-1').textContent = fmtRM(pmt2);
-
-    // Card 2: lump sum
-    const lump = targetAmount / Math.pow(1 + annualReturn, ytr);
-    document.getElementById('rc-amount-2').textContent = fmtRM(lump);
+    // Recommendation cards — use live growth rate
+    updateRecCards();
   }
 
-  function updateDonutAxis(target) {
-    const millions = Math.ceil(target / 1000000);
-    const axis = document.getElementById('donut-axis');
-    const labels = ['RM0'];
-    for (let i = 1; i <= Math.max(millions, 4); i++) {
-      labels.push('RM ' + i + ' M');
+  /* ── Age bar chart ─────────────────── */
+  function buildAgeChart() {
+    const wrap = document.getElementById('age-chart-wrap');
+    if (!wrap) return;
+    const { target, projMonthly, retAge, lifeExp, ytr } = _recData;
+    const { postReturn } = getInputs();
+    if (!target) { wrap.innerHTML = ''; return; }
+
+    const startAge  = CURRENT_AGE - 1;
+    const endAge    = lifeExp + 1;
+    const totalAges = endAge - startAge + 1;
+
+    /* ── fund simulation ── */
+    const mRate   = (_growthRate / 100) / 12;
+    const annualR = postReturn / 100;
+
+    let pmt = 0, contribYears = 0, lumpAmt = 0;
+    if (_selectedRec === 0) {
+      pmt = calcPMT(target, 10 * 12, _growthRate);
+      contribYears = Math.min(10, ytr);
+    } else if (_selectedRec === 1) {
+      pmt = calcPMT(target, 20 * 12, _growthRate);
+      contribYears = Math.min(20, ytr);
+    } else if (_selectedRec === 2) {
+      lumpAmt = calcLumpSumNow(target, ytr, _growthRate);
     }
-    axis.innerHTML = labels.map(l => `<span>${l}</span>`).join('');
+
+    const fundVals  = [];
+    const barColors = [];
+
+    for (let age = startAge; age <= endAge; age++) {
+      let val = 0, col = '#BDBDBD';
+
+      if (age === startAge || age === endAge) {
+        /* boundary — empty */
+      } else if (age < retAge) {
+        /* pre-retirement */
+        if (_selectedRec >= 0) {
+          const yearsElapsed = age - CURRENT_AGE;
+          const months = yearsElapsed * 12;
+          if (_selectedRec === 0 || _selectedRec === 1) {
+            const cm = Math.min(months, contribYears * 12);
+            val = mRate === 0
+              ? pmt * cm
+              : pmt * (Math.pow(1 + mRate, cm) - 1) / mRate;
+            if (months > contribYears * 12) {
+              val *= _growthRate === 0 ? 1 : Math.pow(1 + mRate, months - contribYears * 12);
+            }
+          } else {
+            val = _growthRate === 0 ? lumpAmt : lumpAmt * Math.pow(1 + _growthRate / 100, yearsElapsed);
+          }
+          val = Math.min(val, target);
+          col = '#3A8DDE';
+        }
+      } else if (age >= retAge) {
+        /* post-retirement drawdown */
+        const yearsIn = age - retAge;
+        let fund = _selectedRec >= 0 ? target : 0;
+        if (annualR === 0) {
+          fund -= projMonthly * 12 * yearsIn;
+        } else {
+          for (let y = 0; y < yearsIn; y++) {
+            fund = fund * (1 + annualR) - projMonthly * 12;
+            if (fund <= 0) { fund = 0; break; }
+          }
+        }
+
+        if (_selectedRec >= 0) {
+          val = Math.max(0, fund);
+          col = fund > 0 ? '#4CAF50' : '#F54336';
+        } else {
+          /* no rec: show declining unfunded need in red */
+          const remYears = lifeExp - age;
+          val = remYears <= 0 ? 0
+            : annualR === 0
+              ? projMonthly * 12 * remYears
+              : projMonthly * 12 * (1 - Math.pow(1 + annualR, -remYears)) / annualR;
+          val = Math.min(val, target);
+          col = '#F54336';
+        }
+      }
+
+      fundVals.push(val);
+      barColors.push(col);
+    }
+
+    /* ── SVG ── */
+    const W = 600, H = 150;
+    const mL = 54, mR = 10, mT = 16, mB = 26;
+    const plotW = W - mL - mR;
+    const plotH = H - mT - mB;
+    const barW  = plotW / totalAges;
+    const gap   = Math.max(0.8, barW * 0.12);
+    const bW    = barW - gap;
+
+    const xOf = i  => mL + i * barW + gap / 2;
+    const yOf = v  => mT + plotH - (v / target) * plotH;
+    const hOf = v  => (v / target) * plotH;
+
+    const shortFmt = v =>
+      v >= 1e6  ? 'RM ' + (v / 1e6).toFixed(1) + 'M' :
+      v >= 1000 ? 'RM ' + Math.round(v / 1000) + 'k'  : 'RM0';
+
+    /* ages to label */
+    const labelAges = new Set([CURRENT_AGE, retAge, lifeExp]);
+    for (let a = Math.ceil(CURRENT_AGE / 5) * 5; a <= lifeExp; a += 5) labelAges.add(a);
+    labelAges.delete(startAge);
+    labelAges.delete(endAge);
+
+    const p = [];
+    p.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;">`);
+
+    /* gridlines + y-labels */
+    for (let g = 1; g <= 3; g++) {
+      const gy = (mT + plotH - (g / 4) * plotH).toFixed(1);
+      p.push(`<line x1="${mL}" y1="${gy}" x2="${mL + plotW}" y2="${gy}" stroke="#EEEEEE" stroke-width="1"/>`);
+      p.push(`<text x="${mL - 4}" y="${parseFloat(gy) + 3}" text-anchor="end" font-size="8.5" fill="#BBBBBB" font-family="Open Sans,sans-serif">${shortFmt(target * g / 4)}</text>`);
+    }
+
+    /* bars */
+    for (let i = 0; i < totalAges; i++) {
+      const v = fundVals[i];
+      const h = hOf(v);
+      if (h > 0.5) {
+        const x = xOf(i).toFixed(1);
+        const y = yOf(v).toFixed(1);
+        p.push(`<rect x="${x}" y="${y}" width="${bW.toFixed(1)}" height="${h.toFixed(1)}" fill="${barColors[i]}" rx="1.5"/>`);
+      }
+
+      /* x-axis label */
+      const age = startAge + i;
+      if (labelAges.has(age)) {
+        const cx = (xOf(i) + bW / 2).toFixed(1);
+        const fw = (age === retAge || age === lifeExp) ? '700' : '400';
+        const fc = (age === retAge) ? '#3A8DDE' : (age === lifeExp) ? '#585858' : '#888888';
+        p.push(`<text x="${cx}" y="${mT + plotH + 13}" text-anchor="middle" font-size="9" fill="${fc}" font-family="Open Sans,sans-serif" font-weight="${fw}">${age}</text>`);
+      }
+    }
+
+    /* dashed verticals */
+    const dashed = (ageVal, stroke, opacity) => {
+      const i  = ageVal - startAge;
+      const cx = (xOf(i) + bW / 2).toFixed(1);
+      return `<line x1="${cx}" y1="${mT}" x2="${cx}" y2="${mT + plotH}" stroke="${stroke}" stroke-width="1.5" stroke-dasharray="4 3" opacity="${opacity}"/>`;
+    };
+    p.push(dashed(retAge,  '#3A8DDE', '0.65'));
+    p.push(dashed(lifeExp, '#888888', '0.50'));
+
+    /* phase micro-labels */
+    const retCX  = (xOf(retAge  - startAge) + bW / 2).toFixed(1);
+    p.push(`<text x="${parseFloat(retCX) - 5}" y="${mT + 11}" text-anchor="end"   font-size="8.5" fill="#3A8DDE" font-family="Open Sans,sans-serif" opacity="0.85">Accumulation</text>`);
+    p.push(`<text x="${parseFloat(retCX) + 5}" y="${mT + 11}" text-anchor="start" font-size="8.5" fill="#888888" font-family="Open Sans,sans-serif" opacity="0.85">Drawdown</text>`);
+
+    /* x-axis baseline */
+    p.push(`<line x1="${mL}" y1="${mT + plotH}" x2="${mL + plotW}" y2="${mT + plotH}" stroke="#CCCCCC" stroke-width="1"/>`);
+
+    p.push(`</svg>`);
+    wrap.innerHTML = p.join('');
   }
 
   /* ── Add Entry placeholder ─────────── */
