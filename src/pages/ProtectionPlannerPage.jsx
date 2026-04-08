@@ -357,31 +357,29 @@ function ProtectionBasicInfo({ plan, updatePlan, setNeed, onContinue, monthlyInc
                   <h4 className="text-[15px] font-semibold text-gray-900">{riskLabels[risk]}</h4>
                 </div>
 
-                {/* Form body */}
-                <div className="px-4 pt-3 pb-4">
-                  <div className="grid grid-cols-3 gap-4">
-                    {/* Lump Sum */}
-                    <div>
-                      <label className="block text-[13px] font-semibold text-gray-800 mb-1.5">
-                        {t('protection.lumpSum')}{' '}
-                        <span className="font-normal text-gray-400">Required</span>
-                      </label>
-                      <div className="flex items-center h-10 rounded px-3 bg-white" style={{ border: '1px solid #c4c4c4' }}>
-                        <span className="text-gray-500 text-sm mr-1.5 shrink-0">RM</span>
-                        <NumberInput
-                          value={plan.needs[risk].lumpSum}
-                          onChange={(num) => setNeed(risk, 'lumpSum', num)}
-                          className="border-0 p-0 flex-1 text-[15px] text-gray-900 bg-transparent focus:outline-none w-full"
-                          placeholder="0"
-                        />
-                      </div>
+                {/* Form body — GoalsMapper layout: Lump Sum full-width, then Monthly + Period side-by-side */}
+                <div className="px-4 pt-3 pb-4 space-y-3">
+                  {/* Row 1: Lump Sum — full width */}
+                  <div>
+                    <label className="block text-[13px] font-semibold text-gray-800 mb-1.5">
+                      Lump Sum <span className="font-normal text-gray-400">Required</span>
+                    </label>
+                    <div className="flex items-center h-10 rounded px-3 bg-white" style={{ border: '1px solid #c4c4c4' }}>
+                      <span className="text-gray-500 text-sm mr-1.5 shrink-0">RM</span>
+                      <NumberInput
+                        value={plan.needs[risk].lumpSum}
+                        onChange={(num) => setNeed(risk, 'lumpSum', num)}
+                        className="border-0 p-0 flex-1 text-[15px] text-gray-900 bg-transparent focus:outline-none w-full"
+                        placeholder="0"
+                      />
                     </div>
+                  </div>
 
-                    {/* Monthly Expenses */}
+                  {/* Row 2: Monthly Expenses + Period side-by-side */}
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[13px] font-semibold text-gray-800 mb-1.5">
-                        {t('protection.monthlyExpenses')}{' '}
-                        <span className="font-normal text-gray-400">Required</span>
+                        Monthly Expenses <span className="font-normal text-gray-400">Required</span>
                       </label>
                       <div className="flex items-center h-10 rounded px-3 bg-white" style={{ border: '1px solid #c4c4c4' }}>
                         <span className="text-gray-500 text-sm mr-1.5 shrink-0">RM</span>
@@ -393,12 +391,9 @@ function ProtectionBasicInfo({ plan, updatePlan, setNeed, onContinue, monthlyInc
                         />
                       </div>
                     </div>
-
-                    {/* Period */}
                     <div>
                       <label className="block text-[13px] font-semibold text-gray-800 mb-1.5">
-                        {t('protection.period')}{' '}
-                        <span className="font-normal text-gray-400">Required</span>
+                        Period <span className="font-normal text-gray-400">Required</span>
                       </label>
                       <div className="flex items-center h-10 rounded overflow-hidden bg-white" style={{ border: '1px solid #c4c4c4' }}>
                         <input
@@ -553,10 +548,10 @@ function ProtectionExistingCoverage({ plan, setExisting, onBack, onContinue, ins
     <div className="flex gap-6">
       {/* Left: Form */}
       <div className="flex-1 space-y-4">
-        <div className="hig-card p-5">
-          <h3 className="text-hig-headline mb-1">{t('protection.existingCoverageHeader')}</h3>
-          <p className="text-hig-subhead text-hig-text-secondary mb-4">
-            {t('protection.existingCoverageDesc')}
+        <div className="bg-white rounded p-5" style={{ border: '1px solid rgba(0,0,0,0.12)' }}>
+          <h3 className="text-[16px] font-bold text-gray-900 mb-1">Existing Coverage</h3>
+          <p className="text-[13px] text-gray-500 mb-5">
+            This allows you to factor in your existing coverage during the analysis
           </p>
 
           {/* ── Insurance Tab sync banner ── */}
@@ -596,45 +591,33 @@ function ProtectionExistingCoverage({ plan, setExisting, onBack, onContinue, ins
               const gap = Math.max(0, target - existing)
 
               return (
-                <div key={risk} className="border border-hig-gray-5 rounded-hig-sm p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: RISK_COLOUR[risk] }} />
-                    <h4 className="text-hig-subhead font-semibold">{riskLabels[risk]}</h4>
+                <div key={risk} className="rounded overflow-hidden bg-white" style={{ border: '1px solid rgba(0,0,0,0.12)' }}>
+                  {/* GoalsMapper-style coloured header band */}
+                  <div className="flex items-center gap-3 px-4 py-3" style={{ backgroundColor: RISK_HEADER_BG[risk] }}>
+                    <span className="w-4 h-4 rounded-full shrink-0" style={{ backgroundColor: RISK_COLOUR[risk], opacity: 0.85 }} />
+                    <h4 className="text-[15px] font-semibold text-gray-900">{riskLabels[risk]}</h4>
                     {target > 0 && (
-                      <span className="ml-auto text-hig-caption1 text-hig-text-secondary">
-                        {t('protection.targetLabel', { amount: formatRMFull(target) })}
+                      <span className="ml-auto text-[13px] text-gray-500">
+                        Target: {formatRMFull(target)}
                       </span>
                     )}
                   </div>
 
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-hig-text-secondary text-hig-subhead">RM</span>
-                    <NumberInput
-                      value={plan.existing[risk]}
-                      onChange={(num) => setExisting(risk, num)}
-                      className="hig-input pl-10"
-                      placeholder="0"
-                    />
-                  </div>
-
-                  {target > 0 && (
-                    <div className="mt-3">
-                      <div className="h-2 bg-hig-gray-6 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-500"
-                          style={{
-                            width: `${pct}%`,
-                            backgroundColor: pct >= 100 ? '#34C759' : pct >= 50 ? '#FF9500' : '#FF3B30',
-                          }}
-                        />
-                      </div>
-                      <div className="flex justify-between mt-1 text-hig-caption2 text-hig-text-secondary">
-                        <span>{t('protection.coveredPct', { pct })}</span>
-                        {gap > 0 && <span className="text-hig-red">{t('protection.gapLabel', { amount: formatRMFull(gap) })}</span>}
-                        {gap === 0 && existing > 0 && <span className="text-hig-green">{t('protection.fullyCovered')}</span>}
-                      </div>
+                  {/* Input */}
+                  <div className="px-4 pt-3 pb-4">
+                    <label className="block text-[13px] font-semibold text-gray-800 mb-1.5">
+                      Coverage Amount <span className="font-normal text-gray-400">Required</span>
+                    </label>
+                    <div className="flex items-center h-10 rounded px-3 bg-white" style={{ border: '1px solid #c4c4c4' }}>
+                      <span className="text-gray-500 text-sm mr-1.5 shrink-0">RM</span>
+                      <NumberInput
+                        value={plan.existing[risk]}
+                        onChange={(num) => setExisting(risk, num)}
+                        className="border-0 p-0 flex-1 text-[15px] text-gray-900 bg-transparent focus:outline-none w-full"
+                        placeholder="0"
+                      />
                     </div>
-                  )}
+                  </div>
                 </div>
               )
             })}
@@ -647,39 +630,39 @@ function ProtectionExistingCoverage({ plan, setExisting, onBack, onContinue, ins
         </div>
       </div>
 
-      {/* Right: Summary */}
+      {/* Right: GoalsMapper Protection Progress panel — Step 2 variant */}
       <div className="w-72 shrink-0">
-        <div className="hig-card p-5 space-y-4 sticky top-4">
-          <h3 className="text-hig-headline">{t('protection.coverageGap')}</h3>
-          <div className="space-y-3">
+        <div className="bg-white rounded p-5 sticky top-4" style={{ border: '1px solid rgba(0,0,0,0.12)' }}>
+          <h3 className="text-[15px] font-semibold text-gray-900">Protection Progress</h3>
+          <p className="text-[13px] text-gray-500 mt-0.5 mb-5">Compare your existing coverage against what you need</p>
+          <div className="space-y-5">
             {RISKS.map((risk) => {
               const existing = plan.existing[risk] || 0
               const target = targets[risk] || 0
-              const gap = Math.max(0, target - existing)
               const pct = target > 0 ? Math.min(100, Math.round((existing / target) * 100)) : 0
+              const isGap = pct < 100
 
               return (
-                <div key={risk} className="space-y-1">
-                  <div className="flex items-center justify-between">
+                <div key={risk}>
+                  {/* Label row with warning + % */}
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[13px] font-bold text-gray-900">{riskLabels[risk]}</span>
                     <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: RISK_COLOUR[risk] }} />
-                      <span className="text-hig-caption1 text-hig-text-secondary">{RISK_SHORT[risk]}</span>
+                      {isGap && (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b"><path d="M12 2L1 21h22L12 2zm0 3.5L21 19H3L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg>
+                      )}
+                      <span className="text-[12px] font-bold" style={{ color: isGap ? '#777' : '#16a34a' }}>{pct}%</span>
                     </div>
-                    <span className={`text-hig-caption1 font-semibold ${gap > 0 ? 'text-hig-red' : 'text-hig-green'}`}>
-                      {gap > 0 ? `-${formatRMFull(gap)}` : 'OK'}
-                    </span>
                   </div>
-                  {target > 0 && (
-                    <div className="h-1.5 bg-hig-gray-6 rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${pct}%`,
-                          backgroundColor: pct >= 100 ? '#34C759' : pct >= 50 ? '#FF9500' : '#FF3B30',
-                        }}
-                      />
-                    </div>
-                  )}
+                  {/* Progress bar */}
+                  <div className="h-2.5 rounded-full w-full overflow-hidden" style={{ backgroundColor: 'rgba(0,0,0,0.08)' }}>
+                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: RISK_COLOUR[risk] }} />
+                  </div>
+                  {/* Existing / Total row */}
+                  <div className="flex justify-between mt-1">
+                    <span className="text-[12px] text-gray-500">Existing Coverage: {formatRMFull(existing)}</span>
+                    <span className="text-[12px] font-bold text-gray-500">Total Required Coverage: {formatRMFull(target)}</span>
+                  </div>
                 </div>
               )
             })}
