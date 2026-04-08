@@ -322,7 +322,9 @@ function ProtectionBasicInfo({ plan, updatePlan, setNeed, onContinue, monthlyInc
   }
 
   return (
-    <div className="flex gap-6">
+    <>
+    {/* pb-16 keeps content above the fixed footer */}
+    <div className="flex flex-col lg:flex-row gap-6 pb-16">
       {/* Left: Form */}
       <div className="flex-1 space-y-4">
         <div className="bg-white rounded p-5" style={{ border: '1px solid rgba(0,0,0,0.12)' }}>
@@ -412,87 +414,10 @@ function ProtectionBasicInfo({ plan, updatePlan, setNeed, onContinue, monthlyInc
             ))}
           </div>
         </div>
-
-        {/* Planning Parameters */}
-        <div className="hig-card p-5">
-          <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
-            <div>
-              <h3 className="text-hig-headline mb-1">{t('protection.planningParamsTitle')}</h3>
-              <p className="text-hig-subhead text-hig-text-secondary">
-                {t('protection.planningParamsDesc')}
-              </p>
-            </div>
-            <div className="text-right min-w-[220px]">
-              <p className="text-hig-caption1 text-hig-text-secondary font-medium">Income replacement sense-check</p>
-              {expenseRatio !== null ? (
-                <>
-                  <p className="text-hig-title3">{expenseRatio}%</p>
-                  <p className="text-hig-caption2 text-hig-text-secondary">Death monthly need vs gross monthly income</p>
-                </>
-              ) : (
-                <p className="text-hig-caption2 text-hig-text-secondary">Add gross monthly income in Financial Info for a cleaner protection benchmark.</p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-            {ASSUMPTION_PRESETS.map((preset) => {
-              const isActive = plan.inflationRate === preset.inflationRate && plan.returnRate === preset.returnRate
-              return (
-                <button
-                  key={preset.key}
-                  type="button"
-                  onClick={() => applyPreset(preset)}
-                  className={`text-left rounded-hig-sm border p-3 transition-colors ${isActive ? 'border-hig-blue bg-hig-blue/5' : 'border-hig-gray-5 hover:border-hig-gray-4'}`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-hig-subhead font-semibold">{preset.label}</span>
-                    {isActive && <span className="text-[10px] font-bold uppercase tracking-wide text-hig-blue">Active</span>}
-                  </div>
-                  <p className="text-hig-caption2 text-hig-text-secondary mt-1">{preset.helper}</p>
-                  <p className="text-hig-caption2 text-hig-text-secondary mt-2">Inflation {preset.inflationRate}% · Return {preset.returnRate}%</p>
-                </button>
-              )
-            })}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="hig-label">{t('protection.inflationRatePct')}</label>
-              <input
-                type="number"
-                step="0.5"
-                min={0}
-                max={10}
-                value={plan.inflationRate}
-                onChange={(e) => updatePlan({ inflationRate: parseFloat(e.target.value) || 0 })}
-                className="hig-input"
-              />
-              <p className="text-hig-caption2 text-hig-text-secondary mt-1">{t('protection.inflationRateDesc')}</p>
-            </div>
-            <div>
-              <label className="hig-label">{t('protection.returnRatePct')}</label>
-              <input
-                type="number"
-                step="0.5"
-                min={0}
-                max={10}
-                value={plan.returnRate}
-                onChange={(e) => updatePlan({ returnRate: parseFloat(e.target.value) || 0 })}
-                className="hig-input"
-              />
-              <p className="text-hig-caption2 text-hig-text-secondary mt-1">{t('protection.returnRateDesc')}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex justify-end">
-          <button onClick={onContinue} className="hig-btn-primary">{t('common.continue')}</button>
-        </div>
-      </div>
+      </div>{/* /flex-1 left column */}
 
       {/* Right: GoalsMapper Protection Progress panel */}
-      <div className="w-72 shrink-0">
+      <div className="w-full lg:w-72 shrink-0">
         <div className="bg-white rounded p-5 sticky top-4" style={{ border: '1px solid rgba(0,0,0,0.12)' }}>
           <h3 className="text-[15px] font-semibold text-gray-900">Protection Progress</h3>
           <p className="text-[13px] text-gray-500 mt-0.5 mb-5">Compare your existing coverage against what you need</p>
@@ -512,6 +437,21 @@ function ProtectionBasicInfo({ plan, updatePlan, setNeed, onContinue, monthlyInc
         </div>
       </div>
     </div>
+
+    {/* GoalsMapper fixed bottom footer — Step 1 */}
+    <div
+      className="fixed bottom-0 left-0 right-0 flex items-center justify-end px-4 py-2 z-50"
+      style={{ backgroundColor: 'rgb(250,250,250)', borderTop: '1px solid rgba(0,0,0,0.08)' }}
+    >
+      <button
+        onClick={onContinue}
+        className="font-semibold text-white rounded transition-colors hover:opacity-90"
+        style={{ backgroundColor: 'rgb(58,141,222)', padding: '4px 16px', fontSize: '13px', borderRadius: '4px' }}
+      >
+        Continue
+      </button>
+    </div>
+    </>
   )
 }
 
@@ -624,9 +564,19 @@ function ProtectionExistingCoverage({ plan, setExisting, onBack, onContinue, ins
           </div>
         </div>
 
-        <div className="flex justify-between">
-          <button onClick={onBack} className="hig-btn-ghost gap-1.5"><ArrowLeft size={16} /> {t('common.back')}</button>
-          <button onClick={onContinue} className="hig-btn-primary">{t('common.continue')}</button>
+        {/* GoalsMapper-style fixed footer — Step 2 */}
+        <div
+          className="fixed bottom-0 left-0 right-0 flex items-center justify-between px-4 py-2 z-50"
+          style={{ backgroundColor: 'rgb(250,250,250)', borderTop: '1px solid rgba(0,0,0,0.08)' }}
+        >
+          <button
+            onClick={onBack}
+            style={{ color: 'rgba(0,0,0,0.26)', background: 'transparent', padding: '4px 5px', fontSize: '13px', border: 'none', cursor: 'pointer' }}
+          >Back</button>
+          <button
+            onClick={onContinue}
+            style={{ backgroundColor: 'rgb(58,141,222)', color: 'white', padding: '4px 16px', fontSize: '13px', borderRadius: '4px', fontWeight: 600, border: 'none', cursor: 'pointer' }}
+          >Continue</button>
         </div>
       </div>
 
