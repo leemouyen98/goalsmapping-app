@@ -1,7 +1,7 @@
 import {
   Document, Page, Text, View, StyleSheet, Image, PDFDownloadLink,
 } from '@react-pdf/renderer'
-import { formatRMFull } from '../../lib/calculations'
+import { formatRMFull, recMonthlyFV } from '../../lib/calculations'
 
 const getLogo = () => `${window.location.origin}/assets/sora-logo.png`
 
@@ -272,11 +272,12 @@ export function RetirementReportDocument({ plan, projection, contact, agentName 
   const barPct = Math.min(pct, 100)
   const color  = coverageColor(pct)
 
-  const provisions      = plan.provisions    || []
+  const provisions      = projection.provisionDetails || plan.provisions || []
   const recommendations = (plan.recommendations || []).filter((r) => r.isSelected)
   const currentAge      = contact?.currentAge || projection.currentAge || 30
   const retireAge       = plan.retirementAge  || 55
   const lifeExp         = plan.lifeExpectancy || 100
+  const yearsToRetirement = Math.max(0, retireAge - currentAge)
 
   const today = new Date().toLocaleDateString('en-MY', {
     day: '2-digit', month: 'long', year: 'numeric',
@@ -450,7 +451,7 @@ export function RetirementReportDocument({ plan, projection, contact, agentName 
                     <Text style={[styles.tableCell, { flex: 1.2, textAlign: 'right' }]}>{fmtRM(p.currentBalance)}</Text>
                     <Text style={[styles.tableCell, { flex: 1, textAlign: 'right' }]}>{fmtRM(p.contributionAmount)}</Text>
                     <Text style={[styles.tableCell, { flex: 1.5, textAlign: 'right', color: C.green }]}>
-                      {fmtRM(p._projectedValue)}
+                      {fmtRM(p.projectedValue)}
                     </Text>
                   </View>
                 ))}
@@ -462,25 +463,46 @@ export function RetirementReportDocument({ plan, projection, contact, agentName 
           {recommendations.length > 0 && (
             <>
               <SectionHead title="Recommended Actions" />
-              {recommendations.map((rec, i) => (
-                <View key={rec.id || i} style={styles.recCard}>
-                  <Text style={styles.recTitle}>
-                    {rec.label || `Recommendation ${i + 1}`}
-                  </Text>
-                  {rec.pmt > 0 && (
-                    <Text style={styles.recDetail}>
-                      Invest {fmtRM(rec.pmt)}/month for {rec.n} years at {rec.rate}% p.a.
-                      {'  →  '}Projected: {fmtRM(rec.fvResult)}
+              {recommendations.map((rec, i) => {
+                const rate    = rec.growthRate || 5
+                const monthly = rec.monthlyAmount || 0
+                const lump    = rec.lumpSum || 0
+                const years   = rec.periodYears || yearsToRetirement
+
+                let fvResult = 0
+                if (rec.type === 'custom') {
+                  fvResult = rec.futureValue || 0
+                } else if (monthly > 0) {
+                  fvResult = recMonthlyFV(monthly, rate, years, yearsToRetirement)
+                } else if (lump > 0) {
+                  fvResult = Math.round(lump * Math.pow(1 + rate / 100, yearsToRetirement))
+                }
+
+                return (
+                  <View key={rec.id || i} style={styles.recCard}>
+                    <Text style={styles.recTitle}>
+                      {rec.name || `Recommendation ${i + 1}`}
                     </Text>
-                  )}
-                  {rec.pv > 0 && rec.pmt === 0 && (
-                    <Text style={styles.recDetail}>
-                      One-time investment of {fmtRM(rec.pv)} at {rec.rate}% p.a.
-                      {'  →  '}Projected: {fmtRM(rec.fvResult)}
-                    </Text>
-                  )}
-                </View>
-              ))}
+                    {monthly > 0 && (
+                      <Text style={styles.recDetail}>
+                        Invest {fmtRM(monthly)}/month for {years} years at {rate}% p.a.
+                        {'  →  '}Projected: {fmtRM(fvResult)}
+                      </Text>
+                    )}
+                    {lump > 0 && monthly === 0 && (
+                      <Text style={styles.recDetail}>
+                        One-time investment of {fmtRM(lump)} at {rate}% p.a.
+                        {'  →  '}Projected: {fmtRM(fvResult)}
+                      </Text>
+                    )}
+                    {rec.type === 'custom' && monthly === 0 && lump === 0 && (
+                      <Text style={styles.recDetail}>
+                        Target value: {fmtRM(rec.futureValue)} at {rate}% p.a.
+                      </Text>
+                    )}
+                  </View>
+                )
+              })}
             </>
           )}
 
