@@ -21,8 +21,8 @@ export default function AppShell({ children }) {
 
   return (
     <div
-      className="flex min-h-screen overflow-hidden bg-hig-bg"
-      style={{ minHeight: 'var(--app-height)' }}
+      className="flex h-screen overflow-hidden bg-hig-bg"
+      style={{ height: 'var(--app-height)' }}
     >
       {/* Sidebar — hidden on mobile, mini strip on tablet, collapsible on desktop */}
       <Sidebar
