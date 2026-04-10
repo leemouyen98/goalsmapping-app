@@ -167,7 +167,7 @@ const translations = {
 
     planningHeader:     { en: 'Financial Planning',     zh: '财务规划'         },
     retirementPlanner:  { en: 'Retirement Planner',     zh: '退休规划'         },
-    insurancePlanner:   { en: 'Insurance Planner',      zh: '保险规划'         },
+    insurancePlanner:   { en: 'Wealth Protection',      zh: '财富保障'         },
     cashFlowPlanner:    { en: 'Cash Flow Planner',      zh: '现金流规划'       },
     wealthPlanner:      { en: 'Wealth Planner',         zh: '财富规划'         },
     openPlanner:        { en: 'Open',                   zh: '开启'             },

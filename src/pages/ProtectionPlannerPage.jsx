@@ -513,22 +513,12 @@ function ProtectionBasicInfo({ plan, updatePlan, setNeed, onContinue, monthlyInc
               </div>
             ))}
           </div>
+
+          <button onClick={onContinue} className="hig-btn-primary w-full mt-4">
+            Continue
+          </button>
         </div>
       </div>
-    </div>
-
-    {/* GoalsMapper fixed bottom footer — Step 1 */}
-    <div
-      className="fixed bottom-0 left-0 right-0 flex items-center justify-end px-4 py-2 z-50"
-      style={{ backgroundColor: 'rgb(250,250,250)', borderTop: '1px solid rgba(0,0,0,0.08)', paddingBottom: 'calc(0.5rem + var(--safe-area-bottom))' }}
-    >
-      <button
-        onClick={onContinue}
-        className="font-semibold text-white rounded transition-colors hover:opacity-90"
-        style={{ backgroundColor: 'rgb(58,141,222)', padding: '4px 16px', fontSize: '13px', borderRadius: '4px' }}
-      >
-        Continue
-      </button>
     </div>
     </>
   )
@@ -643,20 +633,6 @@ function ProtectionExistingCoverage({ plan, setExisting, onBack, onContinue, ins
           </div>
         </div>
 
-        {/* GoalsMapper-style fixed footer — Step 2 */}
-        <div
-          className="fixed bottom-0 left-0 right-0 flex items-center justify-between px-4 py-2 z-50"
-          style={{ backgroundColor: 'rgb(250,250,250)', borderTop: '1px solid rgba(0,0,0,0.08)', paddingBottom: 'calc(0.5rem + var(--safe-area-bottom))' }}
-        >
-          <button
-            onClick={onBack}
-            style={{ color: 'rgba(0,0,0,0.26)', background: 'transparent', padding: '4px 5px', fontSize: '13px', border: 'none', cursor: 'pointer' }}
-          >Back</button>
-          <button
-            onClick={onContinue}
-            style={{ backgroundColor: 'rgb(58,141,222)', color: 'white', padding: '4px 16px', fontSize: '13px', borderRadius: '4px', fontWeight: 600, border: 'none', cursor: 'pointer' }}
-          >Continue</button>
-        </div>
       </div>
 
       {/* Right: GoalsMapper Protection Progress panel — Step 2 variant */}
@@ -695,6 +671,15 @@ function ProtectionExistingCoverage({ plan, setExisting, onBack, onContinue, ins
                 </div>
               )
             })}
+          </div>
+
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between mt-4">
+            <button onClick={onBack} className="hig-btn-ghost gap-1.5">
+              <ArrowLeft size={16} /> Back
+            </button>
+            <button onClick={onContinue} className="hig-btn-primary">
+              Continue
+            </button>
           </div>
         </div>
       </div>
