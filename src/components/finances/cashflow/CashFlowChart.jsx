@@ -61,8 +61,8 @@ export default function CashFlowChart({
               style={{ background: showCashSavings ? '#2E96FF' : '#C7C7CC' }}
             >
               <span
-                className="absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform"
-                style={{ transform: showCashSavings ? 'translateX(19px)' : 'translateX(2px)' }}
+                className="absolute top-[3px] h-4 w-4 rounded-full bg-white shadow-sm transition-transform"
+                style={{ transform: showCashSavings ? 'translateX(22px)' : 'translateX(2px)' }}
               />
             </button>
             Cash savings
