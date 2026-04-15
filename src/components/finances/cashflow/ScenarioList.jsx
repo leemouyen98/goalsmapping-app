@@ -17,7 +17,7 @@ const LABELS = {
 
 export default function ScenarioList({ scenarios, onToggle, onUpdate, currentAge }) {
   return (
-    <SectionCard title="Stress scenarios" subtitle="Stress test the plan before making product recommendations.">
+    <SectionCard title="Scenarios" subtitle="Stress test the plan before making product recommendations.">
       <div className="space-y-3">
         {scenarios.map((scenario) => (
           <ScenarioRow

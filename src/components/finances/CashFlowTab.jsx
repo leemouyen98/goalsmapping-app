@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Edit, Settings, TrendingUp } from 'lucide-react'
+import { Edit, Settings } from 'lucide-react'
 import { useLanguage } from '../../hooks/useLanguage'
 import PlannerLayout from '../ui/PlannerLayout'
 import SectionCard from '../ui/SectionCard'
@@ -11,7 +11,6 @@ import GoalsPanel from './cashflow/GoalsPanel'
 import RecommendationsPanel from './cashflow/RecommendationsPanel'
 import CashFlowEmptyState from './cashflow/CashFlowEmptyState'
 import {
-  buildCashFlowRecommendations,
   buildInsurancePlans,
   getCashFlowMilestones,
   projectCashFlow,
@@ -82,12 +81,6 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
   }), [summary, currentAge, assumptions, goals, scenarios])
 
   const shortfallSummary = useMemo(() => summarizeShortfall(chartData), [chartData])
-  const recommendations = useMemo(() => buildCashFlowRecommendations({
-    financials,
-    scenarios,
-    shortfallSummary,
-    t,
-  }), [financials, scenarios, shortfallSummary, t])
   const insurancePlans = useMemo(() => buildInsurancePlans(financials), [financials])
   const milestones = useMemo(() => getCashFlowMilestones(chartData), [chartData])
 
@@ -182,13 +175,6 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
       )}
       right={(
         <>
-          <SectionCard title="Quick lens" subtitle="The planner should tell the story before the adviser does.">
-            <div className="flex items-center gap-2 rounded-hig-sm bg-hig-blue/10 px-3 py-2 text-hig-footnote text-hig-blue">
-              <TrendingUp size={15} />
-              Full-suite cash flow projection is active.
-            </div>
-          </SectionCard>
-
           <CashFlowSummary
             annualIncome={summary.annualIncome}
             annualExpenses={summary.annualExpenses}
@@ -204,10 +190,7 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
           />
 
           <RecommendationsPanel
-            recommendations={recommendations}
             insurancePlans={insurancePlans}
-            annualIncome={summary.annualIncome}
-            annualExpenses={summary.annualExpenses}
           />
         </>
       )}

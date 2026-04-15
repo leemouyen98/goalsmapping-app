@@ -24,7 +24,7 @@ export default function GoalsPanel({ goals, onAddGoal, onToggleGoal, onRemoveGoa
 
   return (
     <SectionCard
-      title="Goals and lump sums"
+      title="Financial Goals"
       subtitle="Place major cash events into the timeline."
       action={
         <button className="hig-btn-ghost gap-1.5" onClick={() => setOpen((value) => !value)}>
