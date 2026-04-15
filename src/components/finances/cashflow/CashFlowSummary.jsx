@@ -7,39 +7,16 @@ const STATUS_STYLES = {
   tight: 'bg-amber-50 text-amber-700',
 }
 
-export default function CashFlowSummary({ annualIncome, annualExpenses, shortfallSummary, milestones, linkedPlans, includeLinkedPlans }) {
+export default function CashFlowSummary({ annualIncome, annualExpenses, shortfallSummary, milestones }) {
   const annualSurplus = annualIncome - annualExpenses
-  const linkedAnnual = includeLinkedPlans ? (linkedPlans?.totalMonthly || 0) * 12 : 0
-  const adjustedSurplus = annualSurplus - linkedAnnual
 
   return (
     <SectionCard title="Planner summary" subtitle="Key decision points, not just a chart.">
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+      <div className="grid grid-cols-3 gap-2">
         <Stat label="Income" value={formatRMCompact(annualIncome)} tone="text-hig-blue" />
         <Stat label="Expenses" value={formatRMCompact(annualExpenses)} tone="text-hig-red" />
         <Stat label="Surplus" value={formatRMCompact(annualSurplus)} tone={annualSurplus >= 0 ? 'text-hig-green' : 'text-hig-red'} />
-        <Stat label="After linked plans" value={formatRMCompact(adjustedSurplus)} tone={adjustedSurplus >= 0 ? 'text-hig-green' : 'text-hig-red'} />
       </div>
-
-
-      {linkedPlans ? (
-        <div className="mt-4 rounded-hig-sm border border-hig-gray-5 bg-hig-gray-6/60 p-3">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="text-hig-caption1 font-semibold text-hig-text">Linked planning load</div>
-              <p className="mt-1 text-hig-caption1 text-hig-text-secondary">Protection and retirement recommendations should be tested against cash flow, not shown in isolation.</p>
-            </div>
-            <span className={`inline-flex rounded-full px-2 py-0.5 text-hig-caption2 font-medium ${includeLinkedPlans ? 'bg-hig-blue/10 text-hig-blue' : 'bg-hig-gray-5 text-hig-text-secondary'}`}>
-              {includeLinkedPlans ? 'Included in projection' : 'Excluded from projection'}
-            </span>
-          </div>
-          <div className="mt-3 grid gap-2 md:grid-cols-3">
-            <Stat label="Protection premium" value={formatRMCompact(linkedPlans.protectionMonthly * 12)} tone="text-hig-text" />
-            <Stat label="Retirement funding" value={formatRMCompact(linkedPlans.retirementMonthly * 12)} tone="text-hig-text" />
-            <Stat label="One-off today" value={formatRMCompact(linkedPlans.oneOffToday)} tone={linkedPlans.oneOffToday > 0 ? 'text-amber-700' : 'text-hig-text'} />
-          </div>
-        </div>
-      ) : null}
 
       <div className="mt-4 rounded-hig-sm border border-hig-gray-5 bg-hig-gray-6/60 p-3">
         {shortfallSummary ? (

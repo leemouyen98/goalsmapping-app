@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Edit, Lightbulb, Settings, TrendingUp } from 'lucide-react'
+import { Edit, Settings, TrendingUp } from 'lucide-react'
 import { useLanguage } from '../../hooks/useLanguage'
 import PlannerLayout from '../ui/PlannerLayout'
 import SectionCard from '../ui/SectionCard'
@@ -13,7 +13,6 @@ import CashFlowEmptyState from './cashflow/CashFlowEmptyState'
 import {
   buildCashFlowRecommendations,
   buildInsurancePlans,
-  buildLinkedPlanningCommitments,
   getCashFlowMilestones,
   projectCashFlow,
   summarizeShortfall,
@@ -50,15 +49,12 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
   })
   const [showSettings, setShowSettings] = useState(false)
   const [showCashSavings, setShowCashSavings] = useState(true)
-  const [includeLinkedPlans, setIncludeLinkedPlans] = useState(true)
   const [goals, setGoals] = useState([])
   const [scenarios, setScenarios] = useState([
     { id: 'ci', age: currentAge, duration: 3, active: false },
     { id: 'disability', age: currentAge, active: false },
     { id: 'death', age: currentAge, active: false },
   ])
-
-  const linkedPlans = useMemo(() => buildLinkedPlanningCommitments(contact, currentAge, assumptions.retirementAge), [contact, currentAge, assumptions.retirementAge])
 
   const summary = useMemo(() => {
     const income = Array.isArray(financials?.income) ? financials.income : []
@@ -83,18 +79,15 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
     epfDividendRate: assumptions.epfDividendRate,
     goals,
     scenarios,
-    linkedCommitments: includeLinkedPlans ? linkedPlans.schedules : [],
-    oneOffNeeds: includeLinkedPlans ? linkedPlans.oneOffRetirementNeeds : [],
-  }), [summary, currentAge, assumptions, goals, scenarios, includeLinkedPlans, linkedPlans])
+  }), [summary, currentAge, assumptions, goals, scenarios])
 
   const shortfallSummary = useMemo(() => summarizeShortfall(chartData), [chartData])
   const recommendations = useMemo(() => buildCashFlowRecommendations({
     financials,
     scenarios,
     shortfallSummary,
-    linkedPlans: includeLinkedPlans ? linkedPlans : null,
     t,
-  }), [financials, scenarios, shortfallSummary, includeLinkedPlans, linkedPlans, t])
+  }), [financials, scenarios, shortfallSummary, t])
   const insurancePlans = useMemo(() => buildInsurancePlans(financials), [financials])
   const milestones = useMemo(() => getCashFlowMilestones(chartData), [chartData])
 
@@ -158,30 +151,9 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
                 <button onClick={() => setShowSettings((value) => !value)} className={`hig-btn-ghost gap-1.5 ${showSettings ? 'bg-hig-gray-5 text-hig-blue' : ''}`}>
                   <Settings size={14} /> Assumptions
                 </button>
-                <button
-                  onClick={() => setIncludeLinkedPlans((value) => !value)}
-                  className={`hig-btn-ghost gap-1.5 ${includeLinkedPlans ? 'bg-hig-blue/10 text-hig-blue' : ''}`}
-                >
-                  <Lightbulb size={14} /> {includeLinkedPlans ? 'Linked plans on' : 'Linked plans off'}
-                </button>
               </div>
             )}
-          >
-            <div className="grid gap-2 md:grid-cols-3">
-              <div className="rounded-hig-sm bg-hig-gray-6 px-3 py-2">
-                <div className="text-hig-caption2 uppercase tracking-wide text-hig-text-secondary">Protection premium</div>
-                <div className="mt-1 text-hig-subhead font-semibold text-hig-text">RM {linkedPlans.protectionMonthly.toLocaleString(undefined, { maximumFractionDigits: 0 })}/mo</div>
-              </div>
-              <div className="rounded-hig-sm bg-hig-gray-6 px-3 py-2">
-                <div className="text-hig-caption2 uppercase tracking-wide text-hig-text-secondary">Retirement funding</div>
-                <div className="mt-1 text-hig-subhead font-semibold text-hig-text">RM {linkedPlans.retirementMonthly.toLocaleString(undefined, { maximumFractionDigits: 0 })}/mo</div>
-              </div>
-              <div className="rounded-hig-sm bg-hig-gray-6 px-3 py-2">
-                <div className="text-hig-caption2 uppercase tracking-wide text-hig-text-secondary">One-off today</div>
-                <div className="mt-1 text-hig-subhead font-semibold text-hig-text">RM {linkedPlans.oneOffToday.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
-              </div>
-            </div>
-          </SectionCard>
+          />
 
           {showSettings ? (
             <PlanningAssumptionsPanel
@@ -222,8 +194,6 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
             annualExpenses={summary.annualExpenses}
             shortfallSummary={shortfallSummary}
             milestones={milestones}
-            linkedPlans={linkedPlans}
-            includeLinkedPlans={includeLinkedPlans}
           />
 
           <ScenarioList
@@ -236,8 +206,6 @@ export default function CashFlowTab({ financials, contact, onEditFinancialInfo =
           <RecommendationsPanel
             recommendations={recommendations}
             insurancePlans={insurancePlans}
-            linkedPlans={linkedPlans}
-            includeLinkedPlans={includeLinkedPlans}
             annualIncome={summary.annualIncome}
             annualExpenses={summary.annualExpenses}
           />
