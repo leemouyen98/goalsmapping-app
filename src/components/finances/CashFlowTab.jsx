@@ -18,6 +18,7 @@ import {
   summarizeShortfall,
   toAnnual,
 } from '../../lib/cashflow'
+import { calcMonthlyRepayment } from './financial-info/helpers'
 
 function getCurrentAge(dob) {
   if (!dob) return 30
@@ -125,6 +126,7 @@ export default function CashFlowTab({ financials, contact, onSaveFinancials, onD
     const income = Array.isArray(localFinancials?.income) ? localFinancials.income : []
     const expenses = Array.isArray(localFinancials?.expenses) ? localFinancials.expenses : []
     const assets = Array.isArray(localFinancials?.assets) ? localFinancials.assets : []
+    const liabilities = Array.isArray(localFinancials?.liabilities) ? localFinancials.liabilities : []
 
     const annualPassiveIncome = income
       .filter((row) => row.type !== 'Employment')
@@ -133,11 +135,18 @@ export default function CashFlowTab({ financials, contact, onSaveFinancials, onD
       .filter((row) => row.type === 'Employment')
       .reduce((sum, row) => sum + toAnnual(row.amount, row.frequency), 0)
 
+    const annualBaseExpenses = expenses.reduce((sum, row) => sum + toAnnual(row.amount, row.frequency), 0)
+    const annualRepayments = liabilities.reduce(
+      (sum, row) => sum + calcMonthlyRepayment(row.principal, row.interestRate, row.loanPeriod) * 12,
+      0,
+    )
+
     return {
       annualPassiveIncome,
       annualEmploymentIncome,
       annualIncome: annualPassiveIncome + annualEmploymentIncome,
-      annualExpenses: expenses.reduce((sum, row) => sum + toAnnual(row.amount, row.frequency), 0),
+      annualExpenses: annualBaseExpenses + annualRepayments,
+      annualRepayments,
       initialSavings: Number(assets.find((row) => row.id === 'savings-cash')?.amount) || 0,
       initialEpf: Number(assets.find((row) => row.id === 'epf-all')?.amount) || 0,
     }
@@ -278,6 +287,7 @@ export default function CashFlowTab({ financials, contact, onSaveFinancials, onD
             <CashFlowSummary
               annualIncome={summary.annualIncome}
               annualExpenses={summary.annualExpenses}
+              annualRepayments={summary.annualRepayments}
               shortfallSummary={shortfallSummary}
               milestones={milestones}
             />

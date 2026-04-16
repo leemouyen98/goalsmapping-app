@@ -7,7 +7,7 @@ const STATUS_STYLES = {
   tight: 'bg-amber-50 text-amber-700',
 }
 
-export default function CashFlowSummary({ annualIncome, annualExpenses, shortfallSummary, milestones }) {
+export default function CashFlowSummary({ annualIncome, annualExpenses, annualRepayments = 0, shortfallSummary, milestones }) {
   const annualSurplus = annualIncome - annualExpenses
 
   return (
@@ -17,6 +17,11 @@ export default function CashFlowSummary({ annualIncome, annualExpenses, shortfal
         <Stat label="Expenses" value={formatRMCompact(annualExpenses)} tone="text-hig-red" />
         <Stat label="Surplus" value={formatRMCompact(annualSurplus)} tone={annualSurplus >= 0 ? 'text-hig-green' : 'text-hig-red'} />
       </div>
+      {annualRepayments > 0 && (
+        <p className="mt-2 text-hig-caption2 text-hig-text-secondary">
+          Incl. {formatRMCompact(annualRepayments)} loan repayments/yr in expenses
+        </p>
+      )}
 
       <div className="mt-4 rounded-hig-sm border border-hig-gray-5 bg-hig-gray-6/60 p-3">
         {shortfallSummary ? (
