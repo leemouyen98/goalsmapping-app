@@ -57,11 +57,11 @@ export default function CashFlowChart({
             <button
               type="button"
               onClick={onToggleCashSavings}
-              className="relative h-[22px] w-10 rounded-full transition-colors"
+              className="relative h-[22px] w-10 overflow-hidden rounded-full transition-colors"
               style={{ background: showCashSavings ? '#2E96FF' : '#C7C7CC' }}
             >
               <span
-                className="absolute top-[3px] h-4 w-4 rounded-full bg-white shadow-sm transition-transform"
+                className="absolute left-0 top-[3px] h-4 w-4 rounded-full bg-white shadow-sm transition-transform"
                 style={{ transform: showCashSavings ? 'translateX(22px)' : 'translateX(2px)' }}
               />
             </button>
