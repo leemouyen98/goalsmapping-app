@@ -226,7 +226,7 @@ export default function ContactDetailPage() {
         <CashFlowTab
           financials={contact.financials}
           contact={contact}
-          onEditFinancialInfo={() => { setShowCashFlow(false); setTab('finances') }}
+          onSaveFinancials={(data) => saveFinancials(id, data)}
           onDone={() => setShowCashFlow(false)}
         />
 
