@@ -10,7 +10,7 @@
  *   • Blob URL is revoked on modal close — no lingering handle
  */
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Loader } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight, Loader } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 
 // PDF.js from cdnjs — pinned version for stability
@@ -40,7 +40,7 @@ export default function PlanPDFViewerModal({ onClose }) {
   const [status,      setStatus]      = useState('loading')   // 'loading' | 'ready' | 'error'
   const [totalPages,  setTotalPages]  = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
-  const [scale,       setScale]       = useState(1.4)
+  const scale = 1.4
   const [errorMsg,    setErrorMsg]    = useState('')
 
   // ── Block Ctrl+S / Ctrl+P while modal is open ─────────────────────────────
@@ -128,8 +128,6 @@ export default function PlanPDFViewerModal({ onClose }) {
 
   const goToPrev = () => setCurrentPage(p => Math.max(1, p - 1))
   const goToNext = () => setCurrentPage(p => Math.min(totalPages, p + 1))
-  const zoomIn   = () => setScale(s => Math.min(3, +(s + 0.2).toFixed(1)))
-  const zoomOut  = () => setScale(s => Math.max(0.6, +(s - 0.2).toFixed(1)))
 
   // ── Block right-click on the canvas / viewer ──────────────────────────────
   const blockCtxMenu = (e) => e.preventDefault()
@@ -157,29 +155,6 @@ export default function PlanPDFViewerModal({ onClose }) {
               </p>
             )}
           </div>
-
-          {/* Zoom controls */}
-          {status === 'ready' && (
-            <div className="flex items-center gap-1">
-              <button
-                onClick={zoomOut}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors"
-                title="Zoom out"
-              >
-                <ZoomOut size={16} />
-              </button>
-              <span className="text-white/50 text-xs w-12 text-center">
-                {Math.round(scale * 100)}%
-              </span>
-              <button
-                onClick={zoomIn}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors"
-                title="Zoom in"
-              >
-                <ZoomIn size={16} />
-              </button>
-            </div>
-          )}
 
           <button
             onClick={onClose}
