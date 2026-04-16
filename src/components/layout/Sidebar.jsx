@@ -8,11 +8,13 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  BookOpen,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useLanguage } from '../../hooks/useLanguage'
 import ProtectedImg from '../ui/ProtectedImg'
 import AboutSoraModal from './AboutSoraModal'
+import PlanPDFViewerModal from './PlanPDFViewerModal'
 
 // Sora brand navy — matches login left panel and manifest theme-color
 const NAVY  = 'linear-gradient(180deg, #040E1C 0%, #081828 100%)'
@@ -25,6 +27,7 @@ export default function Sidebar({ expanded, onToggle }) {
   const { t } = useLanguage()
   const [hovered, setHovered]     = useState(false)
   const [showAbout, setShowAbout] = useState(false)
+  const [showPlan,  setShowPlan]  = useState(false)
   const hoverTimer = useRef(null)
 
   const isOpen = expanded || hovered
@@ -208,6 +211,19 @@ export default function Sidebar({ expanded, onToggle }) {
             )
           })}
 
+          {/* 5-in-1 Protection Plan */}
+          <button
+            onClick={() => setShowPlan(true)}
+            className={`w-full flex items-center gap-3 min-h-touch rounded-hig-sm ${isOpen ? 'px-5' : 'justify-center'} py-2.5 transition-all duration-hig text-left cursor-pointer`}
+            style={{ color: 'rgba(255,255,255,0.38)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.38)' }}
+            title="5-in-1 完整保障计划"
+          >
+            <BookOpen size={18} strokeWidth={1.8} />
+            {isOpen && <span className="text-hig-subhead truncate">5-in-1 Plan</span>}
+          </button>
+
           {/* About Sora */}
           <button
             onClick={() => setShowAbout(true)}
@@ -238,6 +254,7 @@ export default function Sidebar({ expanded, onToggle }) {
       </aside>
 
       {showAbout && <AboutSoraModal onClose={() => setShowAbout(false)} />}
+      {showPlan  && <PlanPDFViewerModal onClose={() => setShowPlan(false)} />}
     </>
   )
 }
