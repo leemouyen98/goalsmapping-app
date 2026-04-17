@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   Pencil, TrendingUp, TrendingDown, Wallet, X,
   ChevronRight, PiggyBank, BarChart2, ShieldCheck,
@@ -178,9 +178,16 @@ function EmptyFinancials({ onEdit }) {
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
-export default function FinancesTab({ contact, onUpdateFinancials }) {
+export default function FinancesTab({ contact, onUpdateFinancials, autoOpenEdit, onAutoOpenConsumed }) {
   const [subTab, setSubTab]   = useState('info')
   const [editOpen, setEditOpen] = useState(false)
+
+  useEffect(() => {
+    if (autoOpenEdit) {
+      setEditOpen(true)
+      onAutoOpenConsumed?.()
+    }
+  }, [autoOpenEdit])
 
   const financials = contact.financials || getDefaultFinancials()
 

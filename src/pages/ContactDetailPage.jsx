@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useContacts } from '../hooks/useContacts'
 import { useAuth } from '../hooks/useAuth'
@@ -54,6 +54,7 @@ export default function ContactDetailPage() {
   const [showCashFlow, setShowCashFlow] = useState(false)
   const [showCFPrompt, setShowCFPrompt] = useState(false)
   const [showStartPlanning, setShowStartPlanning] = useState(false)
+  const [autoOpenFinancialEdit, setAutoOpenFinancialEdit] = useState(false)
 
   const [noteText, setNoteText] = useState('')
   const [showTaskForm, setShowTaskForm] = useState(false)
@@ -678,6 +679,8 @@ export default function ContactDetailPage() {
               onUpdateFinancials={(contactId, updates) => {
                 saveFinancials(contactId, updates.financials)
               }}
+              autoOpenEdit={autoOpenFinancialEdit}
+              onAutoOpenConsumed={() => setAutoOpenFinancialEdit(false)}
             />
           )}
         </div>
@@ -711,7 +714,7 @@ export default function ContactDetailPage() {
                 Cancel
               </button>
               <button
-                onClick={() => { setShowCFPrompt(false); setTab('finances') }}
+                onClick={() => { setShowCFPrompt(false); setTab('finances'); setAutoOpenFinancialEdit(true) }}
                 className="hig-btn-primary flex-1 gap-1.5"
               >
                 Set up Financial Info <ArrowRight size={14} />
