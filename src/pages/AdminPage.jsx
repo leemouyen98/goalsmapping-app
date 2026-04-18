@@ -299,6 +299,74 @@ function CreateAgentModal({ onClose, onCreate }) {
   )
 }
 
+// ─── Rename agent modal ───────────────────────────────────────────────────────
+function RenameAgentModal({ agent, onClose, onSave }) {
+  const [name, setName] = useState(agent.name)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    const trimmed = name.trim()
+    if (!trimmed) { setError('Name cannot be empty'); return }
+    if (trimmed === agent.name) { onClose(); return }
+    setLoading(true)
+    try {
+      await onSave(agent.code, { name: trimmed })
+      onClose()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} className="bg-white rounded-hig-lg shadow-hig-lg w-full max-w-xs p-5">
+        <div className="flex items-center gap-2 mb-1">
+          <div className="w-7 h-7 rounded-full bg-hig-blue/10 flex items-center justify-center">
+            <UserCheck size={14} className="text-hig-blue" />
+          </div>
+          <h2 className="text-hig-title3 font-semibold">Rename Agent</h2>
+        </div>
+        <p className="text-hig-caption text-hig-text-secondary mb-4">
+          Code <span className="font-mono font-medium text-hig-text">{agent.code}</span>
+        </p>
+        {error && (
+          <p className="text-red-500 text-hig-caption mb-3 flex items-center gap-1">
+            <AlertTriangle size={12} /> {error}
+          </p>
+        )}
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <input
+            className="hig-input w-full"
+            type="text"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            placeholder="Full name"
+            autoFocus
+            autoComplete="off"
+          />
+          <div className="flex gap-2">
+            <button type="button" onClick={onClose} className="hig-btn-secondary flex-1 text-sm">Cancel</button>
+            <button
+              type="submit"
+              disabled={loading || !name.trim()}
+              className="hig-btn-primary flex-1 text-sm flex items-center justify-center gap-1"
+            >
+              {loading
+                ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                : <Check size={13} />}
+              Save
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 // ─── Reset password modal ─────────────────────────────────────────────────────
 function ResetPasswordModal({ agent, onClose, onSave }) {
   const [password, setPassword] = useState('')
@@ -385,6 +453,7 @@ export default function AdminPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [viewingAgent, setViewingAgent] = useState(null)   // contacts drawer
   const [resetAgent, setResetAgent] = useState(null)        // reset pw modal
+  const [renameAgent, setRenameAgent] = useState(null)      // rename modal
   const [toastMsg, setToastMsg] = useState(null)
 
   // Redirect if not admin
@@ -421,6 +490,12 @@ export default function AdminPage() {
     const updated = await updateAgent(agent.code, { is_active: agent.is_active === 1 ? 0 : 1 })
     setAgents(prev => prev.map(a => a.code === agent.code ? { ...a, is_active: updated.is_active } : a))
     showToast(updated.is_active === 1 ? `${updated.name} reactivated` : `${updated.name} deactivated`)
+  }
+
+  async function handleRename(code, data) {
+    const updated = await updateAgent(code, data)
+    setAgents(prev => prev.map(a => a.code === code ? { ...a, name: updated.name } : a))
+    showToast(`Renamed to ${updated.name}`)
   }
 
   async function handleResetPassword(code, data) {
@@ -571,6 +646,15 @@ export default function AdminPage() {
                     {/* Actions */}
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-2">
+                        {/* Rename */}
+                        <button
+                          onClick={() => setRenameAgent(agent)}
+                          title="Rename agent"
+                          className="text-hig-caption text-hig-text-secondary hover:text-hig-blue transition-colors px-2 py-1 rounded hover:bg-hig-blue/5"
+                        >
+                          Rename
+                        </button>
+
                         {/* Reset password */}
                         <button
                           onClick={() => setResetAgent(agent)}
@@ -622,6 +706,13 @@ export default function AdminPage() {
           agent={resetAgent}
           onClose={() => setResetAgent(null)}
           onSave={handleResetPassword}
+        />
+      )}
+      {renameAgent && (
+        <RenameAgentModal
+          agent={renameAgent}
+          onClose={() => setRenameAgent(null)}
+          onSave={handleRename}
         />
       )}
 
