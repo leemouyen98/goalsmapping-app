@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Plus, Pencil, Trash2, Shield, ChevronDown, ChevronUp } from 'lucide-react'
 import { formatRMFull } from '../../lib/calculations'
-import { InsuranceExportButton, PolicySummaryExportButton } from '../pdf/InsurancePoliciesPDF'
+import { InsuranceExportButton } from '../pdf/InsurancePoliciesPDF'
 import { useAuth } from '../../hooks/useAuth'
 import PolicyFormWizard from './PolicyFormWizard'
 
@@ -140,13 +140,6 @@ export default function InsuranceTab({ financials, onSave, contact }) {
 
       {/* Actions */}
       <div className="flex justify-end gap-2">
-        <PolicySummaryExportButton
-          policies={policies}
-          contact={contact}
-          agentName={agent?.name}
-          agentMobile={agent?.mobile}
-          agentEmail={agent?.email}
-        />
         <InsuranceExportButton
           policies={policies}
           contact={contact}
