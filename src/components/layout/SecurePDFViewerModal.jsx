@@ -6,66 +6,90 @@
  *   endpoint    {string}   — authenticated API route to fetch the PDF from
  *   langOptions {Array?}   — optional language toggle
  *                            [{ key, label, endpoint, title }, ...]
- *   scrollMode  {boolean?} — if true, renders all pages stacked vertically
- *                            (no page-by-page nav). Default: false.
+ *   scrollMode  {boolean?} — all pages stacked vertically. Default: false.
  *   onClose     {Function}
  *
- * Security measures:
- *   • Canvas rendering via PDF.js — no native browser PDF toolbar
- *   • Right-click context menu blocked on the viewer
- *   • Ctrl+S / Ctrl+P / Cmd+S / Cmd+P suppressed while open
- *   • PDF fetched behind JWT auth — direct asset URL not exposed to users
- *   • ArrayBuffer cleared; no blob URL left on device after close
+ * Performance:
+ *   • pdfjs-dist bundled as npm dep — no CDN round-trip on first open
+ *   • Module-level ArrayBuffer cache — re-opens are instant (no re-fetch)
+ *   • Scroll mode renders pages in parallel batches of RENDER_CONCURRENCY
+ *
+ * Security:
+ *   • Canvas rendering — no native browser PDF toolbar
+ *   • Right-click blocked on viewer
+ *   • Ctrl/Cmd+S / Ctrl/Cmd+P suppressed while open
+ *   • PDF served behind JWT auth
  */
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { X, ChevronLeft, ChevronRight, Loader } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 
-const PDFJS_CDN    = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'
-const PDFJS_WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
-const SCALE        = 1.4
-
-function loadPDFJS() {
-  return new Promise((resolve, reject) => {
-    if (window.pdfjsLib) { resolve(window.pdfjsLib); return }
-    const script = document.createElement('script')
-    script.src = PDFJS_CDN
-    script.onload = () => {
-      window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER
-      resolve(window.pdfjsLib)
-    }
-    script.onerror = () => reject(new Error('Failed to load PDF.js'))
-    document.head.appendChild(script)
-  })
+// ── PDF.js — lazy-loaded on first use so it doesn't hit the main bundle ───────
+let _pdfjsLib = null
+async function getPDFJS() {
+  if (_pdfjsLib) return _pdfjsLib
+  _pdfjsLib = await import('pdfjs-dist')
+  _pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.js',
+    import.meta.url,
+  ).href
+  return _pdfjsLib
 }
 
+// ── Module-level ArrayBuffer cache (survives modal close/reopen) ─────────────
+// Key: endpoint string → Value: ArrayBuffer
+const pdfBufferCache = new Map()
+
+const SCALE              = 1.4
+const RENDER_CONCURRENCY = 5   // pages rendered in parallel in scroll mode
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+async function fetchPDF(endpoint, token) {
+  if (pdfBufferCache.has(endpoint)) return pdfBufferCache.get(endpoint)
+  const res = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } })
+  if (!res.ok) throw new Error(`Server returned ${res.status}`)
+  const buffer = await res.arrayBuffer()
+  pdfBufferCache.set(endpoint, buffer)
+  return buffer
+}
+
+async function loadPDFFromBuffer(buffer) {
+  const pdfjs = await getPDFJS()
+  return pdfjs.getDocument({ data: buffer.slice(0) }).promise
+}
+
+async function renderPageToCanvas(pdf, pageNum, canvas) {
+  const page     = await pdf.getPage(pageNum)
+  const viewport = page.getViewport({ scale: SCALE })
+  canvas.width   = viewport.width
+  canvas.height  = viewport.height
+  await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
 export default function SecurePDFViewerModal({ title, endpoint, langOptions, scrollMode = false, onClose }) {
   const { token } = useAuth()
 
-  // ── Paged mode refs ───────────────────────────────────────────────────────
-  const canvasRef      = useRef(null)
-  const renderTask     = useRef(null)
+  const canvasRef          = useRef(null)   // paged mode
+  const renderTask         = useRef(null)   // paged mode cancel handle
+  const scrollContainerRef = useRef(null)   // scroll mode
+  const pdfRef             = useRef(null)
 
-  // ── Scroll mode ref ───────────────────────────────────────────────────────
-  const scrollContainerRef = useRef(null)
-
-  const pdfRef = useRef(null)
-
-  // ── Language ──────────────────────────────────────────────────────────────
+  // ── Language ────────────────────────────────────────────────────────────────
   const hasLangs     = Array.isArray(langOptions) && langOptions.length > 1
   const [activeLang, setActiveLang] = useState(hasLangs ? langOptions[0].key : null)
   const activeOption   = hasLangs ? (langOptions.find(l => l.key === activeLang) ?? langOptions[0]) : null
   const activeEndpoint = activeOption ? activeOption.endpoint : endpoint
   const activeTitle    = activeOption ? activeOption.title    : title
 
-  // ── State ─────────────────────────────────────────────────────────────────
-  const [status,      setStatus]      = useState('loading')
-  const [totalPages,  setTotalPages]  = useState(0)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [renderingAll, setRenderingAll] = useState(false)  // scroll mode: pages being painted
-  const [errorMsg,    setErrorMsg]    = useState('')
+  // ── State ───────────────────────────────────────────────────────────────────
+  const [status,       setStatus]       = useState('loading')
+  const [totalPages,   setTotalPages]   = useState(0)
+  const [currentPage,  setCurrentPage]  = useState(1)
+  const [renderingAll, setRenderingAll] = useState(false)
+  const [errorMsg,     setErrorMsg]     = useState('')
 
-  // ── Block Ctrl/Cmd + S / P while open ────────────────────────────────────
+  // ── Block Ctrl/Cmd + S / P while open ──────────────────────────────────────
   useEffect(() => {
     const handler = (e) => {
       if ((e.ctrlKey || e.metaKey) && ['s', 'p'].includes(e.key.toLowerCase())) {
@@ -78,7 +102,7 @@ export default function SecurePDFViewerModal({ title, endpoint, langOptions, scr
     return () => window.removeEventListener('keydown', handler, true)
   }, [onClose])
 
-  // ── Fetch & load PDF ──────────────────────────────────────────────────────
+  // ── Fetch & load PDF ────────────────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false
     setStatus('loading')
@@ -87,16 +111,12 @@ export default function SecurePDFViewerModal({ title, endpoint, langOptions, scr
     setRenderingAll(false)
     if (pdfRef.current) { pdfRef.current.destroy(); pdfRef.current = null }
 
-    async function fetchAndLoad() {
+    async function load() {
       try {
-        const pdfjs = await loadPDFJS()
-        const res = await fetch(activeEndpoint, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        if (!res.ok) throw new Error(`Server returned ${res.status}`)
-        const buffer = await res.arrayBuffer()
+        // fetchPDF returns from cache if available — no re-download
+        const buffer = await fetchPDF(activeEndpoint, token)
         if (cancelled) return
-        const pdf = await pdfjs.getDocument({ data: buffer }).promise
+        const pdf = await loadPDFFromBuffer(buffer)
         if (cancelled) { pdf.destroy(); return }
         pdfRef.current = pdf
         setTotalPages(pdf.numPages)
@@ -110,14 +130,14 @@ export default function SecurePDFViewerModal({ title, endpoint, langOptions, scr
       }
     }
 
-    fetchAndLoad()
+    load()
     return () => {
       cancelled = true
       if (pdfRef.current) { pdfRef.current.destroy(); pdfRef.current = null }
     }
   }, [token, activeEndpoint])
 
-  // ── PAGED MODE: render single page to canvas ──────────────────────────────
+  // ── PAGED MODE: render single page ─────────────────────────────────────────
   const renderPage = useCallback(async (pageNum) => {
     if (!pdfRef.current || !canvasRef.current) return
     try {
@@ -141,7 +161,7 @@ export default function SecurePDFViewerModal({ title, endpoint, langOptions, scr
     if (status === 'ready' && !scrollMode) renderPage(currentPage)
   }, [status, currentPage, renderPage, scrollMode])
 
-  // ── SCROLL MODE: render all pages sequentially into container ─────────────
+  // ── SCROLL MODE: render all pages in parallel batches ──────────────────────
   useEffect(() => {
     if (status !== 'ready' || !scrollMode) return
     let cancelled = false
@@ -150,40 +170,41 @@ export default function SecurePDFViewerModal({ title, endpoint, langOptions, scr
       if (!pdfRef.current || !scrollContainerRef.current) return
       setRenderingAll(true)
       const container = scrollContainerRef.current
-      // Clear any previous render
-      while (container.firstChild) container.removeChild(container.firstChild)
+      const numPages  = pdfRef.current.numPages
 
-      const numPages = pdfRef.current.numPages
-      for (let i = 1; i <= numPages; i++) {
+      // Pre-create all canvas elements so they appear in order immediately
+      const canvases = Array.from({ length: numPages }, (_, i) => {
+        const canvas = document.createElement('canvas')
+        Object.assign(canvas.style, {
+          display:      'block',
+          maxWidth:     '100%',
+          borderRadius: '3px',
+          marginBottom: '6px',
+          boxShadow:    '0 2px 12px rgba(0,0,0,0.45)',
+        })
+        canvas.oncontextmenu = (e) => e.preventDefault()
+        container.appendChild(canvas)
+        return canvas
+      })
+
+      // Render in batches of RENDER_CONCURRENCY
+      for (let i = 0; i < numPages; i += RENDER_CONCURRENCY) {
         if (cancelled) break
-        try {
-          const page     = await pdfRef.current.getPage(i)
-          const viewport = page.getViewport({ scale: SCALE })
-          const canvas   = document.createElement('canvas')
-          canvas.width   = viewport.width
-          canvas.height  = viewport.height
-          Object.assign(canvas.style, {
-            display:     'block',
-            maxWidth:    '100%',
-            borderRadius: '3px',
-            marginBottom: '6px',
-            boxShadow:   '0 2px 12px rgba(0,0,0,0.45)',
-            flexShrink:  '0',
-          })
-          canvas.oncontextmenu = (e) => e.preventDefault()
-          container.appendChild(canvas)
-          if (!cancelled) {
-            await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise
-          }
-        } catch (err) {
-          if (err?.name !== 'RenderingCancelledException') {
-            console.error(`[SecurePDFViewer] scroll render page ${i}`, err)
-          }
-        }
+        const batch = canvases.slice(i, i + RENDER_CONCURRENCY)
+        await Promise.all(
+          batch.map((canvas, j) => renderPageToCanvas(pdfRef.current, i + j + 1, canvas))
+        )
       }
+
       if (!cancelled) setRenderingAll(false)
     }
 
+    // Clear previous canvases then render
+    if (scrollContainerRef.current) {
+      while (scrollContainerRef.current.firstChild) {
+        scrollContainerRef.current.removeChild(scrollContainerRef.current.firstChild)
+      }
+    }
     renderAll()
     return () => { cancelled = true }
   }, [status, scrollMode])
@@ -202,7 +223,7 @@ export default function SecurePDFViewerModal({ title, endpoint, langOptions, scr
         style={{ width: 'min(92vw, 880px)', height: 'min(94vh, 960px)' }}
         onContextMenu={blockCtxMenu}
       >
-        {/* ── Header ─────────────────────────────────────────────────────── */}
+        {/* ── Header ──────────────────────────────────────────────────────── */}
         <div
           className="flex items-center justify-between px-5 py-3 shrink-0 gap-3"
           style={{ borderBottom: '1px solid rgba(255,255,255,0.10)' }}
@@ -212,16 +233,12 @@ export default function SecurePDFViewerModal({ title, endpoint, langOptions, scr
             {status === 'ready' && (
               <p className="text-white/40 text-xs mt-0.5">
                 {scrollMode
-                  ? renderingAll
-                    ? `Loading pages…`
-                    : `${totalPages} pages`
-                  : `Page ${currentPage} of ${totalPages}`
-                }
+                  ? renderingAll ? 'Rendering pages…' : `${totalPages} pages`
+                  : `Page ${currentPage} of ${totalPages}`}
               </p>
             )}
           </div>
 
-          {/* Language toggle */}
           {hasLangs && (
             <div
               className="flex items-center rounded-lg overflow-hidden shrink-0"
@@ -253,13 +270,12 @@ export default function SecurePDFViewerModal({ title, endpoint, langOptions, scr
           </button>
         </div>
 
-        {/* ── Viewport ───────────────────────────────────────────────────── */}
+        {/* ── Viewport ────────────────────────────────────────────────────── */}
         <div
           className="flex-1 overflow-auto flex items-start justify-center py-4 px-4"
           style={{ background: '#2d2d2d', userSelect: 'none', WebkitUserSelect: 'none' }}
           onContextMenu={blockCtxMenu}
         >
-          {/* Loading / error states (both modes) */}
           {status === 'loading' && (
             <div className="flex flex-col items-center justify-center h-full gap-3 text-white/50">
               <Loader size={32} className="animate-spin" />
@@ -273,7 +289,7 @@ export default function SecurePDFViewerModal({ title, endpoint, langOptions, scr
             </div>
           )}
 
-          {/* PAGED MODE */}
+          {/* Paged mode */}
           {status === 'ready' && !scrollMode && (
             <canvas
               ref={canvasRef}
@@ -282,7 +298,7 @@ export default function SecurePDFViewerModal({ title, endpoint, langOptions, scr
             />
           )}
 
-          {/* SCROLL MODE — imperative canvas injection target */}
+          {/* Scroll mode */}
           {status === 'ready' && scrollMode && (
             <div
               ref={scrollContainerRef}
@@ -292,7 +308,7 @@ export default function SecurePDFViewerModal({ title, endpoint, langOptions, scr
           )}
         </div>
 
-        {/* ── Paged navigation (paged mode only) ─────────────────────────── */}
+        {/* ── Paged navigation ────────────────────────────────────────────── */}
         {status === 'ready' && !scrollMode && totalPages > 1 && (
           <div
             className="flex items-center justify-center gap-4 py-3 shrink-0"
