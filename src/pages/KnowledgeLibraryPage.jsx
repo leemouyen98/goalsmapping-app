@@ -1,18 +1,19 @@
 /**
  * KnowledgeLibraryPage
  * ────────────────────
- * Two-panel layout:
- *   Left  — folder list (admin: create / rename / delete)
- *   Right — file grid for selected folder (admin: upload / rename / delete)
+ * Two-panel layout with drill-down folder navigation:
+ *   Left  — breadcrumb + folders at current level (admin: create / rename / delete)
+ *   Right — files in the current folder         (admin: upload / rename / delete)
  *
  * File behaviour:
- *   PDF  → opens in SecurePDFViewerModal (canvas, no download)
+ *   PDF   → SecurePDFViewerModal (canvas, scroll, no download)
  *   Other → authenticated download via /api/library/files/:id/view
  */
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
-  FolderOpen, Folder, Plus, Pencil, Trash2, Upload,
+  FolderOpen, Folder, FolderPlus, Plus, Pencil, Trash2, Upload,
   FileText, FileImage, File, FileSpreadsheet, Loader, Library,
+  ChevronRight,
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import SecurePDFViewerModal from '../components/layout/SecurePDFViewerModal'
@@ -73,7 +74,7 @@ function TextInputModal({ title, placeholder, initial = '', confirmLabel = 'Save
   )
 }
 
-function ConfirmModal({ message, confirmLabel = 'Delete', danger = true, onConfirm, onClose }) {
+function ConfirmModal({ message, confirmLabel = 'Delete', onConfirm, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={e => { if (e.target === e.currentTarget) onClose() }}>
@@ -85,9 +86,7 @@ function ConfirmModal({ message, confirmLabel = 'Delete', danger = true, onConfi
             Cancel
           </button>
           <button onClick={onConfirm}
-            className={`px-4 py-2 text-sm rounded-lg text-white font-medium transition-colors ${
-              danger ? 'bg-red-500 hover:bg-red-600' : 'bg-[#2E96FF] hover:bg-[#1a7ee0]'
-            }`}>
+            className="px-4 py-2 text-sm rounded-lg text-white font-medium bg-red-500 hover:bg-red-600 transition-colors">
             {confirmLabel}
           </button>
         </div>
@@ -97,36 +96,44 @@ function ConfirmModal({ message, confirmLabel = 'Delete', danger = true, onConfi
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
-const NAVY = 'linear-gradient(180deg, #040E1C 0%, #081828 100%)'
-
 export default function KnowledgeLibraryPage() {
   const { token, isAdmin } = useAuth()
   const fileInputRef = useRef(null)
 
-  const [folders,        setFolders]        = useState([])
-  const [selectedFolder, setSelectedFolder] = useState(null)
-  const [files,          setFiles]          = useState([])
+  // folderStack = breadcrumb path, e.g. [{id, name}, {id, name}]
+  // currentFolderId = last item's id, or null = root
+  const [folderStack,  setFolderStack]  = useState([])
+  const [subfolders,   setSubfolders]   = useState([])
+  const [files,        setFiles]        = useState([])
   const [loadingFolders, setLoadingFolders] = useState(true)
   const [loadingFiles,   setLoadingFiles]   = useState(false)
   const [uploading,      setUploading]      = useState(false)
+  const [modal,          setModal]          = useState(null)
+  const [pdfViewer,      setPdfViewer]      = useState(null)
 
-  // Modal state
-  const [modal, setModal] = useState(null)
-  // { type: 'createFolder'|'renameFolder'|'renameFile'|'deleteFolder'|'deleteFile', target?: obj }
-
-  // PDF viewer
-  const [pdfViewer, setPdfViewer] = useState(null)
-  // { fileId, fileName }
-
+  const currentFolderId = folderStack.length > 0 ? folderStack[folderStack.length - 1].id : null
   const headers = { Authorization: `Bearer ${token}` }
 
+  // ── Navigation ──────────────────────────────────────────────────────────────
+  function drillInto(folder) {
+    setFolderStack(prev => [...prev, { id: folder.id, name: folder.name }])
+  }
+
+  function navigateTo(index) {
+    // index = -1 → root, 0..n → that crumb
+    setFolderStack(prev => index < 0 ? [] : prev.slice(0, index + 1))
+  }
+
   // ── Data fetching ───────────────────────────────────────────────────────────
-  const loadFolders = useCallback(async () => {
+  const loadSubfolders = useCallback(async (parentId) => {
     setLoadingFolders(true)
     try {
-      const res = await fetch('/api/library/folders', { headers })
+      const url = parentId
+        ? `/api/library/folders?parentId=${parentId}`
+        : '/api/library/folders'
+      const res  = await fetch(url, { headers })
       const data = await res.json()
-      setFolders(data.folders ?? [])
+      setSubfolders(data.folders ?? [])
     } finally {
       setLoadingFolders(false)
     }
@@ -136,7 +143,7 @@ export default function KnowledgeLibraryPage() {
     setLoadingFiles(true)
     setFiles([])
     try {
-      const res = await fetch(`/api/library/folders/${folderId}/files`, { headers })
+      const res  = await fetch(`/api/library/folders/${folderId}/files`, { headers })
       const data = await res.json()
       setFiles(data.files ?? [])
     } finally {
@@ -144,21 +151,20 @@ export default function KnowledgeLibraryPage() {
     }
   }, [token])
 
-  useEffect(() => { loadFolders() }, [loadFolders])
-
   useEffect(() => {
-    if (selectedFolder) loadFiles(selectedFolder.id)
+    loadSubfolders(currentFolderId)
+    if (currentFolderId) loadFiles(currentFolderId)
     else setFiles([])
-  }, [selectedFolder, loadFiles])
+  }, [currentFolderId, loadSubfolders, loadFiles])
 
   // ── Folder actions ──────────────────────────────────────────────────────────
   async function createFolder(name) {
     const res = await fetch('/api/library/folders', {
       method: 'POST',
       headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name, parentId: currentFolderId }),
     })
-    if (res.ok) { await loadFolders(); setModal(null) }
+    if (res.ok) { loadSubfolders(currentFolderId); setModal(null) }
   }
 
   async function renameFolder(name) {
@@ -168,35 +174,37 @@ export default function KnowledgeLibraryPage() {
       body: JSON.stringify({ name }),
     })
     if (res.ok) {
-      await loadFolders()
-      if (selectedFolder?.id === modal.target.id) setSelectedFolder(f => ({ ...f, name }))
+      // Update name in stack if it's in the breadcrumb path
+      setFolderStack(prev => prev.map(f => f.id === modal.target.id ? { ...f, name } : f))
+      loadSubfolders(currentFolderId)
       setModal(null)
     }
   }
 
   async function deleteFolder() {
-    const res = await fetch(`/api/library/folders/${modal.target.id}`, {
-      method: 'DELETE', headers,
-    })
+    const targetId = modal.target.id
+    const res = await fetch(`/api/library/folders/${targetId}`, { method: 'DELETE', headers })
     if (res.ok) {
-      await loadFolders()
-      if (selectedFolder?.id === modal.target.id) { setSelectedFolder(null); setFiles([]) }
+      // If the deleted folder is in the breadcrumb, pop back to its parent
+      const idx = folderStack.findIndex(f => f.id === targetId)
+      if (idx >= 0) setFolderStack(prev => prev.slice(0, idx))
+      else loadSubfolders(currentFolderId)
       setModal(null)
     }
   }
 
   // ── File actions ────────────────────────────────────────────────────────────
   async function uploadFiles(fileList) {
-    if (!selectedFolder || !fileList.length) return
+    if (!currentFolderId || !fileList.length) return
     setUploading(true)
     for (const file of Array.from(fileList)) {
       const fd = new FormData()
-      fd.append('folderId', selectedFolder.id)
+      fd.append('folderId', currentFolderId)
       fd.append('file', file)
       await fetch('/api/library/files', { method: 'POST', headers, body: fd })
     }
     setUploading(false)
-    loadFiles(selectedFolder.id)
+    loadFiles(currentFolderId)
   }
 
   async function renameFile(name) {
@@ -205,29 +213,24 @@ export default function KnowledgeLibraryPage() {
       headers: { ...headers, 'Content-Type': 'application/json' },
       body: JSON.stringify({ name }),
     })
-    if (res.ok) { loadFiles(selectedFolder.id); setModal(null) }
+    if (res.ok) { loadFiles(currentFolderId); setModal(null) }
   }
 
   async function deleteFile() {
-    const res = await fetch(`/api/library/files/${modal.target.id}`, {
-      method: 'DELETE', headers,
-    })
-    if (res.ok) { loadFiles(selectedFolder.id); setModal(null) }
+    const res = await fetch(`/api/library/files/${modal.target.id}`, { method: 'DELETE', headers })
+    if (res.ok) { loadFiles(currentFolderId); setModal(null) }
   }
 
   function openFile(file) {
     if (file.mime_type === 'application/pdf') {
       setPdfViewer({ fileId: file.id, fileName: file.name })
     } else {
-      // Authenticated download — open in new tab with auth header via a fetch+blob trick
       fetch(`/api/library/files/${file.id}/view`, { headers })
         .then(r => r.blob())
         .then(blob => {
           const url = URL.createObjectURL(blob)
           const a   = document.createElement('a')
-          a.href     = url
-          a.download = file.name
-          a.click()
+          a.href = url; a.download = file.name; a.click()
           URL.revokeObjectURL(url)
         })
     }
@@ -237,73 +240,99 @@ export default function KnowledgeLibraryPage() {
   return (
     <div className="flex h-full" style={{ background: '#F2F2F7' }}>
 
-      {/* ── Left panel — folder list ─────────────────────────────────────── */}
-      <div
-        className="w-64 shrink-0 flex flex-col border-r border-black/8"
-        style={{ background: 'white' }}
-      >
-        {/* Panel header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-black/8">
-          <div className="flex items-center gap-2">
-            <Library size={16} className="text-[#2E96FF]" />
-            <span className="text-sm font-semibold text-[#040E1C]">Folders</span>
+      {/* ── Left panel — folder navigation ──────────────────────────────── */}
+      <div className="w-64 shrink-0 flex flex-col border-r border-black/8 bg-white">
+
+        {/* Breadcrumb */}
+        <div className="px-3 py-2.5 border-b border-black/8">
+          <div className="flex items-center flex-wrap gap-0.5 min-h-[28px]">
+            {/* Root crumb */}
+            <button
+              onClick={() => navigateTo(-1)}
+              className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs transition-colors"
+              style={{ color: folderStack.length === 0 ? '#2E96FF' : '#6B7280' }}
+              onMouseEnter={e => { if (folderStack.length > 0) e.currentTarget.style.color = '#2E96FF' }}
+              onMouseLeave={e => { if (folderStack.length > 0) e.currentTarget.style.color = '#6B7280' }}
+            >
+              <Library size={12} />
+              <span className="font-medium">Library</span>
+            </button>
+
+            {/* Path crumbs */}
+            {folderStack.map((crumb, i) => (
+              <span key={crumb.id} className="flex items-center gap-0.5">
+                <ChevronRight size={11} className="text-gray-300" />
+                <button
+                  onClick={() => navigateTo(i)}
+                  className="px-1.5 py-0.5 rounded text-xs transition-colors truncate max-w-[100px]"
+                  style={{ color: i === folderStack.length - 1 ? '#2E96FF' : '#6B7280' }}
+                  onMouseEnter={e => { if (i < folderStack.length - 1) e.currentTarget.style.color = '#2E96FF' }}
+                  onMouseLeave={e => { if (i < folderStack.length - 1) e.currentTarget.style.color = '#6B7280' }}
+                  title={crumb.name}
+                >
+                  {crumb.name}
+                </button>
+              </span>
+            ))}
           </div>
+        </div>
+
+        {/* Subfolder list header */}
+        <div className="flex items-center justify-between px-4 py-2 border-b border-black/8">
+          <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+            {folderStack.length === 0 ? 'Folders' : 'Subfolders'}
+          </span>
           {isAdmin && (
             <button
               onClick={() => setModal({ type: 'createFolder' })}
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-[#2E96FF] hover:bg-[#2E96FF]/10 transition-colors"
-              title="New folder"
+              className="w-6 h-6 flex items-center justify-center rounded text-[#2E96FF] hover:bg-[#2E96FF]/10 transition-colors"
+              title={`New ${folderStack.length > 0 ? 'subfolder' : 'folder'}`}
             >
-              <Plus size={16} />
+              <Plus size={14} />
             </button>
           )}
         </div>
 
-        {/* Folder list */}
+        {/* Subfolder items */}
         <div className="flex-1 overflow-y-auto py-1">
           {loadingFolders ? (
             <div className="flex items-center justify-center py-8">
-              <Loader size={20} className="animate-spin text-gray-400" />
+              <Loader size={18} className="animate-spin text-gray-300" />
             </div>
-          ) : folders.length === 0 ? (
-            <p className="text-xs text-gray-400 text-center py-8 px-4">
-              {isAdmin ? 'Create your first folder →' : 'No folders yet'}
+          ) : subfolders.length === 0 ? (
+            <p className="text-xs text-gray-400 text-center py-6 px-4">
+              {isAdmin
+                ? `No ${folderStack.length > 0 ? 'subfolders' : 'folders'} yet`
+                : 'Empty'}
             </p>
           ) : (
-            folders.map(folder => {
-              const isSelected = selectedFolder?.id === folder.id
-              return (
-                <div
-                  key={folder.id}
-                  onClick={() => setSelectedFolder(folder)}
-                  className="group flex items-center gap-2 px-3 py-2 mx-1 rounded-lg cursor-pointer transition-colors"
-                  style={{
-                    background: isSelected ? 'rgba(46,150,255,0.10)' : 'transparent',
-                    color:      isSelected ? '#2E96FF' : '#040E1C',
-                  }}
-                  onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = '#F2F2F7' }}
-                  onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}
-                >
-                  {isSelected
-                    ? <FolderOpen size={16} className="shrink-0" />
-                    : <Folder size={16} className="shrink-0 text-gray-400 group-hover:text-[#2E96FF]" />
-                  }
-                  <span className="text-sm truncate flex-1">{folder.name}</span>
-                  {isAdmin && (
-                    <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={e => { e.stopPropagation(); setModal({ type: 'renameFolder', target: folder }) }}
-                        className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-[#2E96FF] hover:bg-[#2E96FF]/10 transition-colors"
-                      ><Pencil size={11} /></button>
-                      <button
-                        onClick={e => { e.stopPropagation(); setModal({ type: 'deleteFolder', target: folder }) }}
-                        className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                      ><Trash2 size={11} /></button>
-                    </div>
-                  )}
-                </div>
-              )
-            })
+            subfolders.map(folder => (
+              <div
+                key={folder.id}
+                onClick={() => drillInto(folder)}
+                className="group flex items-center gap-2 px-3 py-2 mx-1 rounded-lg cursor-pointer transition-colors"
+                style={{ color: '#040E1C' }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#F2F2F7' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+              >
+                <Folder size={15} className="shrink-0 text-[#2E96FF]" />
+                <span className="text-sm truncate flex-1">{folder.name}</span>
+                <ChevronRight size={13} className="text-gray-300 shrink-0" />
+                {isAdmin && (
+                  <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={e => e.stopPropagation()}>
+                    <button
+                      onClick={() => setModal({ type: 'renameFolder', target: folder })}
+                      className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-[#2E96FF] hover:bg-[#2E96FF]/10 transition-colors"
+                    ><Pencil size={11} /></button>
+                    <button
+                      onClick={() => setModal({ type: 'deleteFolder', target: folder })}
+                      className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                    ><Trash2 size={11} /></button>
+                  </div>
+                )}
+              </div>
+            ))
           )}
         </div>
       </div>
@@ -315,91 +344,79 @@ export default function KnowledgeLibraryPage() {
         <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-black/8">
           <div>
             <h1 className="text-sm font-semibold text-[#040E1C]">
-              {selectedFolder ? selectedFolder.name : 'Knowledge Library'}
+              {folderStack.length > 0
+                ? folderStack[folderStack.length - 1].name
+                : 'Knowledge Library'}
             </h1>
-            {selectedFolder && !loadingFiles && (
+            {currentFolderId && !loadingFiles && (
               <p className="text-xs text-gray-400 mt-0.5">
                 {files.length} {files.length === 1 ? 'file' : 'files'}
               </p>
             )}
           </div>
-          {isAdmin && selectedFolder && (
+          {isAdmin && currentFolderId && (
             <>
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#2E96FF] text-white text-sm font-medium hover:bg-[#1a7ee0] disabled:opacity-50 transition-colors"
               >
-                {uploading
-                  ? <Loader size={14} className="animate-spin" />
-                  : <Upload size={14} />
-                }
+                {uploading ? <Loader size={14} className="animate-spin" /> : <Upload size={14} />}
                 {uploading ? 'Uploading…' : 'Upload'}
               </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                className="hidden"
-                onChange={e => { uploadFiles(e.target.files); e.target.value = '' }}
-              />
+              <input ref={fileInputRef} type="file" multiple className="hidden"
+                onChange={e => { uploadFiles(e.target.files); e.target.value = '' }} />
             </>
           )}
         </div>
 
-        {/* File grid / empty states */}
+        {/* File content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {!selectedFolder ? (
+          {!currentFolderId ? (
             <div className="flex flex-col items-center justify-center h-full gap-3 text-gray-400">
               <Library size={40} strokeWidth={1.2} />
-              <p className="text-sm">Select a folder to browse files</p>
+              <p className="text-sm">Open a folder to browse its files</p>
             </div>
           ) : loadingFiles ? (
             <div className="flex items-center justify-center h-full">
-              <Loader size={28} className="animate-spin text-gray-400" />
+              <Loader size={28} className="animate-spin text-gray-300" />
             </div>
           ) : files.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-3 text-gray-400">
               <FolderOpen size={40} strokeWidth={1.2} />
-              <p className="text-sm">{isAdmin ? 'Upload the first file →' : 'No files in this folder'}</p>
+              <p className="text-sm">{isAdmin ? 'Upload the first file →' : 'No files here'}</p>
             </div>
           ) : (
-            <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
+            <div className="grid gap-3"
+              style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
               {files.map(file => {
-                const Icon = fileIcon(file.mime_type)
+                const Icon  = fileIcon(file.mime_type)
                 const isPDF = file.mime_type === 'application/pdf'
                 return (
-                  <div
-                    key={file.id}
+                  <div key={file.id}
                     className="group relative bg-white rounded-xl border border-black/8 p-4 cursor-pointer transition-shadow hover:shadow-md"
                     onClick={() => openFile(file)}
                   >
-                    {/* Admin actions */}
                     {isAdmin && (
-                      <div className="absolute top-2 right-2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                      <div className="absolute top-2 right-2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                        onClick={e => e.stopPropagation()}>
                         <button
-                          onClick={e => { e.stopPropagation(); setModal({ type: 'renameFile', target: file }) }}
+                          onClick={() => setModal({ type: 'renameFile', target: file })}
                           className="w-6 h-6 flex items-center justify-center rounded bg-white border border-gray-200 text-gray-400 hover:text-[#2E96FF] hover:border-[#2E96FF] transition-colors shadow-sm"
                         ><Pencil size={11} /></button>
                         <button
-                          onClick={e => { e.stopPropagation(); setModal({ type: 'deleteFile', target: file }) }}
+                          onClick={() => setModal({ type: 'deleteFile', target: file })}
                           className="w-6 h-6 flex items-center justify-center rounded bg-white border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-300 transition-colors shadow-sm"
                         ><Trash2 size={11} /></button>
                       </div>
                     )}
-
-                    {/* Icon */}
                     <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3"
                       style={{ background: isPDF ? 'rgba(255,59,48,0.10)' : 'rgba(46,150,255,0.10)' }}>
                       <Icon size={20} style={{ color: isPDF ? '#FF3B30' : '#2E96FF' }} />
                     </div>
-
-                    {/* Name */}
                     <p className="text-xs font-medium text-[#040E1C] leading-tight line-clamp-2 mb-2">
                       {file.name}
                     </p>
-
-                    {/* Meta */}
                     <p className="text-[11px] text-gray-400">
                       {formatBytes(file.size)} · {formatDate(file.uploaded_at)}
                     </p>
@@ -414,7 +431,7 @@ export default function KnowledgeLibraryPage() {
       {/* ── Modals ────────────────────────────────────────────────────────── */}
       {modal?.type === 'createFolder' && (
         <TextInputModal
-          title="New Folder"
+          title={folderStack.length > 0 ? `New Subfolder in "${folderStack[folderStack.length-1].name}"` : 'New Folder'}
           placeholder="Folder name"
           confirmLabel="Create"
           onConfirm={createFolder}
@@ -422,36 +439,21 @@ export default function KnowledgeLibraryPage() {
         />
       )}
       {modal?.type === 'renameFolder' && (
-        <TextInputModal
-          title="Rename Folder"
-          placeholder="Folder name"
-          initial={modal.target.name}
-          onConfirm={renameFolder}
-          onClose={() => setModal(null)}
-        />
+        <TextInputModal title="Rename Folder" placeholder="Folder name"
+          initial={modal.target.name} onConfirm={renameFolder} onClose={() => setModal(null)} />
       )}
       {modal?.type === 'deleteFolder' && (
         <ConfirmModal
-          message={`Delete "${modal.target.name}" and all its files? This cannot be undone.`}
-          onConfirm={deleteFolder}
-          onClose={() => setModal(null)}
-        />
+          message={`Delete "${modal.target.name}" and everything inside it? This cannot be undone.`}
+          onConfirm={deleteFolder} onClose={() => setModal(null)} />
       )}
       {modal?.type === 'renameFile' && (
-        <TextInputModal
-          title="Rename File"
-          placeholder="File name"
-          initial={modal.target.name}
-          onConfirm={renameFile}
-          onClose={() => setModal(null)}
-        />
+        <TextInputModal title="Rename File" placeholder="File name"
+          initial={modal.target.name} onConfirm={renameFile} onClose={() => setModal(null)} />
       )}
       {modal?.type === 'deleteFile' && (
-        <ConfirmModal
-          message={`Delete "${modal.target.name}"? This cannot be undone.`}
-          onConfirm={deleteFile}
-          onClose={() => setModal(null)}
-        />
+        <ConfirmModal message={`Delete "${modal.target.name}"? This cannot be undone.`}
+          onConfirm={deleteFile} onClose={() => setModal(null)} />
       )}
 
       {/* ── PDF viewer ────────────────────────────────────────────────────── */}
