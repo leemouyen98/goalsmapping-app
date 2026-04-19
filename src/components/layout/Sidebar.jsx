@@ -10,6 +10,7 @@ import {
   Sparkles,
   BookOpen,
   UserPlus,
+  ClipboardList,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useLanguage } from '../../hooks/useLanguage'
@@ -17,6 +18,7 @@ import ProtectedImg from '../ui/ProtectedImg'
 import AboutSoraModal from './AboutSoraModal'
 import PlanPDFViewerModal from './PlanPDFViewerModal'
 import RecruitmentPDFViewerModal from './RecruitmentPDFViewerModal'
+import UnderwritingPDFViewerModal from './UnderwritingPDFViewerModal'
 
 // Sora brand navy — matches login left panel and manifest theme-color
 const NAVY  = 'linear-gradient(180deg, #040E1C 0%, #081828 100%)'
@@ -30,7 +32,8 @@ export default function Sidebar({ expanded, onToggle }) {
   const [hovered, setHovered]     = useState(false)
   const [showAbout,       setShowAbout]       = useState(false)
   const [showPlan,        setShowPlan]        = useState(false)
-  const [showRecruitment, setShowRecruitment] = useState(false)
+  const [showRecruitment,  setShowRecruitment]  = useState(false)
+  const [showUnderwriting, setShowUnderwriting] = useState(false)
   const hoverTimer = useRef(null)
 
   const isOpen = expanded || hovered
@@ -214,6 +217,19 @@ export default function Sidebar({ expanded, onToggle }) {
             )
           })}
 
+          {/* Underwriting Handbook */}
+          <button
+            onClick={() => setShowUnderwriting(true)}
+            className={`w-full flex items-center gap-3 min-h-touch rounded-hig-sm ${isOpen ? 'px-5' : 'justify-center'} py-2.5 transition-all duration-hig text-left cursor-pointer`}
+            style={{ color: 'rgba(255,255,255,0.38)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.38)' }}
+            title="Underwriting Handbook"
+          >
+            <ClipboardList size={18} strokeWidth={1.8} />
+            {isOpen && <span className="text-hig-subhead truncate">Underwriting</span>}
+          </button>
+
           {/* Recruitment Deck */}
           <button
             onClick={() => setShowRecruitment(true)}
@@ -271,7 +287,8 @@ export default function Sidebar({ expanded, onToggle }) {
 
       {showAbout       && <AboutSoraModal onClose={() => setShowAbout(false)} />}
       {showPlan        && <PlanPDFViewerModal onClose={() => setShowPlan(false)} />}
-      {showRecruitment && <RecruitmentPDFViewerModal onClose={() => setShowRecruitment(false)} />}
+      {showRecruitment  && <RecruitmentPDFViewerModal  onClose={() => setShowRecruitment(false)} />}
+      {showUnderwriting && <UnderwritingPDFViewerModal onClose={() => setShowUnderwriting(false)} />}
     </>
   )
 }
