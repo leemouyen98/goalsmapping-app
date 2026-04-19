@@ -459,6 +459,7 @@ export default function KnowledgeLibraryPage() {
         <SecurePDFViewerModal
           title={pdfViewer.fileName}
           endpoint={`/api/library/files/${pdfViewer.fileId}/view`}
+          scrollMode
           onClose={() => setPdfViewer(null)}
         />
       )}
