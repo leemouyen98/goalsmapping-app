@@ -1,345 +1,879 @@
+/**
+ * ContactsPage — Salesforce-inspired CRM list view
+ *
+ * Features:
+ * · Stats bar: Total | Clients | Prospects | Overdue Reviews
+ * · Filter chips: All / Clients / Prospects / Review Due / Stale
+ * · Sort: Last Activity | Review Date | Name | Stage
+ * · View toggle: List (table) | Pipeline (Kanban)
+ * · Enhanced rows: stage pill, coverage dots, last-activity, overdue badge
+ * · Add contact modal: name, dob, mobile, email, employment, stage, notes
+ */
+
 import { useState, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useContacts } from '../hooks/useContacts'
 import { useLanguage } from '../hooks/useLanguage'
 import {
   Plus, Search, Trash2, Tag, MoreHorizontal,
-  ChevronRight, Phone, Calendar, AlertCircle,
+  ChevronRight, Phone, AlertCircle,
   Target, Shield, CheckCircle2,
+  LayoutList, Columns, Clock, AlertTriangle,
+  SortAsc, Filter, Mail,
 } from 'lucide-react'
 
-const TAG_COLORS = {
-  Client: 'bg-green-50 text-green-700',
-  Prospect: 'bg-blue-50 text-hig-blue',
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+export const STAGES = [
+  { key: 'Lead',     label: 'Lead',     color: '#8E8E93', bg: '#F2F2F7' },
+  { key: 'Prospect', label: 'Prospect', color: '#2E96FF', bg: '#EBF5FF' },
+  { key: 'Proposal', label: 'Proposal', color: '#FF9500', bg: '#FFF8EC' },
+  { key: 'Client',   label: 'Client',   color: '#34C759', bg: '#EDFAEF' },
+  { key: 'Dormant',  label: 'Dormant',  color: '#FF3B30', bg: '#FFF1F0' },
+]
+
+const STAGE_PIPELINE = ['Lead', 'Prospect', 'Proposal', 'Client'] // Kanban columns (Dormant separate)
+const STAGE_MAP = Object.fromEntries(STAGES.map(s => [s.key, s]))
+
+// Infer stage from existing tags if no explicit stage set
+export function getEffectiveStage(contact) {
+  if (contact.stage) return contact.stage
+  if (contact.tags?.includes('Client'))   return 'Client'
+  if (contact.tags?.includes('Prospect')) return 'Prospect'
+  return 'Lead'
 }
 
-const getLastActivity = (contact) => {
-  const dates = [
-    ...(contact.activities || []).map((a) => a.date),
-    ...(contact.interactions || []).map((i) => i.date),
-  ].filter(Boolean).map((d) => new Date(d)).filter((d) => !isNaN(d))
-  if (!dates.length) return null
-  return new Date(Math.max(...dates))
+// Coverage check — derived from financials.insurance array
+function getCoverage(contact) {
+  const policies = contact.financials?.insurance || []
+  const active = policies.filter(p => !p.status || p.status === 'Active')
+  const types  = active.map(p => (p.type || '').toLowerCase())
+  return {
+    life:    types.some(t => ['whole life','term','life','endowment','investment-linked'].some(k => t.includes(k.split(' ')[0]))),
+    medical: types.some(t => t.includes('medical') || t.includes('health')),
+    ci:      types.some(t => t.includes('critical')),
+    pa:      types.some(t => t.includes('personal')),
+  }
 }
+
+function getLastActivity(contact) {
+  const dates = [
+    ...(contact.activities    || []).map(a => a.date),
+    ...(contact.interactions  || []).map(i => i.date),
+  ].filter(Boolean).map(d => new Date(d)).filter(d => !isNaN(d))
+  return dates.length ? new Date(Math.max(...dates)) : null
+}
+
+function getAge(dob) {
+  const d = new Date(dob)
+  const now = new Date()
+  let age = now.getFullYear() - d.getFullYear()
+  if (now.getMonth() < d.getMonth() ||
+     (now.getMonth() === d.getMonth() && now.getDate() < d.getDate())) age--
+  return age
+}
+
+function daysUntilReview(reviewDate) {
+  if (!reviewDate) return null
+  const target = new Date(reviewDate)
+  target.setHours(0,0,0,0)
+  const now = new Date()
+  now.setHours(0,0,0,0)
+  return Math.round((target - now) / 86400000)
+}
+
+function fmtRelativeDate(date) {
+  if (!date) return null
+  const diff = Math.floor((Date.now() - date) / 86400000)
+  if (diff === 0) return 'Today'
+  if (diff === 1) return 'Yesterday'
+  if (diff < 7)  return `${diff}d ago`
+  if (diff < 30) return `${Math.floor(diff/7)}w ago`
+  if (diff < 365) return `${Math.floor(diff/30)}mo ago`
+  return `${Math.floor(diff/365)}y ago`
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function StagePill({ stageKey, size = 'sm' }) {
+  const s = STAGE_MAP[stageKey] || STAGE_MAP.Lead
+  return (
+    <span style={{
+      fontSize: size === 'xs' ? 10 : 11,
+      fontWeight: 600,
+      padding: size === 'xs' ? '1px 6px' : '2px 8px',
+      borderRadius: 20,
+      background: s.bg,
+      color: s.color,
+      whiteSpace: 'nowrap',
+      letterSpacing: '0.02em',
+    }}>
+      {s.label}
+    </span>
+  )
+}
+
+function CoverageDots({ contact }) {
+  const cov = getCoverage(contact)
+  const items = [
+    { key: 'life',    label: 'Life',    color: '#1C1C1E' },
+    { key: 'medical', label: 'Med',     color: '#FF3B30' },
+    { key: 'ci',      label: 'CI',      color: '#FF9500' },
+    { key: 'pa',      label: 'PA',      color: '#AF52DE' },
+  ]
+  return (
+    <div className="flex items-center gap-1">
+      {items.map(({ key, label, color }) => (
+        <span
+          key={key}
+          title={`${label}: ${cov[key] ? 'Covered' : 'Missing'}`}
+          style={{
+            width: 18, height: 18, borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 8, fontWeight: 700,
+            background: cov[key] ? `${color}18` : '#F2F2F7',
+            color: cov[key] ? color : '#C7C7CC',
+            border: cov[key] ? `1px solid ${color}30` : '1px solid #E5E5EA',
+          }}
+        >
+          {label[0]}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+function ReviewBadge({ reviewDate }) {
+  const days = daysUntilReview(reviewDate)
+  if (days === null) return null
+  if (days > 30) return null
+  const overdue = days < 0
+  const today   = days === 0
+  return (
+    <span style={{
+      fontSize: 10, fontWeight: 700,
+      padding: '2px 6px', borderRadius: 10,
+      background: overdue ? '#FFF1F0' : today ? '#FFF8EC' : '#F0F5FF',
+      color:      overdue ? '#FF3B30' : today ? '#FF9500' : '#2E96FF',
+      whiteSpace: 'nowrap',
+    }}>
+      {overdue ? `${Math.abs(days)}d overdue` : today ? 'Review today' : `Review ${days}d`}
+    </span>
+  )
+}
+
+// Stats bar
+function StatsBar({ contacts, activeFilter, onFilter }) {
+  const stats = useMemo(() => {
+    const now = new Date()
+    now.setHours(0,0,0,0)
+    let clients = 0, prospects = 0, overdue = 0, stale = 0
+    contacts.forEach(c => {
+      const stage = getEffectiveStage(c)
+      if (stage === 'Client') clients++
+      else if (['Lead','Prospect','Proposal'].includes(stage)) prospects++
+      // Overdue review
+      if (c.reviewDate) {
+        const d = new Date(c.reviewDate)
+        d.setHours(0,0,0,0)
+        if (d < now) overdue++
+      }
+      // Stale: no activity in 90+ days
+      const last = getLastActivity(c)
+      if (!last || (Date.now() - last) / 86400000 > 90) stale++
+    })
+    return { total: contacts.length, clients, prospects, overdue, stale }
+  }, [contacts])
+
+  const pills = [
+    { key: 'all',      label: 'All',          value: stats.total,     color: '#2E96FF' },
+    { key: 'clients',  label: 'Clients',       value: stats.clients,   color: '#34C759' },
+    { key: 'prospects',label: 'Pipeline',      value: stats.prospects, color: '#FF9500' },
+    { key: 'overdue',  label: 'Review Due',    value: stats.overdue,   color: '#AF52DE' },
+    { key: 'stale',    label: 'No Activity 90d', value: stats.stale,   color: '#FF3B30' },
+  ]
+
+  return (
+    <div className="flex flex-wrap gap-2 mb-4">
+      {pills.map(p => {
+        const active = activeFilter === p.key
+        return (
+          <button
+            key={p.key}
+            onClick={() => onFilter(active ? 'all' : p.key)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '6px 12px', borderRadius: 20,
+              border: active ? `1.5px solid ${p.color}` : '1.5px solid #E5E5EA',
+              background: active ? `${p.color}12` : 'white',
+              cursor: 'pointer', transition: 'all 0.15s',
+            }}
+          >
+            <span style={{
+              fontSize: 15, fontWeight: 700,
+              color: active ? p.color : '#1C1C1E',
+            }}>{p.value}</span>
+            <span style={{
+              fontSize: 12, fontWeight: 500,
+              color: active ? p.color : '#8E8E93',
+            }}>{p.label}</span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+// List row
+function ContactRow({ contact, onClick }) {
+  const stage       = getEffectiveStage(contact)
+  const lastAct     = getLastActivity(contact)
+  const age         = getAge(contact.dob)
+  const pendingTasks = (contact.tasks || []).filter(t => t.status !== 'completed').length
+
+  return (
+    <div
+      onClick={onClick}
+      className="border-b border-hig-gray-5 last:border-b-0 hover:bg-hig-gray-6/50 transition-colors cursor-pointer"
+    >
+      {/* Mobile */}
+      <div className="md:hidden flex items-center gap-3 px-4 py-3">
+        <div style={{
+          width: 38, height: 38, borderRadius: '50%', flexShrink: 0,
+          background: '#2E96FF18', color: '#2E96FF',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 13, fontWeight: 700,
+        }}>
+          {contact.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-hig-subhead font-semibold text-hig-text truncate">{contact.name}</p>
+            <StagePill stageKey={stage} size="xs" />
+            <ReviewBadge reviewDate={contact.reviewDate} />
+          </div>
+          <div className="flex items-center gap-2 mt-0.5 text-hig-caption1 text-hig-text-secondary flex-wrap">
+            <span>Age {age}</span>
+            {contact.mobile && <><span>·</span><span>{contact.mobile}</span></>}
+            {lastAct && <><span>·</span><span>{fmtRelativeDate(lastAct)}</span></>}
+            {pendingTasks > 0 && <><span>·</span><span style={{ color: '#FF9500' }}>{pendingTasks} task{pendingTasks > 1 ? 's' : ''}</span></>}
+          </div>
+        </div>
+        <ChevronRight size={15} className="text-hig-text-secondary shrink-0" />
+      </div>
+
+      {/* Desktop */}
+      <div className="hidden md:grid items-center px-4 py-3"
+        style={{ gridTemplateColumns: '1fr 110px 90px 110px 90px 32px' }}>
+        {/* Name + age */}
+        <div>
+          <div className="flex items-center gap-2">
+            <div style={{
+              width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
+              background: '#2E96FF18', color: '#2E96FF',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 11, fontWeight: 700,
+            }}>
+              {contact.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}
+            </div>
+            <div>
+              <p className="text-hig-subhead font-medium text-hig-text leading-tight">{contact.name}</p>
+              <div className="flex items-center gap-1.5 text-hig-caption1 text-hig-text-secondary">
+                <span>Age {age}</span>
+                {contact.mobile && <><span>·</span><span className="flex items-center gap-0.5"><Phone size={10} />{contact.mobile}</span></>}
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Stage */}
+        <div className="flex items-center gap-1.5">
+          <StagePill stageKey={stage} />
+          <ReviewBadge reviewDate={contact.reviewDate} />
+        </div>
+        {/* Last Activity */}
+        <div className="text-hig-caption1 text-hig-text-secondary">
+          {lastAct ? fmtRelativeDate(lastAct) : <span className="text-hig-gray-3">—</span>}
+        </div>
+        {/* Coverage */}
+        <div>
+          <CoverageDots contact={contact} />
+        </div>
+        {/* Plans */}
+        <div className="flex items-center gap-2">
+          {contact.retirementPlan
+            ? <CheckCircle2 size={14} className="text-hig-blue" title="Retirement plan" />
+            : <Target size={14} className="text-hig-gray-3" title="No retirement plan" />}
+          {contact.protectionPlan
+            ? <CheckCircle2 size={14} className="text-hig-green" title="Protection plan" />
+            : <Shield size={14} className="text-hig-gray-3" title="No protection plan" />}
+          {pendingTasks > 0 && (
+            <span style={{
+              fontSize: 10, fontWeight: 700,
+              width: 16, height: 16, borderRadius: '50%',
+              background: '#FF9500', color: 'white',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }} title={`${pendingTasks} pending task(s)`}>
+              {pendingTasks}
+            </span>
+          )}
+        </div>
+        <ChevronRight size={15} className="text-hig-text-secondary" />
+      </div>
+    </div>
+  )
+}
+
+// Kanban card
+function KanbanCard({ contact, onNavigate, onStageChange }) {
+  const [showMoveMenu, setShowMoveMenu] = useState(false)
+  const stage    = getEffectiveStage(contact)
+  const lastAct  = getLastActivity(contact)
+  const age      = getAge(contact.dob)
+  const reviewD  = daysUntilReview(contact.reviewDate)
+  const isOverdue = reviewD !== null && reviewD < 0
+
+  const nextStages = STAGES.filter(s => s.key !== stage && s.key !== 'Dormant')
+
+  return (
+    <div
+      className="hig-card"
+      style={{ padding: '10px 12px', cursor: 'pointer', marginBottom: 8, position: 'relative' }}
+    >
+      <div onClick={onNavigate}>
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <div style={{
+            width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+            background: '#2E96FF18', color: '#2E96FF',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 10, fontWeight: 700,
+          }}>
+            {contact.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p style={{ fontSize: 13, fontWeight: 600, color: '#1C1C1E', lineHeight: 1.3 }}>{contact.name}</p>
+            <p style={{ fontSize: 11, color: '#8E8E93' }}>Age {age}{contact.employment ? ` · ${contact.employment}` : ''}</p>
+          </div>
+          {isOverdue && <AlertTriangle size={13} style={{ color: '#FF9500', flexShrink: 0 }} title="Review overdue" />}
+        </div>
+
+        <div className="flex items-center justify-between mt-1">
+          <CoverageDots contact={contact} />
+          <span style={{ fontSize: 10, color: '#8E8E93' }}>
+            {lastAct ? fmtRelativeDate(lastAct) : 'No activity'}
+          </span>
+        </div>
+      </div>
+
+      {/* Move stage button */}
+      {nextStages.length > 0 && (
+        <div style={{ position: 'relative', marginTop: 8 }}>
+          <button
+            onClick={e => { e.stopPropagation(); setShowMoveMenu(s => !s) }}
+            style={{
+              width: '100%', padding: '4px 8px', borderRadius: 6,
+              border: '1px dashed #E5E5EA', background: 'none',
+              fontSize: 11, color: '#8E8E93', cursor: 'pointer',
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = '#2E96FF'; e.currentTarget.style.color = '#2E96FF' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E5EA'; e.currentTarget.style.color = '#8E8E93' }}
+          >
+            Move stage →
+          </button>
+          {showMoveMenu && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setShowMoveMenu(false)} />
+              <div style={{
+                position: 'absolute', bottom: '100%', left: 0, right: 0, marginBottom: 4,
+                background: 'white', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                border: '1px solid #F2F2F7', zIndex: 20, overflow: 'hidden',
+              }}>
+                {nextStages.map(s => (
+                  <button
+                    key={s.key}
+                    onClick={e => { e.stopPropagation(); onStageChange(contact.id, s.key); setShowMoveMenu(false) }}
+                    style={{
+                      width: '100%', padding: '7px 12px',
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      border: 'none', background: 'none', cursor: 'pointer',
+                      fontSize: 12, color: '#1C1C1E', textAlign: 'left',
+                      transition: 'background 0.1s',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#F9F9FB'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                  >
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: s.color, flexShrink: 0 }} />
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Kanban pipeline view
+function PipelineView({ contacts, onNavigate, onStageChange }) {
+  return (
+    <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8 }}>
+      {STAGE_PIPELINE.map(stageKey => {
+        const s = STAGE_MAP[stageKey]
+        const stageContacts = contacts.filter(c => getEffectiveStage(c) === stageKey)
+        return (
+          <div key={stageKey} style={{ minWidth: 220, maxWidth: 260, flex: '1 1 220px' }}>
+            {/* Column header */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '8px 4px 10px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: s.color }} />
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#1C1C1E', letterSpacing: '0.03em' }}>
+                  {s.label.toUpperCase()}
+                </span>
+              </div>
+              <span style={{
+                fontSize: 11, fontWeight: 600, color: s.color,
+                background: s.bg, padding: '2px 7px', borderRadius: 10,
+              }}>
+                {stageContacts.length}
+              </span>
+            </div>
+
+            {/* Cards */}
+            <div>
+              {stageContacts.length === 0 ? (
+                <div style={{
+                  padding: '24px 12px', textAlign: 'center',
+                  border: '1.5px dashed #E5E5EA', borderRadius: 10,
+                  color: '#C7C7CC', fontSize: 12,
+                }}>
+                  None
+                </div>
+              ) : stageContacts.map(c => (
+                <KanbanCard
+                  key={c.id}
+                  contact={c}
+                  onNavigate={() => onNavigate(c.id)}
+                  onStageChange={onStageChange}
+                />
+              ))}
+            </div>
+          </div>
+        )
+      })}
+
+      {/* Dormant column (collapsed by default) */}
+      {(() => {
+        const dormant = contacts.filter(c => getEffectiveStage(c) === 'Dormant')
+        if (dormant.length === 0) return null
+        const s = STAGE_MAP.Dormant
+        return (
+          <div style={{ minWidth: 220, maxWidth: 260, flex: '1 1 220px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 4px 10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: s.color }} />
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#636366', letterSpacing: '0.03em' }}>DORMANT</span>
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 600, color: s.color, background: s.bg, padding: '2px 7px', borderRadius: 10 }}>{dormant.length}</span>
+            </div>
+            {dormant.map(c => (
+              <KanbanCard key={c.id} contact={c} onNavigate={() => onNavigate(c.id)} onStageChange={onStageChange} />
+            ))}
+          </div>
+        )
+      })()}
+    </div>
+  )
+}
+
+// Add Contact Modal
+function AddContactModal({ onClose, onAdd }) {
+  const [form, setForm] = useState({
+    name: '', dob: '', mobile: '', email: '', employment: '',
+    stage: 'Lead', retirementAge: 55, reviewDate: '', reviewFrequency: '', notes: '',
+  })
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (!form.name || !form.dob) return
+    onAdd(form)
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <form
+        onClick={e => e.stopPropagation()}
+        onSubmit={handleSubmit}
+        className="bg-white rounded-hig-lg shadow-hig-lg w-full max-w-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto"
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-hig-title3">Add Contact</h2>
+          <button type="button" onClick={onClose}
+            className="p-1.5 rounded-hig-sm hover:bg-hig-gray-6 text-hig-text-secondary">
+            ✕
+          </button>
+        </div>
+
+        {/* Name + DOB */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="hig-label">Full Name <span className="text-hig-red">*</span></label>
+            <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="hig-input" placeholder="Ahmad Bin Ali" required />
+          </div>
+          <div>
+            <label className="hig-label">Date of Birth <span className="text-hig-red">*</span></label>
+            <input type="date" value={form.dob} onChange={e => setForm({...form, dob: e.target.value})} className="hig-input" required />
+          </div>
+        </div>
+
+        {/* Mobile + Email */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="hig-label">Mobile</label>
+            <input value={form.mobile} onChange={e => setForm({...form, mobile: e.target.value})} className="hig-input" placeholder="012-3456789" />
+          </div>
+          <div>
+            <label className="hig-label">Email</label>
+            <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="hig-input" placeholder="email@example.com" />
+          </div>
+        </div>
+
+        {/* Employment + Stage */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="hig-label">Employment</label>
+            <select value={form.employment} onChange={e => setForm({...form, employment: e.target.value})} className="hig-input">
+              <option value="">Select...</option>
+              <option>Employed</option>
+              <option>Self-Employed</option>
+              <option>Business Owner</option>
+              <option>Unemployed</option>
+              <option>Retired</option>
+            </select>
+          </div>
+          <div>
+            <label className="hig-label">Pipeline Stage</label>
+            <select value={form.stage} onChange={e => setForm({...form, stage: e.target.value})} className="hig-input">
+              {STAGES.filter(s => s.key !== 'Dormant').map(s => (
+                <option key={s.key} value={s.key}>{s.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Retirement Age */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="hig-label">Retirement Age</label>
+            <input type="number" min={40} max={80} value={form.retirementAge ?? 55}
+              onChange={e => setForm({...form, retirementAge: parseInt(e.target.value) || 55})}
+              className="hig-input" placeholder="55" />
+          </div>
+          <div>
+            <label className="hig-label">Review Date</label>
+            <input type="date" value={form.reviewDate} onChange={e => setForm({...form, reviewDate: e.target.value})} className="hig-input" />
+          </div>
+        </div>
+
+        <div>
+          <label className="hig-label">Notes</label>
+          <textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})}
+            className="hig-input min-h-[60px] resize-y" placeholder="Referral source, key needs..." />
+        </div>
+
+        <div className="flex flex-col-reverse gap-3 pt-1 sm:flex-row sm:justify-end">
+          <button type="button" onClick={onClose} className="hig-btn-secondary">Cancel</button>
+          <button type="submit" className="hig-btn-primary">Add Contact</button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+
+const SORT_OPTIONS = [
+  { key: 'activity', label: 'Last Activity' },
+  { key: 'review',   label: 'Review Date'   },
+  { key: 'name',     label: 'Name'          },
+  { key: 'stage',    label: 'Stage'         },
+]
+
+const STAGE_ORDER = { Lead: 0, Prospect: 1, Proposal: 2, Client: 3, Dormant: 4 }
 
 export default function ContactsPage() {
-  const { contacts, contactsLoading, contactsError, addContact, deleteContacts, addTag } = useContacts()
+  const { contacts, contactsLoading, contactsError, addContact, deleteContacts, addTag, updateContact } = useContacts()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { t } = useLanguage()
 
-  // Initialise from URL ?q= param (set by TopBar global search or direct links)
-  const [search, setSearch] = useState(() => searchParams.get('q') || '')
-  const [selected, setSelected] = useState(new Set())
-  const [showForm, setShowForm] = useState(searchParams.get('new') === 'true')
-  const [showBulkMenu, setShowBulkMenu] = useState(false)
-  // keep bulk selection internal only — checkboxes removed from UI
+  const [search,      setSearch]      = useState(() => searchParams.get('q') || '')
+  const [filter,      setFilter]      = useState('all')
+  const [sortBy,      setSortBy]      = useState('activity')
+  const [viewMode,    setViewMode]    = useState('list') // 'list' | 'pipeline'
+  const [showForm,    setShowForm]    = useState(searchParams.get('new') === 'true')
+  const [selected,    setSelected]    = useState(new Set())
+  const [showBulkMenu,setShowBulkMenu]= useState(false)
+  const [showSort,    setShowSort]    = useState(false)
 
-  // Form state
-  const [form, setForm] = useState({
-    name: '', dob: '', mobile: '', employment: '', retirementAge: 55,
-    reviewDate: '', reviewFrequency: '', notes: '',
-  })
+  const now = new Date()
+  now.setHours(0,0,0,0)
 
+  // Apply filter
   const filtered = useMemo(() => {
-    if (!search) return contacts
-    const q = search.toLowerCase()
-    return contacts.filter(
-      (c) =>
+    let list = contacts
+
+    // Text search
+    if (search) {
+      const q = search.toLowerCase()
+      list = list.filter(c =>
         c.name.toLowerCase().includes(q) ||
         c.mobile?.toLowerCase().includes(q) ||
-        c.tags.some((t) => t.toLowerCase().includes(q))
-    )
-  }, [contacts, search])
-
-  const toggleSelect = (id) => {
-    setSelected((prev) => {
-      const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
-      return next
-    })
-  }
-
-  const toggleAll = () => {
-    if (selected.size === filtered.length) {
-      setSelected(new Set())
-    } else {
-      setSelected(new Set(filtered.map((c) => c.id)))
+        c.email?.toLowerCase().includes(q) ||
+        c.tags?.some(tag => tag.toLowerCase().includes(q))
+      )
     }
-  }
 
-  const handleAdd = (e) => {
-    e.preventDefault()
-    if (!form.name || !form.dob) return
-    const c = addContact(form)
-    setForm({ name: '', dob: '', mobile: '', employment: '', retirementAge: 55, reviewDate: '', reviewFrequency: '', notes: '' })
+    // Quick filter
+    if (filter === 'clients') {
+      list = list.filter(c => getEffectiveStage(c) === 'Client')
+    } else if (filter === 'prospects') {
+      list = list.filter(c => ['Lead','Prospect','Proposal'].includes(getEffectiveStage(c)))
+    } else if (filter === 'overdue') {
+      list = list.filter(c => {
+        if (!c.reviewDate) return false
+        const d = new Date(c.reviewDate)
+        d.setHours(0,0,0,0)
+        return d < now
+      })
+    } else if (filter === 'stale') {
+      list = list.filter(c => {
+        const last = getLastActivity(c)
+        return !last || (Date.now() - last) / 86400000 > 90
+      })
+    }
+
+    // Sort
+    list = [...list].sort((a, b) => {
+      if (sortBy === 'name') return a.name.localeCompare(b.name)
+      if (sortBy === 'stage') return (STAGE_ORDER[getEffectiveStage(a)] ?? 9) - (STAGE_ORDER[getEffectiveStage(b)] ?? 9)
+      if (sortBy === 'review') {
+        const da = a.reviewDate ? new Date(a.reviewDate) : new Date(9999,0,1)
+        const db = b.reviewDate ? new Date(b.reviewDate) : new Date(9999,0,1)
+        return da - db
+      }
+      // Default: last activity (newest first), nulls at bottom
+      const la = getLastActivity(a)
+      const lb = getLastActivity(b)
+      if (!la && !lb) return 0
+      if (!la) return 1
+      if (!lb) return -1
+      return lb - la
+    })
+
+    return list
+  }, [contacts, search, filter, sortBy, now])
+
+  const handleAdd = (formData) => {
+    const c = addContact(formData)
     setShowForm(false)
     setSearchParams({})
     navigate(`/contacts/${c.id}`)
   }
 
   const handleBulkDelete = () => {
-    if (selected.size === 0) return
+    if (!selected.size) return
     deleteContacts([...selected])
     setSelected(new Set())
     setShowBulkMenu(false)
   }
 
   const handleBulkTag = (tag) => {
-    if (selected.size === 0) return
+    if (!selected.size) return
     addTag([...selected], tag)
     setShowBulkMenu(false)
   }
 
-  const getAge = (dob) => {
-    const d = new Date(dob)
-    const now = new Date()
-    let age = now.getFullYear() - d.getFullYear()
-    if (now.getMonth() < d.getMonth() || (now.getMonth() === d.getMonth() && now.getDate() < d.getDate())) age--
-    return age
+  const handleStageChange = (contactId, newStage) => {
+    updateContact(contactId, { stage: newStage })
   }
+
+  const currentSortLabel = SORT_OPTIONS.find(o => o.key === sortBy)?.label
 
   return (
     <div className="max-w-5xl mx-auto">
       {/* Header */}
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-hig-title2">{t('contacts.title')}</h1>
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-hig-title2">Contacts</h1>
         <button onClick={() => setShowForm(true)} className="hig-btn-primary w-full justify-center gap-2 sm:w-auto">
-          <Plus size={18} />
-          {t('contacts.addNew')}
+          <Plus size={16} /> Add Contact
         </button>
       </div>
 
-      {/* Search + Bulk Actions */}
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative flex-1 max-w-full sm:max-w-sm">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-hig-text-secondary" />
+      {/* Stats bar */}
+      {!contactsLoading && !contactsError && (
+        <StatsBar contacts={contacts} activeFilter={filter} onFilter={setFilter} />
+      )}
+
+      {/* Controls row */}
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        {/* Search */}
+        <div className="relative flex-1 max-w-full sm:max-w-xs">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-hig-text-secondary" />
           <input
             type="text"
-            placeholder={t('contacts.searchPlaceholder')}
+            placeholder="Search name, mobile, email..."
             value={search}
-            onChange={(e) => {
-              const val = e.target.value
-              setSearch(val)
-              setSearchParams(val ? { q: val } : {})
+            onChange={e => {
+              setSearch(e.target.value)
+              setSearchParams(e.target.value ? { q: e.target.value } : {})
             }}
             className="w-full h-10 pl-9 pr-3 rounded-lg bg-white border border-hig-gray-4
                        text-hig-subhead outline-none focus:border-hig-blue focus:ring-2
-                       focus:ring-hig-blue/20 transition-all duration-hig"
+                       focus:ring-hig-blue/20 transition-all"
           />
         </div>
-        {selected.size > 0 && (
+
+        <div className="flex items-center gap-2">
+          {/* Bulk actions */}
+          {selected.size > 0 && (
+            <div className="relative">
+              <button onClick={() => setShowBulkMenu(s => !s)} className="hig-btn-secondary gap-2 text-hig-caption1">
+                <MoreHorizontal size={14} /> {selected.size} selected
+              </button>
+              {showBulkMenu && (
+                <div className="absolute right-0 top-12 w-48 bg-white rounded-hig shadow-hig-lg border border-hig-gray-5 py-1 z-50">
+                  <button onClick={() => handleBulkTag('Client')} className="w-full flex items-center gap-2 px-4 py-2.5 text-hig-subhead hover:bg-hig-gray-6">
+                    <Tag size={13} /> Tag as Client
+                  </button>
+                  <button onClick={() => handleBulkTag('Prospect')} className="w-full flex items-center gap-2 px-4 py-2.5 text-hig-subhead hover:bg-hig-gray-6">
+                    <Tag size={13} /> Tag as Prospect
+                  </button>
+                  <hr className="my-1 border-hig-gray-5" />
+                  <button onClick={handleBulkDelete} className="w-full flex items-center gap-2 px-4 py-2.5 text-hig-subhead text-hig-red hover:bg-red-50">
+                    <Trash2 size={13} /> Delete
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Sort */}
           <div className="relative">
             <button
-              onClick={() => setShowBulkMenu(!showBulkMenu)}
-              className="hig-btn-secondary gap-2"
+              onClick={() => setShowSort(s => !s)}
+              className="hig-btn-secondary gap-1.5 text-hig-caption1 text-hig-text-secondary"
+              style={{ height: 36 }}
             >
-              <MoreHorizontal size={16} />
-              {selected.size} {t('contacts.selected')}
+              <SortAsc size={14} />
+              <span className="hidden sm:inline">{currentSortLabel}</span>
             </button>
-            {showBulkMenu && (
-              <div className="absolute right-0 top-12 w-48 bg-white rounded-hig shadow-hig-lg border border-hig-gray-5 py-1 z-50">
-                <button onClick={() => handleBulkTag('Client')} className="w-full flex items-center gap-2 px-4 py-2.5 text-hig-subhead hover:bg-hig-gray-6">
-                  <Tag size={14} /> {t('contacts.tagAsClient')}
-                </button>
-                <button onClick={() => handleBulkTag('Prospect')} className="w-full flex items-center gap-2 px-4 py-2.5 text-hig-subhead hover:bg-hig-gray-6">
-                  <Tag size={14} /> {t('contacts.tagAsProspect')}
-                </button>
-                <hr className="my-1 border-hig-gray-5" />
-                <button onClick={handleBulkDelete} className="w-full flex items-center gap-2 px-4 py-2.5 text-hig-subhead text-hig-red hover:bg-red-50">
-                  <Trash2 size={14} /> {t('common.delete')}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Contact List */}
-      <div className="hig-card overflow-hidden">
-
-        {/* ── Table header (tablet+) ── */}
-        <div className="hidden md:grid grid-cols-[1fr_130px_60px_120px_48px] items-center
-                        px-4 py-3 bg-hig-gray-6 border-b border-hig-gray-5
-                        text-hig-caption1 font-semibold text-hig-text-secondary uppercase tracking-wide">
-          <span>{t('contacts.colName')}</span>
-          <span>{t('contacts.colLastActivity')}</span>
-          <span className="text-center">{t('contacts.colPlans')}</span>
-          <span>{t('contacts.colTags')}</span>
-          <span></span>
-        </div>
-
-        {/* State: error / loading / empty */}
-        {contactsError ? (
-          <div className="px-4 py-10 flex flex-col items-center gap-3 text-center">
-            <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,59,48,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <AlertCircle size={20} style={{ color: '#FF3B30' }} />
-            </div>
-            <p className="text-hig-subhead font-medium" style={{ color: '#FF3B30' }}>{t('contacts.loadFailed')}</p>
-            <p className="text-hig-caption1 text-hig-text-secondary">{contactsError}</p>
-          </div>
-        ) : contactsLoading ? (
-          <div className="px-4 py-12 text-center text-hig-subhead text-hig-text-secondary">
-            {t('contacts.loadingMsg')}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="px-4 py-12 text-center text-hig-subhead text-hig-text-secondary">
-            {search ? t('contacts.noMatch') : t('contacts.noContacts')}
-          </div>
-        ) : filtered.map((c) => {
-          const lastActivity = getLastActivity(c)
-          return (
-            <div
-              key={c.id}
-              className="border-b border-hig-gray-5 last:border-b-0 hover:bg-hig-gray-6/50
-                         transition-colors cursor-pointer"
-              onClick={() => navigate(`/contacts/${c.id}`)}
-            >
-              {/* ── Mobile card view ── */}
-              <div className="md:hidden flex items-center gap-3 px-4 py-3">
-                {/* Avatar */}
-                <div className="w-10 h-10 rounded-full bg-hig-blue/10 text-hig-blue
-                                flex items-center justify-center text-hig-caption1 font-bold shrink-0">
-                  {c.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-hig-subhead font-semibold text-hig-text truncate">{c.name}</p>
-                    {c.tags.map((t) => (
-                      <span key={t} className={`text-hig-caption2 px-1.5 py-0 rounded-full font-medium shrink-0 ${TAG_COLORS[t] || 'bg-hig-gray-6 text-hig-text-secondary'}`}>
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-2 mt-0.5 text-hig-caption1 text-hig-text-secondary">
-                    <span>{t('common.age')} {getAge(c.dob)}</span>
-                    {c.mobile && <><span>·</span><span className="flex items-center gap-0.5"><Phone size={10} /> {c.mobile}</span></>}
-                    {lastActivity && <><span>·</span><span>{lastActivity.toLocaleDateString('en-MY', { day: 'numeric', month: 'short' })}</span></>}
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {c.retirementPlan
-                    ? <CheckCircle2 size={13} className="text-hig-blue" />
-                    : <Target size={13} className="text-hig-gray-3" />
-                  }
-                  {c.protectionPlan
-                    ? <CheckCircle2 size={13} className="text-hig-green" />
-                    : <Shield size={13} className="text-hig-gray-3" />
-                  }
-                  <ChevronRight size={15} className="text-hig-text-secondary ml-1" />
-                </div>
-              </div>
-
-              {/* ── Tablet+ table row ── */}
-              <div className="hidden md:grid grid-cols-[1fr_130px_60px_120px_48px] items-center px-4 py-3">
-                <div>
-                  <p className="text-hig-subhead font-medium text-hig-text">{c.name}</p>
-                  <p className="text-hig-caption1 text-hig-text-secondary">
-                    {t('common.age')} {getAge(c.dob)}
-                    {c.mobile && <span className="ml-2 inline-flex items-center gap-1"><Phone size={11} /> {c.mobile}</span>}
-                  </p>
-                </div>
-                <div className="text-hig-caption1 text-hig-text-secondary">
-                  {lastActivity
-                    ? lastActivity.toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })
-                    : '—'}
-                </div>
-                <div className="flex items-center justify-center gap-1.5">
-                  {c.retirementPlan
-                    ? <CheckCircle2 size={14} className="text-hig-blue" title="Retirement plan active" />
-                    : <Target size={14} className="text-hig-gray-3" title="No retirement plan" />
-                  }
-                  {c.protectionPlan
-                    ? <CheckCircle2 size={14} className="text-hig-green" title="Protection plan active" />
-                    : <Shield size={14} className="text-hig-gray-3" title="No protection plan" />
-                  }
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {c.tags.map((t) => (
-                    <span key={t} className={`text-hig-caption2 px-2 py-0.5 rounded-full font-medium ${TAG_COLORS[t] || 'bg-hig-gray-6 text-hig-text-secondary'}`}>
-                      {t}
-                    </span>
+            {showSort && (
+              <>
+                <div className="fixed inset-0 z-20" onClick={() => setShowSort(false)} />
+                <div className="absolute right-0 top-full mt-1 bg-white rounded-hig shadow-hig-lg border border-hig-gray-5 py-1 z-30 w-40">
+                  {SORT_OPTIONS.map(o => (
+                    <button
+                      key={o.key}
+                      onClick={() => { setSortBy(o.key); setShowSort(false) }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-hig-subhead hover:bg-hig-gray-6 text-left"
+                      style={{ fontWeight: sortBy === o.key ? 600 : 400, color: sortBy === o.key ? '#2E96FF' : undefined }}
+                    >
+                      {sortBy === o.key && <span style={{ color: '#2E96FF' }}>✓</span>}
+                      {o.label}
+                    </button>
                   ))}
                 </div>
-                <div className="flex justify-end">
-                  <ChevronRight size={16} className="text-hig-text-secondary" />
-                </div>
-              </div>
-            </div>
-          )
-        })}
+              </>
+            )}
+          </div>
+
+          {/* View toggle */}
+          <div style={{
+            display: 'flex', borderRadius: 8, border: '1px solid #E5E5EA',
+            overflow: 'hidden', height: 36,
+          }}>
+            {[
+              { key: 'list',     Icon: LayoutList },
+              { key: 'pipeline', Icon: Columns    },
+            ].map(({ key, Icon }) => (
+              <button
+                key={key}
+                onClick={() => setViewMode(key)}
+                style={{
+                  padding: '0 10px', border: 'none', cursor: 'pointer',
+                  background: viewMode === key ? '#2E96FF' : 'white',
+                  color: viewMode === key ? 'white' : '#8E8E93',
+                  transition: 'all 0.15s',
+                }}
+                title={key === 'list' ? 'List view' : 'Pipeline view'}
+              >
+                <Icon size={15} />
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
+
+      {/* Content */}
+      {contactsError ? (
+        <div className="hig-card px-4 py-10 flex flex-col items-center gap-3 text-center">
+          <AlertCircle size={22} style={{ color: '#FF3B30' }} />
+          <p className="text-hig-subhead font-medium" style={{ color: '#FF3B30' }}>Failed to load contacts</p>
+          <p className="text-hig-caption1 text-hig-text-secondary">{contactsError}</p>
+        </div>
+      ) : contactsLoading ? (
+        <div className="hig-card px-4 py-12 text-center text-hig-subhead text-hig-text-secondary">
+          Loading contacts…
+        </div>
+      ) : viewMode === 'pipeline' ? (
+        <PipelineView
+          contacts={filtered}
+          onNavigate={id => navigate(`/contacts/${id}`)}
+          onStageChange={handleStageChange}
+        />
+      ) : (
+        <div className="hig-card overflow-hidden">
+          {/* Table header */}
+          <div className="hidden md:grid items-center px-4 py-2.5 bg-hig-gray-6 border-b border-hig-gray-5
+                          text-hig-caption2 font-semibold text-hig-text-secondary uppercase tracking-wide"
+            style={{ gridTemplateColumns: '1fr 110px 90px 110px 90px 32px' }}>
+            <span>Contact</span>
+            <span>Stage</span>
+            <span>Last Activity</span>
+            <span>Coverage</span>
+            <span>Plans</span>
+            <span></span>
+          </div>
+
+          {filtered.length === 0 ? (
+            <div className="px-4 py-12 text-center">
+              <p className="text-hig-subhead text-hig-text-secondary">
+                {search ? 'No contacts match your search.' : 'No contacts yet. Add your first one above.'}
+              </p>
+            </div>
+          ) : (
+            filtered.map(c => (
+              <ContactRow
+                key={c.id}
+                contact={c}
+                onClick={() => navigate(`/contacts/${c.id}`)}
+              />
+            ))
+          )}
+        </div>
+      )}
 
       {/* Add Contact Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4" onClick={() => { setShowForm(false); setSearchParams({}) }}>
-          <form
-            onClick={(e) => e.stopPropagation()}
-            onSubmit={handleAdd}
-            className="bg-white rounded-hig-lg shadow-hig-lg w-full max-w-lg p-6 space-y-4 max-h-[85vh] overflow-y-auto"
-          >
-            <h2 className="text-hig-title3">{t('contacts.modalTitle')}</h2>
-
-            <div>
-              <label className="hig-label">{t('contacts.fieldName')} <span className="text-hig-red">*</span></label>
-              <input value={form.name} onChange={(e) => setForm({...form, name: e.target.value})} className="hig-input" placeholder={t('contacts.placeholderName')} required />
-            </div>
-            <div>
-              <label className="hig-label">{t('contacts.fieldDob')} <span className="text-hig-red">*</span></label>
-              <input type="date" value={form.dob} onChange={(e) => setForm({...form, dob: e.target.value})} className="hig-input" required />
-            </div>
-            <div>
-              <label className="hig-label">{t('contacts.fieldMobile')}</label>
-              <input value={form.mobile} onChange={(e) => setForm({...form, mobile: e.target.value})} className="hig-input" placeholder="012-3456789" />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="hig-label">{t('contacts.fieldEmployment')}</label>
-                <select value={form.employment} onChange={(e) => setForm({...form, employment: e.target.value})} className="hig-input">
-                  <option value="">Select...</option>
-                  <option>{t('contacts.empEmployed')}</option>
-                  <option>{t('contacts.empSelfEmployed')}</option>
-                  <option>{t('contacts.empUnemployed')}</option>
-                  <option>{t('contacts.empRetired')}</option>
-                </select>
-              </div>
-              <div>
-                <label className="hig-label">{t('contacts.fieldRetAge')}</label>
-                <input
-                  type="number" min={40} max={80}
-                  value={form.retirementAge ?? 55}
-                  onChange={(e) => setForm({...form, retirementAge: parseInt(e.target.value) || 55})}
-                  className="hig-input"
-                  placeholder="55"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="hig-label">{t('contacts.fieldReviewDate')}</label>
-                <input type="date" value={form.reviewDate} onChange={(e) => setForm({...form, reviewDate: e.target.value})} className="hig-input" />
-              </div>
-              <div>
-                <label className="hig-label">{t('contacts.fieldReviewFreq')}</label>
-                <select value={form.reviewFrequency} onChange={(e) => setForm({...form, reviewFrequency: e.target.value})} className="hig-input">
-                  <option value="">Select...</option>
-                  <option>{t('contacts.freqAnnually')}</option>
-                  <option>{t('contacts.freqSemiAnnual')}</option>
-                  <option>{t('contacts.freqQuarterly')}</option>
-                </select>
-              </div>
-            </div>
-            <div>
-              <label className="hig-label">{t('contacts.fieldNotes')}</label>
-              <textarea value={form.notes} onChange={(e) => setForm({...form, notes: e.target.value})} className="hig-input min-h-[80px] resize-y" placeholder={t('contacts.placeholderNotes')} />
-            </div>
-
-            <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
-              <button type="button" onClick={() => { setShowForm(false); setSearchParams({}) }} className="hig-btn-secondary">{t('common.cancel')}</button>
-              <button type="submit" className="hig-btn-primary">{t('contacts.btnAdd')}</button>
-            </div>
-          </form>
-        </div>
+        <AddContactModal
+          onClose={() => { setShowForm(false); setSearchParams({}) }}
+          onAdd={handleAdd}
+        />
       )}
     </div>
   )
