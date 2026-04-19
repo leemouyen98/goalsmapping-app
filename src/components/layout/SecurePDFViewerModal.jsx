@@ -63,11 +63,12 @@ async function renderPageToCanvas(pdf, pageNum, canvas) {
   const page     = await pdf.getPage(pageNum)
   const viewport = page.getViewport({ scale: SCALE * dpr })
   // Physical pixel dimensions — sharp on HiDPI / Retina screens
-  canvas.width        = viewport.width
-  canvas.height       = viewport.height
-  // CSS dimensions — keep the canvas the same visual size
-  canvas.style.width  = `${viewport.width  / dpr}px`
-  canvas.style.height = `${viewport.height / dpr}px`
+  canvas.width  = viewport.width
+  canvas.height = viewport.height
+  // Set only CSS width; browser derives height from the canvas's intrinsic
+  // width/height attribute ratio — preserves aspect ratio when maxWidth kicks in
+  canvas.style.width  = `${viewport.width / dpr}px`
+  canvas.style.height = 'auto'
   await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise
 }
 
@@ -153,8 +154,8 @@ export default function SecurePDFViewerModal({ title, endpoint, langOptions, scr
       const canvas   = canvasRef.current
       canvas.width        = viewport.width
       canvas.height       = viewport.height
-      canvas.style.width  = `${viewport.width  / dpr}px`
-      canvas.style.height = `${viewport.height / dpr}px`
+      canvas.style.width  = `${viewport.width / dpr}px`
+      canvas.style.height = 'auto'
       const task = page.render({ canvasContext: canvas.getContext('2d'), viewport })
       renderTask.current = task
       await task.promise
