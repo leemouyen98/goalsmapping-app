@@ -885,32 +885,33 @@ export default function ContactDetailPage() {
       {/* ── Full-width Hero Bar ───────────────────────────────────────────── */}
       <div style={{
         borderRadius: 16, overflow: 'hidden', marginBottom: 20,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.05)',
       }}>
-        {/* Gradient banner */}
+        {/* ── Gradient banner — contains identity + nav ─────────────────── */}
         <div style={{
-          height: 80,
-          background: `linear-gradient(135deg, hsl(${hue},65%,50%) 0%, hsl(${(hue+45)%360},60%,62%) 100%)`,
+          background: `linear-gradient(135deg, hsl(${hue},68%,44%) 0%, hsl(${(hue+50)%360},62%,56%) 100%)`,
+          padding: '14px 16px 16px',
           position: 'relative',
         }}>
-          {/* Back button */}
-          <button
-            onClick={() => navigate('/contacts')}
-            style={{
-              position: 'absolute', top: 12, left: 12,
-              display: 'flex', alignItems: 'center', gap: 5,
-              padding: '4px 10px', borderRadius: 20,
-              background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)',
-              color: 'white', fontSize: 12, fontWeight: 600, cursor: 'pointer',
-              backdropFilter: 'blur(4px)', transition: 'background 0.15s',
-            }}
-            onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.32)'}
-            onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.2)'}
-          >
-            <ArrowLeft size={12} /> Contacts
-          </button>
-          {/* Top-right actions */}
-          <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: 6 }}>
+          {/* Row 1: back button + top-right actions */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <button
+              onClick={() => navigate('/contacts')}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '4px 10px', borderRadius: 20,
+                background: 'rgba(0,0,0,0.18)', border: '1px solid rgba(255,255,255,0.2)',
+                color: 'white', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background='rgba(0,0,0,0.28)'}
+              onMouseLeave={e => e.currentTarget.style.background='rgba(0,0,0,0.18)'}
+            >
+              <ArrowLeft size={12} /> Contacts
+            </button>
+
+            {/* Top-right actions */}
+            <div style={{ display: 'flex', gap: 6 }}>
             {/* Start Planning dropdown */}
             <div style={{ position: 'relative' }}>
               <button
@@ -1036,108 +1037,116 @@ export default function ContactDetailPage() {
               )}
             </div>
           </div>
-        </div>
+          </div>
 
-        {/* Hero content below banner */}
-        <div style={{ background: 'white', padding: '0 20px 16px', marginTop: -36 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14, marginBottom: 14 }}>
+          {/* ── Row 2: identity — avatar + name inside gradient ─────────── */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             {/* Avatar */}
             <div style={{
-              width: 72, height: 72, borderRadius: '50%', flexShrink: 0,
-              background: `hsl(${hue},65%,50%)`,
-              border: '4px solid white', boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              width: 56, height: 56, borderRadius: '50%', flexShrink: 0,
+              background: 'rgba(255,255,255,0.22)',
+              border: '2px solid rgba(255,255,255,0.5)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 24, fontWeight: 700, color: 'white',
+              fontSize: 20, fontWeight: 800, color: 'white',
+              letterSpacing: '-0.02em',
             }}>
               {initials}
             </div>
 
-            {/* Name block */}
-            <div style={{ flex: 1, paddingBottom: 4 }}>
+            {/* Name + subtitle */}
+            <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <h1 style={{ fontSize: 20, fontWeight: 800, color: '#1C1C1E', letterSpacing: '-0.01em' }}>
+                <h1 style={{
+                  fontSize: 20, fontWeight: 800, color: 'white',
+                  letterSpacing: '-0.02em', lineHeight: 1.1,
+                  textShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                }}>
                   {contact.name}
                 </h1>
-                {/* Birthday badge */}
                 {bdDays !== null && bdDays <= 7 && (
                   <span style={{
                     display: 'flex', alignItems: 'center', gap: 4,
                     fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20,
-                    background: '#F5EEFF', color: '#AF52DE',
+                    background: 'rgba(255,255,255,0.25)', color: 'white',
+                    border: '1px solid rgba(255,255,255,0.3)',
                   }}>
                     <Gift size={10} />
                     {bdDays === 0 ? 'Birthday today!' : `Birthday in ${bdDays}d`}
                   </span>
                 )}
               </div>
-              <p style={{ fontSize: 13, color: '#8E8E93', marginTop: 2 }}>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', marginTop: 3 }}>
                 Age {age}{contact.employment ? ` · ${contact.employment}` : ''}
                 {contact.reviewFrequency ? ` · ${contact.reviewFrequency} review` : ''}
               </p>
             </div>
-
-            {/* Edit button */}
-            <button
-              onClick={() => navigate(`/contacts/${id}/edit`)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 5,
-                padding: '6px 12px', borderRadius: 10, marginBottom: 4,
-                border: '1.5px solid #E5E5EA', background: 'white',
-                fontSize: 12, fontWeight: 600, color: '#3C3C43', cursor: 'pointer',
-                transition: 'all 0.15s',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor='#2E96FF'; e.currentTarget.style.color='#2E96FF' }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor='#E5E5EA'; e.currentTarget.style.color='#3C3C43' }}
-            >
-              <Pencil size={12} /> Edit
-            </button>
           </div>
+        </div>
 
-          {/* ── Stats strip ─────────────────────────────────────────────── */}
+        {/* ── White content area — stats, actions, tags ──────────────────── */}
+        <div style={{ background: 'white', padding: '14px 16px 14px' }}>
+
+          {/* Stats strip */}
           <div style={{
-            display: 'flex', gap: 1, background: '#F2F2F7', borderRadius: 12, overflow: 'hidden',
-            marginBottom: 14,
+            display: 'flex', gap: 1, background: '#F0F0F5', borderRadius: 10, overflow: 'hidden',
+            marginBottom: 12,
           }}>
             {[
-              { label: 'APE', value: ape > 0 ? fmtRM(ape) : '—', color: ape > 0 ? '#1C1C1E' : '#C7C7CC', sub: 'annual premium' },
-              { label: 'Policies', value: activePolicies.length || '—', color: activePolicies.length > 0 ? '#2E96FF' : '#C7C7CC', sub: 'active' },
-              { label: 'Coverage', value: `${covCount}/4`, color: covCount===4?'#34C759':covCount>=2?'#FF9500':'#FF3B30', sub: 'categories' },
-              ...(lastSeenDays !== null
-                ? [{ label: 'Last contact', value: lastSeenDays===0?'Today':`${lastSeenDays}d ago`, color: lastSeenDays>60?'#FF3B30':lastSeenDays>14?'#FF9500':'#34C759', sub: '' }]
-                : [{ label: 'Last contact', value: 'Never', color: '#C7C7CC', sub: '' }]
-              ),
-              ...(openTasksCount > 0
-                ? [{ label: 'Open tasks', value: openTasksCount, color: '#FF9500', sub: 'pending' }]
-                : []
-              ),
-            ].map((s, i) => (
-              <div key={s.label} style={{ flex: 1, background: 'white', padding: '10px 8px', textAlign: 'center', minWidth: 60 }}>
-                <p style={{ fontSize: 16, fontWeight: 800, color: s.color, lineHeight: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.value}</p>
+              {
+                label: 'APE',
+                value: ape > 0 ? fmtRM(ape) : 'No policies',
+                color: ape > 0 ? '#1C1C1E' : '#8E8E93',
+                small: ape === 0,
+              },
+              {
+                label: 'Policies',
+                value: activePolicies.length > 0 ? activePolicies.length : '—',
+                color: activePolicies.length > 0 ? '#2E96FF' : '#8E8E93',
+              },
+              {
+                label: 'Coverage',
+                value: `${covCount}/4`,
+                color: covCount===4?'#34C759':covCount>=2?'#FF9500':'#FF3B30',
+              },
+              lastSeenDays !== null
+                ? { label: 'Last contact', value: lastSeenDays===0?'Today':`${lastSeenDays}d ago`, color: lastSeenDays>60?'#FF3B30':lastSeenDays>14?'#FF9500':'#34C759' }
+                : { label: 'Last contact', value: 'Never', color: '#8E8E93' },
+              ...(openTasksCount > 0 ? [{ label: 'Tasks', value: `${openTasksCount} open`, color: '#FF9500' }] : []),
+            ].map(s => (
+              <div key={s.label} style={{
+                flex: 1, background: 'white', padding: '9px 6px', textAlign: 'center', minWidth: 60,
+              }}>
+                <p style={{
+                  fontSize: s.small ? 11 : 15, fontWeight: s.small ? 500 : 800,
+                  color: s.color, lineHeight: 1.1,
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
+                  {s.value}
+                </p>
                 <p style={{ fontSize: 10, color: '#8E8E93', marginTop: 3, fontWeight: 500 }}>{s.label}</p>
               </div>
             ))}
           </div>
 
-          {/* ── Quick actions row ────────────────────────────────────────── */}
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-            {/* WhatsApp — #1 priority for MY market */}
+          {/* Quick actions + stage */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 10 }}>
+            {/* WhatsApp — primary CTA */}
             {contact.mobile && (
               <a
-                href={`https://wa.me/6${contact.mobile.replace(/^0/, '').replace(/[\s\-]/g, '')}`}
+                href={`https://wa.me/${contact.mobile.replace(/^0/, '60').replace(/[\s\-]/g, '')}`}
                 target="_blank" rel="noopener noreferrer"
                 style={{
                   display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '7px 14px', borderRadius: 20, textDecoration: 'none',
+                  padding: '7px 16px', borderRadius: 20, textDecoration: 'none',
                   background: '#25D366', color: 'white',
-                  fontSize: 13, fontWeight: 600,
-                  boxShadow: '0 1px 4px rgba(37,211,102,0.35)',
+                  fontSize: 13, fontWeight: 700,
+                  boxShadow: '0 2px 6px rgba(37,211,102,0.4)',
                   transition: 'opacity 0.15s',
                 }}
-                onMouseEnter={e => e.currentTarget.style.opacity='0.85'}
+                onMouseEnter={e => e.currentTarget.style.opacity='0.88'}
                 onMouseLeave={e => e.currentTarget.style.opacity='1'}
               >
-                <MessageCircle size={14} />
-                WhatsApp
+                <MessageCircle size={14} /> WhatsApp
               </a>
             )}
             {contact.mobile && (
@@ -1146,14 +1155,12 @@ export default function ContactDetailPage() {
                   display: 'flex', alignItems: 'center', gap: 6,
                   padding: '7px 14px', borderRadius: 20, textDecoration: 'none',
                   border: '1.5px solid #E5E5EA', background: 'white',
-                  color: '#1C1C1E', fontSize: 13, fontWeight: 500,
-                  transition: 'all 0.15s',
+                  color: '#1C1C1E', fontSize: 13, fontWeight: 500, transition: 'all 0.15s',
                 }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor='#2E96FF'; e.currentTarget.style.color='#2E96FF' }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor='#E5E5EA'; e.currentTarget.style.color='#1C1C1E' }}
               >
-                <Phone size={13} />
-                {contact.mobile}
+                <Phone size={13} /> {contact.mobile}
               </a>
             )}
             {contact.email && (
@@ -1162,62 +1169,67 @@ export default function ContactDetailPage() {
                   display: 'flex', alignItems: 'center', gap: 6,
                   padding: '7px 14px', borderRadius: 20, textDecoration: 'none',
                   border: '1.5px solid #E5E5EA', background: 'white',
-                  color: '#1C1C1E', fontSize: 13, fontWeight: 500,
-                  transition: 'all 0.15s',
-                  maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  color: '#1C1C1E', fontSize: 13, fontWeight: 500, transition: 'all 0.15s',
+                  maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor='#2E96FF'; e.currentTarget.style.color='#2E96FF' }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor='#E5E5EA'; e.currentTarget.style.color='#1C1C1E' }}
               >
-                <Mail size={13} style={{ flexShrink: 0 }} />
-                {contact.email}
+                <Mail size={13} style={{ flexShrink: 0 }} /> {contact.email}
               </a>
             )}
-            {/* Stage selector */}
+            {/* Edit */}
+            <button
+              onClick={() => navigate(`/contacts/${id}/edit`)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '7px 12px', borderRadius: 20,
+                border: '1.5px solid #E5E5EA', background: 'white',
+                fontSize: 12, fontWeight: 600, color: '#3C3C43', cursor: 'pointer', transition: 'all 0.15s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor='#2E96FF'; e.currentTarget.style.color='#2E96FF' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor='#E5E5EA'; e.currentTarget.style.color='#3C3C43' }}
+            >
+              <Pencil size={12} /> Edit
+            </button>
+            {/* Stage — pushed to right */}
             <div style={{ marginLeft: 'auto' }}>
-              <StageSelector
-                stage={stage}
-                onChange={newStage => updateContact(id, { stage: newStage })}
-              />
+              <StageSelector stage={stage} onChange={newStage => updateContact(id, { stage: newStage })} />
             </div>
           </div>
 
-          {/* Tags row */}
-          {(contact.tags.length > 0 || true) && (
-            <div style={{ marginTop: 10, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
-              {contact.tags.map(tag => (
-                <span key={tag} style={{
-                  display: 'flex', alignItems: 'center', gap: 4,
-                  fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 20,
-                  background: '#EBF5FF', color: '#2E96FF',
-                }}>
-                  {tag}
-                  <button onClick={() => removeTag([contact.id], tag)} style={{ color: '#2E96FF80', border: 'none', background: 'none', cursor: 'pointer', display: 'flex' }}>
-                    <X size={9} />
-                  </button>
-                </span>
-              ))}
-              {['Client','Prospect'].filter(t => !contact.tags.includes(t)).map(t => (
-                <button key={t} onClick={() => addTag([contact.id], t)}
-                  style={{
-                    fontSize: 11, padding: '3px 8px', borderRadius: 20,
-                    border: '1.5px dashed #C7C7CC', background: 'none',
-                    color: '#8E8E93', cursor: 'pointer', transition: 'all 0.15s',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor='#2E96FF'; e.currentTarget.style.color='#2E96FF' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor='#C7C7CC'; e.currentTarget.style.color='#8E8E93' }}>
-                  + {t}
+          {/* Tags + notes */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+            {contact.tags.map(tag => (
+              <span key={tag} style={{
+                display: 'flex', alignItems: 'center', gap: 4,
+                fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 20,
+                background: '#EBF5FF', color: '#2E96FF',
+              }}>
+                {tag}
+                <button onClick={() => removeTag([contact.id], tag)} style={{ color: '#2E96FF60', border: 'none', background: 'none', cursor: 'pointer', display: 'flex' }}>
+                  <X size={9} />
                 </button>
-              ))}
-            </div>
-          )}
-
-          {/* Notes line */}
-          {contact.notes && (
-            <p style={{ fontSize: 12, color: '#8E8E93', marginTop: 8, paddingTop: 8, borderTop: '1px solid #F2F2F7', lineHeight: 1.5 }}>
-              {contact.notes}
-            </p>
-          )}
+              </span>
+            ))}
+            {['Client','Prospect'].filter(t => !contact.tags.includes(t)).map(t => (
+              <button key={t} onClick={() => addTag([contact.id], t)}
+                style={{
+                  fontSize: 11, padding: '3px 8px', borderRadius: 20,
+                  border: '1.5px dashed #C7C7CC', background: 'none',
+                  color: '#8E8E93', cursor: 'pointer', transition: 'all 0.15s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor='#2E96FF'; e.currentTarget.style.color='#2E96FF' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor='#C7C7CC'; e.currentTarget.style.color='#8E8E93' }}>
+                + {t}
+              </button>
+            ))}
+            {contact.notes && (
+              <p style={{ width: '100%', fontSize: 12, color: '#8E8E93', marginTop: 4, lineHeight: 1.5 }}>
+                {contact.notes}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
