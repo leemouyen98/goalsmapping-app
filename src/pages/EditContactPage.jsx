@@ -21,6 +21,7 @@ import {
   UserCheck, Trash2, AlertTriangle, Save, X,
 } from 'lucide-react'
 import { STAGES } from './ContactsPage'
+import DatePicker from '../components/ui/DatePicker'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -408,12 +409,12 @@ export default function EditContactPage() {
             </div>
             <Field label="Date of Birth" required error={errors.dob}
               hint={age !== null ? `${age} years old` : undefined}>
-              <input
-                type="date"
+              <DatePicker
                 value={form.dob}
-                onChange={e => set('dob', e.target.value)}
-                className="hig-input"
-                style={{ borderColor: errors.dob ? '#FF3B30' : undefined }}
+                onChange={v => set('dob', v)}
+                placeholder="Date of birth"
+                max={new Date().toISOString().slice(0, 10)}
+                error={!!errors.dob}
               />
             </Field>
             <Field label="Retirement Age" hint="Used in retirement projections">
@@ -484,11 +485,10 @@ export default function EditContactPage() {
           <SectionHeader icon={Clock} label="Review Schedule" color="#30B0C7" />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <Field label="Next Review Date">
-              <input
-                type="date"
+              <DatePicker
                 value={form.reviewDate}
-                onChange={e => set('reviewDate', e.target.value)}
-                className="hig-input"
+                onChange={v => set('reviewDate', v)}
+                placeholder="Select review date"
               />
             </Field>
             <Field label="Review Frequency">

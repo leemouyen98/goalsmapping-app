@@ -17,6 +17,7 @@ import FinancesTab from '../components/finances/FinancesTab'
 import CashFlowTab from '../components/finances/CashFlowTab'
 import PlanningSnapshot from '../components/PlanningSnapshot'
 import { STAGES, getEffectiveStage } from './ContactsPage'
+import DatePicker from '../components/ui/DatePicker'
 import {
   ArrowLeft, Phone, Calendar, Briefcase, Target, Shield,
   Plus, Check, FileText, PhoneCall, Users, MessageSquare, Clock,
@@ -425,13 +426,13 @@ function ComposeForm({ actionKey, contactId, onSubmit, onCancel, addInteraction,
               style={{ flex: '1 1 200px' }}
               placeholder="Task title..."
             />
-            <input
-              type="date"
-              value={dueDate}
-              onChange={e => setDueDate(e.target.value)}
-              className="hig-input"
-              style={{ width: 150 }}
-            />
+            <div style={{ width: 180, flexShrink: 0 }}>
+              <DatePicker
+                value={dueDate}
+                onChange={v => setDueDate(v)}
+                placeholder="Due date"
+              />
+            </div>
           </div>
         ) : (
           <>

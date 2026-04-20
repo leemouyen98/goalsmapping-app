@@ -21,6 +21,7 @@ import {
   UserCheck, MessageSquare, TrendingUp, Clock,
 } from 'lucide-react'
 import { STAGES } from './ContactsPage'
+import DatePicker from '../components/ui/DatePicker'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -384,13 +385,12 @@ export default function AddContactPage() {
               </label>
               <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                 <div style={{ flex: 1 }}>
-                  <input
-                    type="date"
+                  <DatePicker
                     value={form.dob}
-                    onChange={e => set('dob', e.target.value)}
-                    style={inputStyle(!!errors.dob)}
-                    onFocus={handleInputFocus}
-                    onBlur={handleInputBlur}
+                    onChange={v => set('dob', v)}
+                    placeholder="Date of birth"
+                    max={new Date().toISOString().slice(0, 10)}
+                    error={!!errors.dob}
                   />
                 </div>
                 {/* Live age badge */}
@@ -710,13 +710,10 @@ export default function AddContactPage() {
                     <label style={{ fontSize: 13, fontWeight: 600, color: '#1C1C1E', display: 'block', marginBottom: 6 }}>
                       First Review Date
                     </label>
-                    <input
-                      type="date"
+                    <DatePicker
                       value={form.reviewDate}
-                      onChange={e => set('reviewDate', e.target.value)}
-                      style={inputStyle(false)}
-                      onFocus={handleInputFocus}
-                      onBlur={handleInputBlur}
+                      onChange={v => set('reviewDate', v)}
+                      placeholder="Select review date"
                     />
                   </div>
                 </div>

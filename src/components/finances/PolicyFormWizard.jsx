@@ -14,6 +14,7 @@ import {
   TrendingUp, Heart, ArrowLeftRight, UserCheck, FileText,
   CreditCard, Calendar, ToggleLeft, ToggleRight,
 } from 'lucide-react'
+import DatePicker from '../ui/DatePicker'
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -388,19 +389,18 @@ function Step2({ form, update }) {
       {/* Dates */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
         <Field label="Policy Start Date" icon={Calendar}>
-          <input
-            type="date"
+          <DatePicker
             value={form.commencementDate}
-            onChange={e => update('commencementDate', e.target.value)}
-            className="hig-input"
+            onChange={v => update('commencementDate', v)}
+            placeholder="Select start date"
           />
         </Field>
         <Field label="Maturity Date" icon={Calendar}>
-          <input
-            type="date"
+          <DatePicker
             value={form.maturityDate}
-            onChange={e => update('maturityDate', e.target.value)}
-            className="hig-input"
+            onChange={v => update('maturityDate', v)}
+            placeholder="Select maturity date"
+            min={form.commencementDate || undefined}
           />
         </Field>
       </div>
