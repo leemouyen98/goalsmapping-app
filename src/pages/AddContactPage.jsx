@@ -14,6 +14,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useContacts } from '../hooks/useContacts'
+import { useLanguage } from '../hooks/useLanguage'
 import {
   ArrowLeft, User, Phone, Mail, Briefcase, Calendar,
   ChevronRight, Shield, Target, Check, AlertCircle,
@@ -258,6 +259,7 @@ const EMPTY_FORM = {
 export default function AddContactPage() {
   const navigate   = useNavigate()
   const { addContact } = useContacts()
+  const { t } = useLanguage()
   const nameRef    = useRef(null)
 
   const [form,        setForm]        = useState(EMPTY_FORM)
@@ -272,6 +274,29 @@ export default function AddContactPage() {
 
   const age = useMemo(() => calcAge(form.dob), [form.dob])
 
+  // Translated options (inside component so t() is available)
+  const EMPLOYMENT_OPTS = [
+    { key: 'Employed',      label: t('contacts.empEmployed'),      Icon: Briefcase,    color: '#2E96FF' },
+    { key: 'Self-Employed', label: t('contacts.empSelfEmployed'),   Icon: UserCheck,    color: '#34C759' },
+    { key: 'Business Owner',label: t('contacts.empBusinessOwner'),  Icon: Building2,    color: '#FF9500' },
+    { key: 'Retired',       label: t('contacts.empRetired'),        Icon: Umbrella,     color: '#AF52DE' },
+    { key: 'Student',       label: t('contacts.empStudent'),        Icon: GraduationCap,color: '#30B0C7' },
+    { key: 'Other',         label: t('contacts.empOther'),          Icon: HelpCircle,   color: '#8E8E93' },
+  ]
+
+  const REVIEW_FREQ_OPTS = [
+    { key: 'Annually',      label: t('contacts.freqAnnually')    },
+    { key: 'Semi-annually', label: t('contacts.freqSemiAnnual')  },
+    { key: 'Quarterly',     label: t('contacts.freqQuarterly')   },
+  ]
+
+  const STAGE_DESCS = {
+    Lead:     t('contacts.stageLeadDesc'),
+    Prospect: t('contacts.stageProspectDesc'),
+    Proposal: t('contacts.stageProposalDesc'),
+    Client:   t('contacts.stageClientDesc'),
+  }
+
   const set = (key, value) => {
     setForm(f => ({ ...f, [key]: value }))
     if (errors[key]) setErrors(e => { const n = {...e}; delete n[key]; return n })
@@ -279,9 +304,9 @@ export default function AddContactPage() {
 
   const validate = () => {
     const errs = {}
-    if (!form.name.trim())  errs.name = 'Full name is required'
-    if (!form.dob)          errs.dob  = 'Date of birth is required'
-    else if (age === null || age < 0 || age > 100) errs.dob = 'Enter a valid date of birth'
+    if (!form.name.trim())  errs.name = t('contacts.errNameRequired')
+    if (!form.dob)          errs.dob  = t('contacts.errDobRequired')
+    else if (age === null || age < 0 || age > 100) errs.dob = t('contacts.errDobInvalid')
     return errs
   }
 
@@ -329,14 +354,14 @@ export default function AddContactPage() {
           onMouseEnter={e => { e.currentTarget.style.borderColor = '#2E96FF'; e.currentTarget.style.color = '#2E96FF' }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E5EA'; e.currentTarget.style.color = '#636366' }}
         >
-          <ArrowLeft size={14} /> Contacts
+          <ArrowLeft size={14} /> {t('contacts.title')}
         </button>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1C1C1E', margin: 0, lineHeight: 1.2 }}>
-            Add New Contact
+            {t('contacts.modalTitle')}
           </h1>
           <p style={{ fontSize: 13, color: '#8E8E93', marginTop: 3 }}>
-            Create a contact profile to start planning
+            {t('contacts.addSubtitle')}
           </p>
         </div>
       </div>
@@ -352,11 +377,11 @@ export default function AddContactPage() {
         >
 
           {/* ─ Section: Identity ──────────────────────────────────────── */}
-          <Section title="Identity" hint="Required to create the contact">
+          <Section title={t('contacts.sectionIdentity')} hint={t('contacts.sectionIdentityHint')}>
             {/* Name */}
             <div style={{ marginBottom: 12 }} data-error={errors.name || undefined}>
               <label style={{ fontSize: 13, fontWeight: 600, color: '#1C1C1E', display: 'block', marginBottom: 6 }}>
-                Full Name <span style={{ color: '#FF3B30' }}>*</span>
+                {t('contacts.fieldName')} <span style={{ color: '#FF3B30' }}>*</span>
               </label>
               <input
                 ref={nameRef}
@@ -381,7 +406,7 @@ export default function AddContactPage() {
             {/* DOB + age preview */}
             <div style={{ marginBottom: 4 }} data-error={errors.dob || undefined}>
               <label style={{ fontSize: 13, fontWeight: 600, color: '#1C1C1E', display: 'block', marginBottom: 6 }}>
-                Date of Birth <span style={{ color: '#FF3B30' }}>*</span>
+                {t('contacts.fieldDob')} <span style={{ color: '#FF3B30' }}>*</span>
               </label>
               <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                 <div style={{ flex: 1 }}>
@@ -409,7 +434,7 @@ export default function AddContactPage() {
                         {age}
                       </span>
                       <span style={{ fontSize: 10, color: '#2E96FF', fontWeight: 500, marginTop: 1 }}>
-                        years old
+                        {t('contacts.yearsOld')}
                       </span>
                     </>
                   ) : (
@@ -426,12 +451,12 @@ export default function AddContactPage() {
           </Section>
 
           {/* ─ Section: Contact ───────────────────────────────────────── */}
-          <Section title="Contact Details">
+          <Section title={t('contacts.sectionContactDet')}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               {/* Mobile */}
               <div>
                 <label style={{ fontSize: 13, fontWeight: 600, color: '#1C1C1E', display: 'block', marginBottom: 6 }}>
-                  Mobile
+                  {t('contacts.fieldMobile')}
                 </label>
                 <div style={{ position: 'relative' }}>
                   <Phone size={14} style={{
@@ -453,7 +478,7 @@ export default function AddContactPage() {
               {/* Email */}
               <div>
                 <label style={{ fontSize: 13, fontWeight: 600, color: '#1C1C1E', display: 'block', marginBottom: 6 }}>
-                  Email
+                  {t('contacts.email')}
                 </label>
                 <div style={{ position: 'relative' }}>
                   <Mail size={14} style={{
@@ -475,11 +500,11 @@ export default function AddContactPage() {
           </Section>
 
           {/* ─ Section: Pipeline ──────────────────────────────────────── */}
-          <Section title="Pipeline" hint="Where is this contact in your sales process?">
+          <Section title={t('contacts.sectionPipeline')} hint={t('contacts.pipelineHint')}>
             {/* Stage pills */}
             <div style={{ marginBottom: 16 }}>
               <label style={{ fontSize: 13, fontWeight: 600, color: '#1C1C1E', display: 'block', marginBottom: 10 }}>
-                Stage
+                {t('contacts.fieldStage')}
               </label>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {PIPELINE_STAGES.map(s => {
@@ -506,24 +531,21 @@ export default function AddContactPage() {
                         fontSize: 13, fontWeight: active ? 700 : 500,
                         color: active ? s.color : '#636366',
                         transition: 'all 0.15s',
-                      }}>{s.label}</span>
+                      }}>{t(`contacts.stage${s.key}`)}</span>
                       {active && <Check size={13} style={{ color: s.color }} />}
                     </button>
                   )
                 })}
               </div>
               <p style={{ fontSize: 11, color: '#C7C7CC', marginTop: 8 }}>
-                {form.stage === 'Lead' && 'Initial contact — needs assessment not started'}
-                {form.stage === 'Prospect' && 'Needs identified — in active discussion'}
-                {form.stage === 'Proposal' && 'Quotation sent — awaiting decision'}
-                {form.stage === 'Client' && 'Active policyholder'}
+                {STAGE_DESCS[form.stage]}
               </p>
             </div>
 
             {/* Referred by */}
             <div>
               <label style={{ fontSize: 13, fontWeight: 600, color: '#1C1C1E', display: 'block', marginBottom: 6 }}>
-                Referred By
+                {t('contacts.referredBy')}
               </label>
               <div style={{ position: 'relative' }}>
                 <Users size={14} style={{
@@ -534,7 +556,7 @@ export default function AddContactPage() {
                   type="text"
                   value={form.referredBy}
                   onChange={e => set('referredBy', e.target.value)}
-                  placeholder="Who made the introduction?"
+                  placeholder={t('contacts.referredByPh')}
                   style={{ ...inputStyle(false), paddingLeft: 36 }}
                   onFocus={handleInputFocus}
                   onBlur={handleInputBlur}
@@ -544,14 +566,14 @@ export default function AddContactPage() {
           </Section>
 
           {/* ─ Section: Employment ────────────────────────────────────── */}
-          <Section title="Background" hint="Helps with planning assumptions">
+          <Section title={t('contacts.sectionBackground')} hint={t('contacts.backgroundHint')}>
             {/* Employment cards */}
             <div style={{ marginBottom: 16 }}>
               <label style={{ fontSize: 13, fontWeight: 600, color: '#1C1C1E', display: 'block', marginBottom: 10 }}>
-                Employment Status
+                {t('contacts.fieldEmployment')}
               </label>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                {EMPLOYMENT_OPTIONS.map(opt => {
+                {EMPLOYMENT_OPTS.map(opt => {
                   const active = form.employment === opt.key
                   return (
                     <button
@@ -595,7 +617,7 @@ export default function AddContactPage() {
             {/* Income bracket */}
             <div>
               <label style={{ fontSize: 13, fontWeight: 600, color: '#1C1C1E', display: 'block', marginBottom: 10 }}>
-                Monthly Income
+                {t('contacts.monthlyIncome')}
               </label>
               <div style={{
                 display: 'flex', gap: 8, overflowX: 'auto',
@@ -635,7 +657,7 @@ export default function AddContactPage() {
           </Section>
 
           {/* ─ Section: Notes ─────────────────────────────────────────── */}
-          <Section title="Notes" hint="Context for your first meeting, key observations">
+          <Section title={t('contacts.fieldNotes')} hint={t('contacts.placeholderNotes')}>
             <div style={{ position: 'relative' }}>
               <textarea
                 value={form.notes}
@@ -678,7 +700,7 @@ export default function AddContactPage() {
                 transition: 'transform 0.2s',
                 transform: showOptional ? 'rotate(45deg)' : 'none',
               }}>+</span>
-              {showOptional ? 'Hide' : 'Show'} planning defaults
+              {showOptional ? t('contacts.hideDefaults') : t('contacts.showDefaults')}
             </button>
 
             {showOptional && (
@@ -689,13 +711,13 @@ export default function AddContactPage() {
                 display: 'flex', flexDirection: 'column', gap: 14,
               }}>
                 <p style={{ fontSize: 11, color: '#8E8E93', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', margin: 0 }}>
-                  Planning Defaults
+                  {t('contacts.planningDefaults')}
                 </p>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div>
                     <label style={{ fontSize: 13, fontWeight: 600, color: '#1C1C1E', display: 'block', marginBottom: 6 }}>
-                      Retirement Age
+                      {t('contacts.fieldRetAge')}
                     </label>
                     <input
                       type="number" min={40} max={80}
@@ -708,7 +730,7 @@ export default function AddContactPage() {
                   </div>
                   <div>
                     <label style={{ fontSize: 13, fontWeight: 600, color: '#1C1C1E', display: 'block', marginBottom: 6 }}>
-                      First Review Date
+                      {t('contacts.firstReviewDate')}
                     </label>
                     <DatePicker
                       value={form.reviewDate}
@@ -720,15 +742,15 @@ export default function AddContactPage() {
 
                 <div>
                   <label style={{ fontSize: 13, fontWeight: 600, color: '#1C1C1E', display: 'block', marginBottom: 8 }}>
-                    Review Frequency
+                    {t('contacts.fieldReviewFreq')}
                   </label>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    {REVIEW_FREQ.map(f => {
-                      const active = form.reviewFrequency === f
+                    {REVIEW_FREQ_OPTS.map(f => {
+                      const active = form.reviewFrequency === f.key
                       return (
                         <button
-                          key={f} type="button"
-                          onClick={() => set('reviewFrequency', f)}
+                          key={f.key} type="button"
+                          onClick={() => set('reviewFrequency', f.key)}
                           style={{
                             padding: '7px 14px', borderRadius: 8,
                             border: `1.5px solid ${active ? '#2E96FF' : '#E5E5EA'}`,
@@ -738,7 +760,7 @@ export default function AddContactPage() {
                             cursor: 'pointer', transition: 'all 0.15s',
                           }}
                         >
-                          {f}
+                          {f.label}
                         </button>
                       )
                     })}
@@ -765,7 +787,7 @@ export default function AddContactPage() {
               onMouseEnter={e => { e.currentTarget.style.borderColor = '#C7C7CC' }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E5EA' }}
             >
-              Cancel
+              {t('common.cancel')}
             </button>
 
             <button
@@ -784,14 +806,14 @@ export default function AddContactPage() {
               onMouseEnter={e => { if (!submitting) e.currentTarget.style.opacity = '0.9' }}
               onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
             >
-              {submitting ? 'Creating…' : 'Create Contact'}
+              {submitting ? t('contacts.creating') : t('contacts.createContact')}
               {!submitting && <ChevronRight size={15} />}
             </button>
           </div>
 
           {/* Required fields notice */}
           <p style={{ fontSize: 12, color: '#C7C7CC', marginTop: 10, textAlign: 'center' }}>
-            <span style={{ color: '#FF3B30' }}>*</span> Name and date of birth are required
+            {t('contacts.nameAndDobNote')}
           </p>
 
         </form>

@@ -104,13 +104,13 @@ export default function SettingsPage() {
       })
       const data = await res.json()
       if (!res.ok) {
-        setContactError(data.error || 'Failed to save contact info.')
+        setContactError(data.error || t('settings.errContactNetwork'))
       } else {
         updateAgentProfile({ email: data.email, mobile: data.mobile })
-        addToast('Contact info saved.', 'success')
+        addToast(t('settings.contactInfoSaved'), 'success')
       }
     } catch {
-      setContactError('Network error — check your connection and try again.')
+      setContactError(t('settings.errContactNetwork'))
     } finally {
       setContactLoading(false)
     }
@@ -184,15 +184,15 @@ export default function SettingsPage() {
         icon={Phone}
         iconColor="#FF9500"
         iconBg="rgba(255,149,0,0.1)"
-        title="Contact Info"
+        title={t('settings.contactInfoTitle')}
       >
         <p style={{ fontSize: 13, color: '#8E8E93', marginBottom: 16, lineHeight: 1.5 }}>
-          Your mobile number and email will be auto-populated into policy export PDFs.
+          {t('settings.contactInfoDesc')}
         </p>
         <form onSubmit={handleContactSave} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div>
-              <label className="hig-label">Mobile Number (H/P)</label>
+              <label className="hig-label">{t('settings.mobileNumber')}</label>
               <div className="relative">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-hig-text-secondary">
                   <Phone size={14} />
@@ -207,7 +207,7 @@ export default function SettingsPage() {
               </div>
             </div>
             <div>
-              <label className="hig-label">Email Address</label>
+              <label className="hig-label">{t('settings.emailAddress')}</label>
               <div className="relative">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-hig-text-secondary">
                   <Mail size={14} />
@@ -242,7 +242,7 @@ export default function SettingsPage() {
               disabled={contactLoading}
               style={{ opacity: contactLoading ? 0.65 : 1, minWidth: 140 }}
             >
-              {contactLoading ? 'Saving…' : 'Save Contact Info'}
+              {contactLoading ? t('settings.saving') : t('settings.saveContactInfo')}
             </button>
           </div>
         </form>

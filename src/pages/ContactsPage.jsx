@@ -13,6 +13,7 @@
 import { useState, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useContacts } from '../hooks/useContacts'
+import { useLanguage } from '../hooks/useLanguage'
 import {
   Plus, Search, Trash2, Tag, MoreHorizontal,
   ChevronRight, Phone, AlertCircle,
@@ -95,7 +96,10 @@ function fmtRelativeDate(date) {
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function StagePill({ stageKey, size = 'sm' }) {
+  const { t } = useLanguage()
   const s = STAGE_MAP[stageKey] || STAGE_MAP.Lead
+  const stageKeyMap = { Lead: 'stageLead', Prospect: 'stageProspect', Proposal: 'stageProposal', Client: 'stageClient', Dormant: 'stageDormant' }
+  const label = t(`contacts.${stageKeyMap[stageKey] || 'stageLead'}`)
   return (
     <span style={{
       fontSize: size === 'xs' ? 10 : 11,
@@ -107,7 +111,7 @@ function StagePill({ stageKey, size = 'sm' }) {
       whiteSpace: 'nowrap',
       letterSpacing: '0.02em',
     }}>
-      {s.label}
+      {label}
     </span>
   )
 }
@@ -143,11 +147,17 @@ function CoverageDots({ contact }) {
 }
 
 function ReviewBadge({ reviewDate }) {
+  const { t } = useLanguage()
   const days = daysUntilReview(reviewDate)
   if (days === null) return null
   if (days > 30) return null
   const overdue = days < 0
   const today   = days === 0
+  const label = overdue
+    ? t('contacts.reviewOverdue', { days: Math.abs(days) })
+    : today
+      ? t('contacts.reviewToday')
+      : t('contacts.reviewDays', { days })
   return (
     <span style={{
       fontSize: 10, fontWeight: 700,
@@ -156,13 +166,14 @@ function ReviewBadge({ reviewDate }) {
       color:      overdue ? '#FF3B30' : today ? '#FF9500' : '#2E96FF',
       whiteSpace: 'nowrap',
     }}>
-      {overdue ? `${Math.abs(days)}d overdue` : today ? 'Review today' : `Review ${days}d`}
+      {label}
     </span>
   )
 }
 
 // Stats bar
 function StatsBar({ contacts, activeFilter, onFilter }) {
+  const { t } = useLanguage()
   const stats = useMemo(() => {
     const now = new Date()
     now.setHours(0,0,0,0)
@@ -185,11 +196,11 @@ function StatsBar({ contacts, activeFilter, onFilter }) {
   }, [contacts])
 
   const pills = [
-    { key: 'all',      label: 'All',          value: stats.total,     color: '#2E96FF' },
-    { key: 'clients',  label: 'Clients',       value: stats.clients,   color: '#34C759' },
-    { key: 'prospects',label: 'Pipeline',      value: stats.prospects, color: '#FF9500' },
-    { key: 'overdue',  label: 'Review Due',    value: stats.overdue,   color: '#AF52DE' },
-    { key: 'stale',    label: 'No Activity 90d', value: stats.stale,   color: '#FF3B30' },
+    { key: 'all',      label: t('contacts.filterAll'),          value: stats.total,     color: '#2E96FF' },
+    { key: 'clients',  label: t('contacts.filterClients'),       value: stats.clients,   color: '#34C759' },
+    { key: 'prospects',label: t('contacts.filterPipeline'),      value: stats.prospects, color: '#FF9500' },
+    { key: 'overdue',  label: t('contacts.filterReviewDue'),     value: stats.overdue,   color: '#AF52DE' },
+    { key: 'stale',    label: t('contacts.filterNoActivity'),    value: stats.stale,     color: '#FF3B30' },
   ]
 
   return (
@@ -225,10 +236,11 @@ function StatsBar({ contacts, activeFilter, onFilter }) {
 
 // List row
 function ContactRow({ contact, onClick }) {
+  const { t } = useLanguage()
   const stage       = getEffectiveStage(contact)
   const lastAct     = getLastActivity(contact)
   const age         = getAge(contact.dob)
-  const pendingTasks = (contact.tasks || []).filter(t => t.status !== 'completed').length
+  const pendingTasks = (contact.tasks || []).filter(task => task.status !== 'completed').length
 
   return (
     <div
@@ -252,7 +264,7 @@ function ContactRow({ contact, onClick }) {
             <ReviewBadge reviewDate={contact.reviewDate} />
           </div>
           <div className="flex items-center gap-2 mt-0.5 text-hig-caption1 text-hig-text-secondary flex-wrap">
-            <span>Age {age}</span>
+            <span>{t('contacts.ageLabel')} {age}</span>
             {contact.mobile && <><span>·</span><span>{contact.mobile}</span></>}
             {lastAct && <><span>·</span><span>{fmtRelativeDate(lastAct)}</span></>}
             {pendingTasks > 0 && <><span>·</span><span style={{ color: '#FF9500' }}>{pendingTasks} task{pendingTasks > 1 ? 's' : ''}</span></>}
@@ -278,7 +290,7 @@ function ContactRow({ contact, onClick }) {
             <div>
               <p className="text-hig-subhead font-medium text-hig-text leading-tight">{contact.name}</p>
               <div className="flex items-center gap-1.5 text-hig-caption1 text-hig-text-secondary">
-                <span>Age {age}</span>
+                <span>{t('contacts.ageLabel')} {age}</span>
                 {contact.mobile && <><span>·</span><span className="flex items-center gap-0.5"><Phone size={10} />{contact.mobile}</span></>}
               </div>
             </div>
@@ -324,6 +336,7 @@ function ContactRow({ contact, onClick }) {
 
 // Kanban card
 function KanbanCard({ contact, onNavigate, onStageChange }) {
+  const { t } = useLanguage()
   const [showMoveMenu, setShowMoveMenu] = useState(false)
   const stage    = getEffectiveStage(contact)
   const lastAct  = getLastActivity(contact)
@@ -350,7 +363,7 @@ function KanbanCard({ contact, onNavigate, onStageChange }) {
           </div>
           <div className="flex-1 min-w-0">
             <p style={{ fontSize: 13, fontWeight: 600, color: '#1C1C1E', lineHeight: 1.3 }}>{contact.name}</p>
-            <p style={{ fontSize: 11, color: '#8E8E93' }}>Age {age}{contact.employment ? ` · ${contact.employment}` : ''}</p>
+            <p style={{ fontSize: 11, color: '#8E8E93' }}>{t('contacts.ageLabel')} {age}{contact.employment ? ` · ${contact.employment}` : ''}</p>
           </div>
           {isOverdue && <AlertTriangle size={13} style={{ color: '#FF9500', flexShrink: 0 }} title="Review overdue" />}
         </div>
@@ -358,7 +371,7 @@ function KanbanCard({ contact, onNavigate, onStageChange }) {
         <div className="flex items-center justify-between mt-1">
           <CoverageDots contact={contact} />
           <span style={{ fontSize: 10, color: '#8E8E93' }}>
-            {lastAct ? fmtRelativeDate(lastAct) : 'No activity'}
+            {lastAct ? fmtRelativeDate(lastAct) : t('contacts.noActivity')}
           </span>
         </div>
       </div>
@@ -377,7 +390,7 @@ function KanbanCard({ contact, onNavigate, onStageChange }) {
             onMouseEnter={e => { e.currentTarget.style.borderColor = '#2E96FF'; e.currentTarget.style.color = '#2E96FF' }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E5EA'; e.currentTarget.style.color = '#8E8E93' }}
           >
-            Move stage →
+            {t('contacts.moveStage')}
           </button>
           {showMoveMenu && (
             <>
@@ -416,6 +429,7 @@ function KanbanCard({ contact, onNavigate, onStageChange }) {
 
 // Kanban pipeline view
 function PipelineView({ contacts, onNavigate, onStageChange }) {
+  const { t } = useLanguage()
   return (
     <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8 }}>
       {STAGE_PIPELINE.map(stageKey => {
@@ -431,7 +445,7 @@ function PipelineView({ contacts, onNavigate, onStageChange }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: s.color }} />
                 <span style={{ fontSize: 12, fontWeight: 700, color: '#1C1C1E', letterSpacing: '0.03em' }}>
-                  {s.label.toUpperCase()}
+                  {t(`contacts.stage${stageKey}`).toUpperCase()}
                 </span>
               </div>
               <span style={{
@@ -450,7 +464,7 @@ function PipelineView({ contacts, onNavigate, onStageChange }) {
                   border: '1.5px dashed #E5E5EA', borderRadius: 10,
                   color: '#C7C7CC', fontSize: 12,
                 }}>
-                  None
+                  {t('contacts.noneInStage')}
                 </div>
               ) : stageContacts.map(c => (
                 <KanbanCard
@@ -491,17 +505,18 @@ function PipelineView({ contacts, onNavigate, onStageChange }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-const SORT_OPTIONS = [
-  { key: 'activity', label: 'Last Activity' },
-  { key: 'review',   label: 'Review Date'   },
-  { key: 'name',     label: 'Name'          },
-  { key: 'stage',    label: 'Stage'         },
+const SORT_KEYS = [
+  { key: 'activity', tKey: 'contacts.sortActivity' },
+  { key: 'review',   tKey: 'contacts.sortReview'   },
+  { key: 'name',     tKey: 'contacts.sortName'     },
+  { key: 'stage',    tKey: 'contacts.sortStage'    },
 ]
 
 const STAGE_ORDER = { Lead: 0, Prospect: 1, Proposal: 2, Client: 3, Dormant: 4 }
 
 export default function ContactsPage() {
   const { contacts, contactsLoading, contactsError, deleteContacts, addTag, updateContact } = useContacts()
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -588,15 +603,16 @@ export default function ContactsPage() {
     updateContact(contactId, { stage: newStage })
   }
 
+  const SORT_OPTIONS = SORT_KEYS.map(o => ({ key: o.key, label: t(o.tKey) }))
   const currentSortLabel = SORT_OPTIONS.find(o => o.key === sortBy)?.label
 
   return (
     <div className="max-w-5xl mx-auto">
       {/* Header */}
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-hig-title2">Contacts</h1>
+        <h1 className="text-hig-title2">{t('contacts.title')}</h1>
         <button onClick={() => navigate('/contacts/new')} className="hig-btn-primary w-full justify-center gap-2 sm:w-auto">
-          <Plus size={16} /> Add Contact
+          <Plus size={16} /> {t('contacts.addNew')}
         </button>
       </div>
 
@@ -612,7 +628,7 @@ export default function ContactsPage() {
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-hig-text-secondary" />
           <input
             type="text"
-            placeholder="Search name, mobile, email..."
+            placeholder={t('contacts.searchPlaceholder')}
             value={search}
             onChange={e => {
               setSearch(e.target.value)
@@ -629,19 +645,19 @@ export default function ContactsPage() {
           {selected.size > 0 && (
             <div className="relative">
               <button onClick={() => setShowBulkMenu(s => !s)} className="hig-btn-secondary gap-2 text-hig-caption1">
-                <MoreHorizontal size={14} /> {selected.size} selected
+                <MoreHorizontal size={14} /> {selected.size} {t('contacts.selected')}
               </button>
               {showBulkMenu && (
                 <div className="absolute right-0 top-12 w-48 bg-white rounded-hig shadow-hig-lg border border-hig-gray-5 py-1 z-50">
                   <button onClick={() => handleBulkTag('Client')} className="w-full flex items-center gap-2 px-4 py-2.5 text-hig-subhead hover:bg-hig-gray-6">
-                    <Tag size={13} /> Tag as Client
+                    <Tag size={13} /> {t('contacts.tagAsClient')}
                   </button>
                   <button onClick={() => handleBulkTag('Prospect')} className="w-full flex items-center gap-2 px-4 py-2.5 text-hig-subhead hover:bg-hig-gray-6">
-                    <Tag size={13} /> Tag as Prospect
+                    <Tag size={13} /> {t('contacts.tagAsProspect')}
                   </button>
                   <hr className="my-1 border-hig-gray-5" />
                   <button onClick={handleBulkDelete} className="w-full flex items-center gap-2 px-4 py-2.5 text-hig-subhead text-hig-red hover:bg-red-50">
-                    <Trash2 size={13} /> Delete
+                    <Trash2 size={13} /> {t('common.delete')}
                   </button>
                 </div>
               )}
@@ -709,12 +725,12 @@ export default function ContactsPage() {
       {contactsError ? (
         <div className="hig-card px-4 py-10 flex flex-col items-center gap-3 text-center">
           <AlertCircle size={22} style={{ color: '#FF3B30' }} />
-          <p className="text-hig-subhead font-medium" style={{ color: '#FF3B30' }}>Failed to load contacts</p>
+          <p className="text-hig-subhead font-medium" style={{ color: '#FF3B30' }}>{t('contacts.loadFailed')}</p>
           <p className="text-hig-caption1 text-hig-text-secondary">{contactsError}</p>
         </div>
       ) : contactsLoading ? (
         <div className="hig-card px-4 py-12 text-center text-hig-subhead text-hig-text-secondary">
-          Loading contacts…
+          {t('contacts.loadingMsg')}
         </div>
       ) : viewMode === 'pipeline' ? (
         <PipelineView
@@ -728,18 +744,18 @@ export default function ContactsPage() {
           <div className="hidden md:grid items-center px-4 py-2.5 bg-hig-gray-6 border-b border-hig-gray-5
                           text-hig-caption2 font-semibold text-hig-text-secondary uppercase tracking-wide"
             style={{ gridTemplateColumns: '1fr 110px 90px 110px 90px 32px' }}>
-            <span>Contact</span>
-            <span>Stage</span>
-            <span>Last Activity</span>
-            <span>Coverage</span>
-            <span>Plans</span>
+            <span>{t('contacts.colContact')}</span>
+            <span>{t('contacts.colStage')}</span>
+            <span>{t('contacts.colLastActivity')}</span>
+            <span>{t('contacts.colCoverage')}</span>
+            <span>{t('contacts.colPlans')}</span>
             <span></span>
           </div>
 
           {filtered.length === 0 ? (
             <div className="px-4 py-12 text-center">
               <p className="text-hig-subhead text-hig-text-secondary">
-                {search ? 'No contacts match your search.' : 'No contacts yet. Add your first one above.'}
+                {search ? t('contacts.noMatch') : t('contacts.noContacts')}
               </p>
             </div>
           ) : (
