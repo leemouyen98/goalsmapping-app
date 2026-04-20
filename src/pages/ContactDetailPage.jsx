@@ -24,7 +24,7 @@ import {
   Pencil, CheckCircle2, X, Tag, TrendingUp, ArrowRight, ChevronDown,
   DollarSign, BarChart2, MoreVertical, Trash2, RotateCcw, AlertTriangle,
   Zap, Activity, Heart, Mail, ChevronRight, Lightbulb, Bell,
-  Filter as FilterIcon,
+  Filter as FilterIcon, MessageCircle, Gift, ExternalLink,
 } from 'lucide-react'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -97,6 +97,27 @@ function getCoverageStatus(contact) {
   }
 }
 
+// Compute annual premium equivalents across all active policies
+function getAPE(contact) {
+  const policies = (contact.financials?.insurance || []).filter(p => !p.status || p.status === 'Active')
+  return policies.reduce((sum, p) => {
+    const amt = Number(p.annualPremium || p.premium || 0)
+    const monthly = p.premiumFrequency === 'Monthly'
+    return sum + (monthly ? amt * 12 : amt)
+  }, 0)
+}
+
+// Days until next birthday (0 = today, negative = already passed this year)
+function daysUntilBirthday(dob) {
+  if (!dob) return null
+  const today = new Date()
+  today.setHours(0,0,0,0)
+  const bd = new Date(dob)
+  const next = new Date(today.getFullYear(), bd.getMonth(), bd.getDate())
+  if (next < today) next.setFullYear(today.getFullYear() + 1)
+  return Math.round((next - today) / 86400000)
+}
+
 // Merge all timeline items into one sorted array
 function buildTimeline(contact) {
   const items = []
@@ -148,37 +169,57 @@ function nameHue(name = '') {
   return Math.abs(h) % 360
 }
 
-// Next-action suggestion engine
-function getNextAction(contact) {
+// Next-action suggestion engine — returns up to 3 ranked suggestions
+function getNextActions(contact) {
   const stage = getEffectiveStage(contact)
   const lastItems = [
     ...(contact.activities    || []).map(a => new Date(a.date)),
     ...(contact.interactions  || []).map(i => new Date(i.date)),
   ].filter(d => !isNaN(d))
-  const daysSinceLast = lastItems.length
+  const hasActivity    = lastItems.length > 0
+  const daysSinceLast  = hasActivity
     ? Math.floor((Date.now() - Math.max(...lastItems)) / 86400000)
-    : 999
-  const reviewDays = daysUntilDate(contact.reviewDate)
+    : null
+  const reviewDays     = daysUntilDate(contact.reviewDate)
+  const cov            = getCoverageStatus(contact)
+  const bdDays         = daysUntilBirthday(contact.dob)
+  const suggestions    = []
 
+  // Birthday within 7 days
+  if (bdDays !== null && bdDays <= 7) {
+    suggestions.push({ icon: Gift, color: '#AF52DE', text: bdDays === 0 ? `It's ${contact.name.split(' ')[0]}'s birthday today — send a message` : `Birthday in ${bdDays} day${bdDays===1?'':'s'} — great excuse to reach out` })
+  }
+  // Review overdue/due
   if (reviewDays !== null && reviewDays <= 0) {
-    return { icon: Bell, color: '#AF52DE', text: `Review overdue by ${Math.abs(reviewDays)} day${Math.abs(reviewDays) === 1 ? '' : 's'} — schedule now` }
+    suggestions.push({ icon: Bell, color: '#FF3B30', text: `Annual review ${Math.abs(reviewDays)}d overdue — schedule now` })
+  } else if (reviewDays !== null && reviewDays <= 14) {
+    suggestions.push({ icon: Bell, color: '#FF9500', text: `Review in ${reviewDays}d — prep agenda` })
   }
-  if (reviewDays !== null && reviewDays <= 14) {
-    return { icon: Bell, color: '#FF9500', text: `Review due in ${reviewDays} day${reviewDays === 1 ? '' : 's'} — prep agenda` }
+  // Stage-specific
+  if (stage === 'Proposal' && (!hasActivity || daysSinceLast > 3)) {
+    suggestions.push({ icon: PhoneCall, color: '#2E96FF', text: 'Proposal sent — follow up, handle objections' })
   }
-  if (stage === 'Proposal' && daysSinceLast > 3) {
-    return { icon: PhoneCall, color: '#2E96FF', text: 'Proposal pending — follow up with client' }
+  if (stage === 'Prospect' && hasActivity && daysSinceLast > 14) {
+    suggestions.push({ icon: Lightbulb, color: '#FF9500', text: `${daysSinceLast}d since last touch — time to send proposal?` })
   }
-  if (stage === 'Prospect' && daysSinceLast > 14) {
-    return { icon: Lightbulb, color: '#FF9500', text: 'In discussion for ' + daysSinceLast + ' days — time to send proposal?' }
+  if (stage === 'Lead' && (!hasActivity || daysSinceLast > 7)) {
+    suggestions.push({ icon: PhoneCall, color: '#2E96FF', text: 'New lead — log a needs-analysis call' })
   }
-  if (stage === 'Lead' && daysSinceLast > 7) {
-    return { icon: PhoneCall, color: '#2E96FF', text: 'New lead — schedule first needs-analysis call' }
+  // Coverage gaps
+  const gaps = Object.entries(cov).filter(([, v]) => !v).map(([k]) => POLICY_CATEGORIES[k].label)
+  if (gaps.length > 0 && (stage === 'Client' || stage === 'Active')) {
+    suggestions.push({ icon: Shield, color: '#FF3B30', text: `Coverage gap: ${gaps.join(', ')} not covered` })
   }
-  if (daysSinceLast > 90) {
-    return { icon: AlertTriangle, color: '#FF3B30', text: `No activity in ${daysSinceLast} days — at risk of going dormant` }
+  // Dormant
+  if (hasActivity && daysSinceLast > 90) {
+    suggestions.push({ icon: AlertTriangle, color: '#FF3B30', text: `No contact in ${daysSinceLast}d — at risk of going dormant` })
   }
-  return null
+  // No activity at all (new contact)
+  if (!hasActivity && stage !== 'Client' && stage !== 'Active') {
+    suggestions.push({ icon: PhoneCall, color: '#2E96FF', text: 'No activity logged yet — log your first touchpoint' })
+  }
+
+  return suggestions.slice(0, 3)
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -240,54 +281,90 @@ function StageSelector({ stage, onChange }) {
   )
 }
 
-// Coverage snapshot widget
-function CoverageSnapshot({ contact, onNavigate }) {
-  const cov = getCoverageStatus(contact)
+// Coverage — gap-aware, shows policy names when covered
+function CoverageSection({ contact, onNavigate }) {
+  const cov      = getCoverageStatus(contact)
+  const policies = (contact.financials?.insurance || []).filter(p => !p.status || p.status === 'Active')
+
+  const getPolicyName = (key) => {
+    const cat = POLICY_CATEGORIES[key]
+    const found = policies.find(p => {
+      const t = (p.type || '').toLowerCase()
+      return cat.keywords.some(k => t.includes(k.split(' ')[0]))
+    })
+    return found?.name || found?.insurer || null
+  }
+
   const items = Object.entries(POLICY_CATEGORIES).map(([key, cfg]) => ({
-    key, ...cfg, covered: cov[key],
+    key, ...cfg, covered: cov[key], policyName: getPolicyName(key),
   }))
   const coveredCount = items.filter(i => i.covered).length
+  const pct = (coveredCount / 4) * 100
 
   return (
     <div>
+      {/* Header + bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <h3 style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#8E8E93' }}>
           Coverage
         </h3>
         <span style={{
-          fontSize: 10, fontWeight: 600,
+          fontSize: 11, fontWeight: 700,
           color: coveredCount === 4 ? '#34C759' : coveredCount >= 2 ? '#FF9500' : '#FF3B30',
         }}>
           {coveredCount}/4
         </span>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+      {/* Progress bar */}
+      <div style={{ height: 4, borderRadius: 4, background: '#F2F2F7', marginBottom: 10, overflow: 'hidden' }}>
+        <div style={{
+          height: '100%', borderRadius: 4,
+          width: `${pct}%`,
+          background: coveredCount === 4 ? '#34C759' : coveredCount >= 2 ? '#FF9500' : '#FF3B30',
+          transition: 'width 0.4s ease',
+        }} />
+      </div>
+
+      {/* Gap rows */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
         {items.map(item => (
           <button
             key={item.key}
             onClick={() => onNavigate?.('insurance')}
             style={{
-              display: 'flex', alignItems: 'center', gap: 7,
-              padding: '7px 9px', borderRadius: 8,
+              display: 'flex', alignItems: 'center', gap: 9,
+              padding: '7px 10px', borderRadius: 9,
               background: item.covered ? item.bg : '#FAFAFA',
-              border: `1px solid ${item.covered ? item.color + '30' : '#E5E5EA'}`,
-              cursor: onNavigate ? 'pointer' : 'default',
-              transition: 'all 0.15s',
+              border: `1px solid ${item.covered ? item.color + '25' : '#EBEBEB'}`,
+              cursor: 'pointer', transition: 'all 0.15s', textAlign: 'left', width: '100%',
             }}
+            onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
+            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
           >
+            {/* Status dot */}
             <span style={{
-              width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+              width: 22, height: 22, borderRadius: 6, flexShrink: 0,
               background: item.covered ? `${item.color}18` : '#F2F2F7',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 9, fontWeight: 800,
+              fontSize: 10, fontWeight: 800,
               color: item.covered ? item.color : '#C7C7CC',
             }}>
-              {item.covered ? '✓' : '✗'}
+              {item.covered ? '✓' : '!'}
             </span>
-            <div style={{ textAlign: 'left' }}>
-              <p style={{ fontSize: 11, fontWeight: 600, color: item.covered ? item.color : '#8E8E93', lineHeight: 1 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 12, fontWeight: 600, color: item.covered ? item.color : '#8E8E93', lineHeight: 1 }}>
                 {item.label}
               </p>
+              {item.covered && item.policyName && (
+                <p style={{ fontSize: 10, color: '#8E8E93', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {item.policyName}
+                </p>
+              )}
+              {!item.covered && (
+                <p style={{ fontSize: 10, color: '#FF3B30', marginTop: 1 }}>
+                  Not covered — tap to add
+                </p>
+              )}
             </div>
           </button>
         ))}
@@ -328,23 +405,44 @@ function ReviewCountdown({ reviewDate }) {
   )
 }
 
-// Next action suggestion banner
-function NextActionBanner({ contact, onLogCall, onLogNote }) {
-  const action = getNextAction(contact)
-  if (!action) return null
-  const { icon: Icon, color, text } = action
+// Smart suggestions panel — shows up to 3 ranked next actions
+function SmartSuggestions({ contact }) {
+  const actions = getNextActions(contact)
+  if (actions.length === 0) return null
 
   return (
     <div style={{
-      display: 'flex', alignItems: 'flex-start', gap: 10,
-      padding: '10px 14px', borderRadius: 10,
-      background: `${color}0D`, border: `1px solid ${color}25`,
-      marginBottom: 16,
+      background: 'white', borderRadius: 12,
+      border: '1px solid #F2F2F7',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+      marginBottom: 16, overflow: 'hidden',
     }}>
-      <Icon size={15} style={{ color, marginTop: 1, flexShrink: 0 }} />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontSize: 13, fontWeight: 500, color: '#1C1C1E' }}>{text}</p>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 6,
+        padding: '9px 14px', borderBottom: '1px solid #F2F2F7',
+        background: '#FAFAFA',
+      }}>
+        <Zap size={12} style={{ color: '#FF9500' }} />
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: '#8E8E93' }}>
+          Suggested Actions
+        </span>
       </div>
+      {actions.map(({ icon: Icon, color, text }, i) => (
+        <div key={i} style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '9px 14px',
+          borderTop: i > 0 ? '1px solid #F9F9FB' : 'none',
+        }}>
+          <div style={{
+            width: 26, height: 26, borderRadius: 8, flexShrink: 0,
+            background: `${color}12`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Icon size={13} style={{ color }} />
+          </div>
+          <p style={{ fontSize: 13, color: '#1C1C1E', flex: 1, lineHeight: 1.4 }}>{text}</p>
+        </div>
+      ))}
     </div>
   )
 }
@@ -755,108 +853,25 @@ export default function ContactDetailPage() {
     )
   }
 
+  // ── Derived values for hero ────────────────────────────────────────────────
+  const hue      = nameHue(contact.name)
+  const initials = contact.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2)
+  const ape      = getAPE(contact)
+  const bdDays   = daysUntilBirthday(contact.dob)
+  const activePolicies = (contact.financials?.insurance || []).filter(p => !p.status || p.status === 'Active')
+  const covCount = Object.values(getCoverageStatus(contact)).filter(Boolean).length
+  const allActivityDates = [
+    ...(contact.activities   || []).map(a => new Date(a.date)),
+    ...(contact.interactions || []).map(i => new Date(i.date)),
+  ].filter(d => !isNaN(d))
+  const lastSeenDays = allActivityDates.length
+    ? Math.floor((Date.now() - Math.max(...allActivityDates)) / 86400000)
+    : null
+  const openTasksCount = (contact.tasks || []).filter(t => t.status !== 'completed').length
+
   // ── Main view ─────────────────────────────────────────────────────────────
   return (
     <div className="max-w-6xl mx-auto">
-
-      {/* Top header */}
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <button onClick={() => navigate('/contacts')} className="hig-btn-ghost gap-1.5 -ml-3">
-          <ArrowLeft size={16} /> Contacts
-        </button>
-
-        <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
-          {/* ⋮ Options */}
-          <div className="relative">
-            <button
-              onClick={() => setShowOptionsMenu(s => !s)}
-              className={`hig-btn-ghost p-2 ${showOptionsMenu ? 'bg-hig-gray-5' : ''}`}
-            >
-              <MoreVertical size={16} />
-            </button>
-            {showOptionsMenu && (
-              <>
-                <div className="fixed inset-0 z-20" onClick={() => setShowOptionsMenu(false)} />
-                <div className="absolute right-0 top-full mt-1.5 bg-white rounded-hig shadow-hig-lg border border-hig-gray-5 py-1 min-w-[230px] z-30">
-                  <div className="px-3 py-1.5">
-                    <p className="text-hig-caption2 font-semibold text-hig-text-secondary uppercase tracking-wide">Reset Planner</p>
-                  </div>
-                  {[
-                    ...(isAdmin ? [{ label: t('contactDetail.cashFlowPlanner'), icon: BarChart2, onClick: confirmResetCashFlow }] : []),
-                    { label: t('contactDetail.retirementPlanner'), icon: Target, onClick: confirmResetRetirement },
-                    { label: t('contactDetail.insurancePlanner'),  icon: Shield, onClick: confirmResetInsurance },
-                  ].map(({ label, icon: Icon, onClick }) => (
-                    <button key={label} onClick={onClick}
-                      className="w-full flex items-center gap-3 px-3 py-2 text-hig-subhead hover:bg-hig-gray-6 transition-colors text-left">
-                      <RotateCcw size={14} className="text-hig-text-secondary shrink-0" />
-                      <span>{label}</span>
-                    </button>
-                  ))}
-                  <div className="border-t border-hig-gray-5 my-1" />
-                  <button onClick={confirmDelete}
-                    className="w-full flex items-center gap-3 px-3 py-2 text-hig-subhead hover:bg-red-50 text-red-500 transition-colors text-left">
-                    <Trash2 size={14} className="shrink-0" />
-                    <span>{t('contactDetail.deleteContact')}</span>
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Start Planning */}
-          <div className="relative">
-            <button onClick={() => setShowStartPlanning(s => !s)} className="hig-btn-primary gap-2">
-              {t('contactDetail.startPlanning')}
-              <ChevronDown size={14} className={`transition-transform ${showStartPlanning ? 'rotate-180' : ''}`} />
-            </button>
-            {showStartPlanning && (
-              <>
-                <div className="fixed inset-0 z-20" onClick={() => setShowStartPlanning(false)} />
-                <div className="absolute right-0 top-full mt-1.5 bg-white rounded-hig shadow-hig-lg border border-hig-gray-5 py-1 min-w-[210px] z-30">
-                  {isAdmin && (
-                    <>
-                      <button onClick={launchCashFlow}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-hig-subhead hover:bg-hig-gray-6 transition-colors text-left">
-                        <div className="w-7 h-7 rounded-hig-sm bg-hig-blue/10 flex items-center justify-center shrink-0">
-                          <TrendingUp size={14} className="text-hig-blue" />
-                        </div>
-                        <div>
-                          <p className="font-medium leading-none mb-0.5">{t('contactDetail.cashFlowPlanner')}</p>
-                          <p className="text-hig-caption2 text-hig-text-secondary leading-none">{t('cashflow.fullSuite')}</p>
-                        </div>
-                        {hasFinancialData && <span className="ml-auto text-hig-caption2 text-hig-green font-semibold">Ready</span>}
-                      </button>
-                      <div className="border-t border-hig-gray-5 my-1" />
-                    </>
-                  )}
-                  <button onClick={() => { setShowStartPlanning(false); navigate(`/contacts/${id}/retirement`) }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-hig-subhead hover:bg-hig-gray-6 transition-colors text-left">
-                    <div className="w-7 h-7 rounded-hig-sm bg-hig-blue/10 flex items-center justify-center shrink-0">
-                      <Target size={14} className="text-hig-blue" />
-                    </div>
-                    <div>
-                      <p className="font-medium leading-none mb-0.5">{t('contactDetail.retirementPlanner')}</p>
-                      <p className="text-hig-caption2 text-hig-text-secondary leading-none">{t('contactDetail.startPlanning')}</p>
-                    </div>
-                    {contact.retirementPlan && <CheckCircle2 size={14} className="ml-auto text-hig-green shrink-0" />}
-                  </button>
-                  <button onClick={() => { setShowStartPlanning(false); navigate(`/contacts/${id}/protection`) }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-hig-subhead hover:bg-hig-gray-6 transition-colors text-left">
-                    <div className="w-7 h-7 rounded-hig-sm bg-hig-green/10 flex items-center justify-center shrink-0">
-                      <Shield size={14} className="text-hig-green" />
-                    </div>
-                    <div>
-                      <p className="font-medium leading-none mb-0.5">{t('contactDetail.insurancePlanner')}</p>
-                      <p className="text-hig-caption2 text-hig-text-secondary leading-none">{t('contactDetail.startPlanning')}</p>
-                    </div>
-                    {contact.protectionPlan && <CheckCircle2 size={14} className="ml-auto text-hig-green shrink-0" />}
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
 
       {/* Confirm modal */}
       {confirmAction && (
@@ -867,198 +882,358 @@ export default function ContactDetailPage() {
         />
       )}
 
-      {/* Main layout */}
-      <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-
-        {/* ── Sidebar ──────────────────────────────────────────────────────── */}
-        <div className="w-full lg:w-72 lg:shrink-0 space-y-4">
-
-          {/* ── Hero Card ─────────────────────────────────────────────────── */}
-          <div className="hig-card overflow-hidden">
-            {/* Gradient banner */}
-            {(() => {
-              const hue = nameHue(contact.name)
-              const initials = contact.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2)
-              return (
+      {/* ── Full-width Hero Bar ───────────────────────────────────────────── */}
+      <div style={{
+        borderRadius: 16, overflow: 'hidden', marginBottom: 20,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)',
+      }}>
+        {/* Gradient banner */}
+        <div style={{
+          height: 80,
+          background: `linear-gradient(135deg, hsl(${hue},65%,50%) 0%, hsl(${(hue+45)%360},60%,62%) 100%)`,
+          position: 'relative',
+        }}>
+          {/* Back button */}
+          <button
+            onClick={() => navigate('/contacts')}
+            style={{
+              position: 'absolute', top: 12, left: 12,
+              display: 'flex', alignItems: 'center', gap: 5,
+              padding: '4px 10px', borderRadius: 20,
+              background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)',
+              color: 'white', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              backdropFilter: 'blur(4px)', transition: 'background 0.15s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.32)'}
+            onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.2)'}
+          >
+            <ArrowLeft size={12} /> Contacts
+          </button>
+          {/* Top-right actions */}
+          <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: 6 }}>
+            {/* Start Planning dropdown */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowStartPlanning(s => !s)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  padding: '5px 12px', borderRadius: 20,
+                  background: 'white', border: 'none',
+                  color: '#1C1C1E', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.12)',
+                }}
+              >
+                <Target size={12} style={{ color: '#2E96FF' }} />
+                Plan
+                <ChevronDown size={11} style={{ transition: 'transform 0.15s', transform: showStartPlanning ? 'rotate(180deg)' : 'none' }} />
+              </button>
+              {showStartPlanning && (
                 <>
+                  <div className="fixed inset-0 z-20" onClick={() => setShowStartPlanning(false)} />
                   <div style={{
-                    height: 64,
-                    background: `linear-gradient(135deg, hsl(${hue},70%,55%) 0%, hsl(${(hue+40)%360},65%,65%) 100%)`,
-                    position: 'relative',
+                    position: 'absolute', top: '100%', right: 0, marginTop: 6,
+                    background: 'white', borderRadius: 12,
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.14)', border: '1px solid #F2F2F7',
+                    zIndex: 30, overflow: 'hidden', minWidth: 210,
                   }}>
-                    {/* Edit button top-right */}
-                    <button
-                      onClick={() => navigate(`/contacts/${id}/edit`)}
-                      style={{
-                        position: 'absolute', top: 8, right: 8,
-                        width: 28, height: 28, borderRadius: 8,
-                        background: 'rgba(255,255,255,0.25)',
-                        border: '1px solid rgba(255,255,255,0.35)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        cursor: 'pointer', backdropFilter: 'blur(4px)',
-                        transition: 'background 0.15s',
-                      }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.4)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
-                      title="Edit contact"
-                    >
-                      <Pencil size={13} style={{ color: 'white' }} />
+                    {isAdmin && (
+                      <>
+                        <button onClick={launchCashFlow}
+                          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left' }}
+                          onMouseEnter={e => e.currentTarget.style.background='#F9F9FB'}
+                          onMouseLeave={e => e.currentTarget.style.background='none'}>
+                          <div style={{ width: 28, height: 28, borderRadius: 8, background: '#EBF5FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <TrendingUp size={13} style={{ color: '#2E96FF' }} />
+                          </div>
+                          <div>
+                            <p style={{ fontSize: 13, fontWeight: 500, color: '#1C1C1E', lineHeight: 1 }}>{t('contactDetail.cashFlowPlanner')}</p>
+                            <p style={{ fontSize: 11, color: '#8E8E93', marginTop: 2 }}>{t('cashflow.fullSuite')}</p>
+                          </div>
+                          {hasFinancialData && <span style={{ marginLeft: 'auto', fontSize: 11, color: '#34C759', fontWeight: 600 }}>Ready</span>}
+                        </button>
+                        <div style={{ height: 1, background: '#F2F2F7' }} />
+                      </>
+                    )}
+                    <button onClick={() => { setShowStartPlanning(false); navigate(`/contacts/${id}/retirement`) }}
+                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left' }}
+                      onMouseEnter={e => e.currentTarget.style.background='#F9F9FB'}
+                      onMouseLeave={e => e.currentTarget.style.background='none'}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: '#EBF5FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Target size={13} style={{ color: '#2E96FF' }} />
+                      </div>
+                      <div>
+                        <p style={{ fontSize: 13, fontWeight: 500, color: '#1C1C1E', lineHeight: 1 }}>{t('contactDetail.retirementPlanner')}</p>
+                      </div>
+                      {contact.retirementPlan && <CheckCircle2 size={13} style={{ color: '#34C759', marginLeft: 'auto' }} />}
+                    </button>
+                    <button onClick={() => { setShowStartPlanning(false); navigate(`/contacts/${id}/protection`) }}
+                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left' }}
+                      onMouseEnter={e => e.currentTarget.style.background='#F9F9FB'}
+                      onMouseLeave={e => e.currentTarget.style.background='none'}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: '#EDFAEF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Shield size={13} style={{ color: '#34C759' }} />
+                      </div>
+                      <div>
+                        <p style={{ fontSize: 13, fontWeight: 500, color: '#1C1C1E', lineHeight: 1 }}>{t('contactDetail.insurancePlanner')}</p>
+                      </div>
+                      {contact.protectionPlan && <CheckCircle2 size={13} style={{ color: '#34C759', marginLeft: 'auto' }} />}
                     </button>
                   </div>
+                </>
+              )}
+            </div>
 
-                  {/* Avatar overlapping banner */}
-                  <div style={{ padding: '0 16px 16px', marginTop: -28 }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 10 }}>
-                      <div style={{
-                        width: 56, height: 56, borderRadius: '50%',
-                        background: `hsl(${hue},70%,55%)`,
-                        border: '3px solid white',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 18, fontWeight: 700, color: 'white',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-                        flexShrink: 0,
-                      }}>
-                        {initials}
-                      </div>
-                      {/* Stage pill */}
-                      <StageSelector
-                        stage={stage}
-                        onChange={newStage => updateContact(id, { stage: newStage })}
-                      />
+            {/* ⋮ Options */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowOptionsMenu(s => !s)}
+                style={{
+                  width: 30, height: 30, borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', backdropFilter: 'blur(4px)', transition: 'background 0.15s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.35)'}
+                onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.2)'}
+              >
+                <MoreVertical size={14} style={{ color: 'white' }} />
+              </button>
+              {showOptionsMenu && (
+                <>
+                  <div className="fixed inset-0 z-20" onClick={() => setShowOptionsMenu(false)} />
+                  <div style={{
+                    position: 'absolute', top: '100%', right: 0, marginTop: 6,
+                    background: 'white', borderRadius: 12,
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.14)', border: '1px solid #F2F2F7',
+                    zIndex: 30, overflow: 'hidden', minWidth: 220,
+                  }}>
+                    <div style={{ padding: '8px 14px 4px', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#8E8E93' }}>
+                      Reset Planner
                     </div>
-
-                    {/* Name + age */}
-                    <h2 style={{ fontSize: 17, fontWeight: 700, color: '#1C1C1E', lineHeight: 1.2, marginBottom: 2 }}>
-                      {contact.name}
-                    </h2>
-                    <p style={{ fontSize: 12, color: '#8E8E93', marginBottom: 10 }}>
-                      Age {age}{contact.employment ? ` · ${contact.employment}` : ''}
-                    </p>
-
-                    {/* Stats strip */}
-                    {(() => {
-                      const policies    = (contact.financials?.insurance || []).filter(p => !p.status || p.status === 'Active')
-                      const covCount    = Object.values(getCoverageStatus(contact)).filter(Boolean).length
-                      const allActivity = [
-                        ...(contact.activities   || []).map(a => new Date(a.date)),
-                        ...(contact.interactions || []).map(i => new Date(i.date)),
-                      ].filter(d => !isNaN(d))
-                      const lastSeen = allActivity.length
-                        ? Math.floor((Date.now() - Math.max(...allActivity)) / 86400000)
-                        : null
-                      const openTasks   = (contact.tasks || []).filter(t => t.status !== 'completed').length
-                      const totalAnnPremium = policies.reduce((s, p) => {
-                        const amt = Number(p.annualPremium || p.premium || 0)
-                        return s + (p.premiumFrequency === 'Monthly' ? amt * 12 : amt)
-                      }, 0)
-
-                      const stats = [
-                        { label: 'Coverage', value: `${covCount}/4`, color: covCount===4?'#34C759':covCount>=2?'#FF9500':'#FF3B30' },
-                        { label: 'Policies', value: policies.length, color: '#2E96FF' },
-                        ...(lastSeen !== null ? [{ label: 'Last seen', value: lastSeen===0?'Today':`${lastSeen}d`, color: lastSeen>60?'#FF3B30':lastSeen>14?'#FF9500':'#34C759' }] : []),
-                        ...(openTasks > 0 ? [{ label: 'Open tasks', value: openTasks, color: '#FF9500' }] : []),
-                      ]
-
-                      return (
-                        <div style={{
-                          display: 'grid', gridTemplateColumns: `repeat(${Math.min(stats.length,4)}, 1fr)`,
-                          gap: 1, background: '#F2F2F7', borderRadius: 10, overflow: 'hidden',
-                          marginBottom: 12,
-                        }}>
-                          {stats.map(s => (
-                            <div key={s.label} style={{
-                              background: 'white', padding: '8px 6px', textAlign: 'center',
-                            }}>
-                              <p style={{ fontSize: 15, fontWeight: 700, color: s.color, lineHeight: 1.1 }}>{s.value}</p>
-                              <p style={{ fontSize: 10, color: '#8E8E93', marginTop: 2, fontWeight: 500 }}>{s.label}</p>
-                            </div>
-                          ))}
-                        </div>
-                      )
-                    })()}
-
-                    {/* Review countdown */}
-                    <ReviewCountdown reviewDate={contact.reviewDate} />
-
-                    {/* Contact info */}
-                    <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 7 }}>
-                      {contact.mobile && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-                          <Phone size={13} style={{ color: '#8E8E93', flexShrink: 0 }} />
-                          <a href={`tel:${contact.mobile}`} style={{ color: '#1C1C1E', textDecoration: 'none' }}
-                            onMouseEnter={e => e.target.style.color='#2E96FF'}
-                            onMouseLeave={e => e.target.style.color='#1C1C1E'}>
-                            {contact.mobile}
-                          </a>
-                        </div>
-                      )}
-                      {contact.email && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-                          <Mail size={13} style={{ color: '#8E8E93', flexShrink: 0 }} />
-                          <a href={`mailto:${contact.email}`} style={{ color: '#1C1C1E', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                            onMouseEnter={e => e.target.style.color='#2E96FF'}
-                            onMouseLeave={e => e.target.style.color='#1C1C1E'}>
-                            {contact.email}
-                          </a>
-                        </div>
-                      )}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-                        <Calendar size={13} style={{ color: '#8E8E93', flexShrink: 0 }} />
-                        <span style={{ color: '#1C1C1E' }}>
-                          {new Date(contact.dob).toLocaleDateString('en-MY', { day: 'numeric', month: 'long', year: 'numeric' })}
-                        </span>
-                      </div>
-                      {contact.reviewDate && contact.reviewFrequency && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-                          <Clock size={13} style={{ color: '#8E8E93', flexShrink: 0 }} />
-                          <span style={{ color: '#1C1C1E' }}>{contact.reviewFrequency} review</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Tags */}
-                    <div style={{ marginTop: 10, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                      {contact.tags.map(tag => (
-                        <span key={tag} style={{
-                          display: 'flex', alignItems: 'center', gap: 4,
-                          fontSize: 11, fontWeight: 600,
-                          padding: '3px 8px', borderRadius: 20,
-                          background: '#EBF5FF', color: '#2E96FF',
-                        }}>
-                          {tag}
-                          <button onClick={() => removeTag([contact.id], tag)} style={{ color: '#2E96FF80', border: 'none', background: 'none', cursor: 'pointer', display: 'flex' }}>
-                            <X size={9} />
-                          </button>
-                        </span>
-                      ))}
-                      {['Client','Prospect'].filter(t => !contact.tags.includes(t)).map(t => (
-                        <button key={t} onClick={() => addTag([contact.id], t)}
-                          style={{
-                            fontSize: 11, padding: '3px 8px', borderRadius: 20,
-                            border: '1.5px dashed #C7C7CC', background: 'none',
-                            color: '#8E8E93', cursor: 'pointer', transition: 'all 0.15s',
-                          }}
-                          onMouseEnter={e => { e.currentTarget.style.borderColor='#2E96FF'; e.currentTarget.style.color='#2E96FF' }}
-                          onMouseLeave={e => { e.currentTarget.style.borderColor='#C7C7CC'; e.currentTarget.style.color='#8E8E93' }}>
-                          + {t}
-                        </button>
-                      ))}
-                    </div>
-
-                    {contact.notes && (
-                      <p style={{ fontSize: 12, color: '#8E8E93', marginTop: 10, paddingTop: 10, borderTop: '1px solid #F2F2F7', lineHeight: 1.5 }}>
-                        {contact.notes}
-                      </p>
-                    )}
+                    {[
+                      ...(isAdmin ? [{ label: t('contactDetail.cashFlowPlanner'), onClick: confirmResetCashFlow }] : []),
+                      { label: t('contactDetail.retirementPlanner'), onClick: confirmResetRetirement },
+                      { label: t('contactDetail.insurancePlanner'), onClick: confirmResetInsurance },
+                    ].map(({ label, onClick }) => (
+                      <button key={label} onClick={onClick}
+                        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', fontSize: 13 }}
+                        onMouseEnter={e => e.currentTarget.style.background='#F9F9FB'}
+                        onMouseLeave={e => e.currentTarget.style.background='none'}>
+                        <RotateCcw size={13} style={{ color: '#8E8E93' }} />
+                        {label}
+                      </button>
+                    ))}
+                    <div style={{ height: 1, background: '#F2F2F7', margin: '4px 0' }} />
+                    <button onClick={confirmDelete}
+                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', fontSize: 13, color: '#FF3B30' }}
+                      onMouseEnter={e => e.currentTarget.style.background='#FFF5F5'}
+                      onMouseLeave={e => e.currentTarget.style.background='none'}>
+                      <Trash2 size={13} style={{ color: '#FF3B30' }} />
+                      {t('contactDetail.deleteContact')}
+                    </button>
                   </div>
                 </>
-              )
-            })()}
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Hero content below banner */}
+        <div style={{ background: 'white', padding: '0 20px 16px', marginTop: -36 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14, marginBottom: 14 }}>
+            {/* Avatar */}
+            <div style={{
+              width: 72, height: 72, borderRadius: '50%', flexShrink: 0,
+              background: `hsl(${hue},65%,50%)`,
+              border: '4px solid white', boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 24, fontWeight: 700, color: 'white',
+            }}>
+              {initials}
+            </div>
+
+            {/* Name block */}
+            <div style={{ flex: 1, paddingBottom: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <h1 style={{ fontSize: 20, fontWeight: 800, color: '#1C1C1E', letterSpacing: '-0.01em' }}>
+                  {contact.name}
+                </h1>
+                {/* Birthday badge */}
+                {bdDays !== null && bdDays <= 7 && (
+                  <span style={{
+                    display: 'flex', alignItems: 'center', gap: 4,
+                    fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20,
+                    background: '#F5EEFF', color: '#AF52DE',
+                  }}>
+                    <Gift size={10} />
+                    {bdDays === 0 ? 'Birthday today!' : `Birthday in ${bdDays}d`}
+                  </span>
+                )}
+              </div>
+              <p style={{ fontSize: 13, color: '#8E8E93', marginTop: 2 }}>
+                Age {age}{contact.employment ? ` · ${contact.employment}` : ''}
+                {contact.reviewFrequency ? ` · ${contact.reviewFrequency} review` : ''}
+              </p>
+            </div>
+
+            {/* Edit button */}
+            <button
+              onClick={() => navigate(`/contacts/${id}/edit`)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '6px 12px', borderRadius: 10, marginBottom: 4,
+                border: '1.5px solid #E5E5EA', background: 'white',
+                fontSize: 12, fontWeight: 600, color: '#3C3C43', cursor: 'pointer',
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor='#2E96FF'; e.currentTarget.style.color='#2E96FF' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor='#E5E5EA'; e.currentTarget.style.color='#3C3C43' }}
+            >
+              <Pencil size={12} /> Edit
+            </button>
           </div>
 
-          {/* Coverage Snapshot */}
+          {/* ── Stats strip ─────────────────────────────────────────────── */}
+          <div style={{
+            display: 'flex', gap: 1, background: '#F2F2F7', borderRadius: 12, overflow: 'hidden',
+            marginBottom: 14,
+          }}>
+            {[
+              { label: 'APE', value: ape > 0 ? fmtRM(ape) : '—', color: ape > 0 ? '#1C1C1E' : '#C7C7CC', sub: 'annual premium' },
+              { label: 'Policies', value: activePolicies.length || '—', color: activePolicies.length > 0 ? '#2E96FF' : '#C7C7CC', sub: 'active' },
+              { label: 'Coverage', value: `${covCount}/4`, color: covCount===4?'#34C759':covCount>=2?'#FF9500':'#FF3B30', sub: 'categories' },
+              ...(lastSeenDays !== null
+                ? [{ label: 'Last contact', value: lastSeenDays===0?'Today':`${lastSeenDays}d ago`, color: lastSeenDays>60?'#FF3B30':lastSeenDays>14?'#FF9500':'#34C759', sub: '' }]
+                : [{ label: 'Last contact', value: 'Never', color: '#C7C7CC', sub: '' }]
+              ),
+              ...(openTasksCount > 0
+                ? [{ label: 'Open tasks', value: openTasksCount, color: '#FF9500', sub: 'pending' }]
+                : []
+              ),
+            ].map((s, i) => (
+              <div key={s.label} style={{ flex: 1, background: 'white', padding: '10px 8px', textAlign: 'center', minWidth: 60 }}>
+                <p style={{ fontSize: 16, fontWeight: 800, color: s.color, lineHeight: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.value}</p>
+                <p style={{ fontSize: 10, color: '#8E8E93', marginTop: 3, fontWeight: 500 }}>{s.label}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* ── Quick actions row ────────────────────────────────────────── */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            {/* WhatsApp — #1 priority for MY market */}
+            {contact.mobile && (
+              <a
+                href={`https://wa.me/6${contact.mobile.replace(/^0/, '').replace(/[\s\-]/g, '')}`}
+                target="_blank" rel="noopener noreferrer"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '7px 14px', borderRadius: 20, textDecoration: 'none',
+                  background: '#25D366', color: 'white',
+                  fontSize: 13, fontWeight: 600,
+                  boxShadow: '0 1px 4px rgba(37,211,102,0.35)',
+                  transition: 'opacity 0.15s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.opacity='0.85'}
+                onMouseLeave={e => e.currentTarget.style.opacity='1'}
+              >
+                <MessageCircle size={14} />
+                WhatsApp
+              </a>
+            )}
+            {contact.mobile && (
+              <a href={`tel:${contact.mobile}`}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '7px 14px', borderRadius: 20, textDecoration: 'none',
+                  border: '1.5px solid #E5E5EA', background: 'white',
+                  color: '#1C1C1E', fontSize: 13, fontWeight: 500,
+                  transition: 'all 0.15s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor='#2E96FF'; e.currentTarget.style.color='#2E96FF' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor='#E5E5EA'; e.currentTarget.style.color='#1C1C1E' }}
+              >
+                <Phone size={13} />
+                {contact.mobile}
+              </a>
+            )}
+            {contact.email && (
+              <a href={`mailto:${contact.email}`}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '7px 14px', borderRadius: 20, textDecoration: 'none',
+                  border: '1.5px solid #E5E5EA', background: 'white',
+                  color: '#1C1C1E', fontSize: 13, fontWeight: 500,
+                  transition: 'all 0.15s',
+                  maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor='#2E96FF'; e.currentTarget.style.color='#2E96FF' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor='#E5E5EA'; e.currentTarget.style.color='#1C1C1E' }}
+              >
+                <Mail size={13} style={{ flexShrink: 0 }} />
+                {contact.email}
+              </a>
+            )}
+            {/* Stage selector */}
+            <div style={{ marginLeft: 'auto' }}>
+              <StageSelector
+                stage={stage}
+                onChange={newStage => updateContact(id, { stage: newStage })}
+              />
+            </div>
+          </div>
+
+          {/* Tags row */}
+          {(contact.tags.length > 0 || true) && (
+            <div style={{ marginTop: 10, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+              {contact.tags.map(tag => (
+                <span key={tag} style={{
+                  display: 'flex', alignItems: 'center', gap: 4,
+                  fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 20,
+                  background: '#EBF5FF', color: '#2E96FF',
+                }}>
+                  {tag}
+                  <button onClick={() => removeTag([contact.id], tag)} style={{ color: '#2E96FF80', border: 'none', background: 'none', cursor: 'pointer', display: 'flex' }}>
+                    <X size={9} />
+                  </button>
+                </span>
+              ))}
+              {['Client','Prospect'].filter(t => !contact.tags.includes(t)).map(t => (
+                <button key={t} onClick={() => addTag([contact.id], t)}
+                  style={{
+                    fontSize: 11, padding: '3px 8px', borderRadius: 20,
+                    border: '1.5px dashed #C7C7CC', background: 'none',
+                    color: '#8E8E93', cursor: 'pointer', transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor='#2E96FF'; e.currentTarget.style.color='#2E96FF' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor='#C7C7CC'; e.currentTarget.style.color='#8E8E93' }}>
+                  + {t}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Notes line */}
+          {contact.notes && (
+            <p style={{ fontSize: 12, color: '#8E8E93', marginTop: 8, paddingTop: 8, borderTop: '1px solid #F2F2F7', lineHeight: 1.5 }}>
+              {contact.notes}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Review countdown — below hero if set */}
+      <ReviewCountdown reviewDate={contact.reviewDate} />
+      {contact.reviewDate && <div style={{ marginBottom: 12 }} />}
+
+      {/* ── Two-column layout ─────────────────────────────────────────────── */}
+      <div className="flex flex-col lg:flex-row gap-4 lg:gap-5">
+
+        {/* ── Sidebar ──────────────────────────────────────────────────────── */}
+        <div className="w-full lg:w-64 lg:shrink-0 space-y-4">
+
+          {/* Coverage section */}
           <div className="hig-card p-4">
-            <CoverageSnapshot
+            <CoverageSection
               contact={contact}
               onNavigate={planner => {
                 if (planner === 'insurance') navigate(`/contacts/${id}/protection`)
@@ -1069,30 +1244,34 @@ export default function ContactDetailPage() {
           {/* Financial Overview */}
           {sidebarFinancial?.hasData && (
             <div className="hig-card p-4 space-y-3">
-              <h3 className="text-hig-caption1 font-semibold text-hig-text-secondary uppercase tracking-wide">
-                Financial Overview
+              <h3 style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#8E8E93', marginBottom: 8 }}>
+                Financials
               </h3>
-              <div className="grid grid-cols-2 gap-2">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 <button onClick={() => setTab('finances')}
-                  className="rounded-hig-sm p-2.5 bg-hig-gray-6 hover:bg-hig-gray-5 transition-colors text-left">
-                  <p className="text-hig-caption2 text-hig-text-secondary font-medium mb-0.5">{t('contactDetail.netWorth')}</p>
-                  <p className={`text-hig-subhead font-bold leading-tight ${sidebarFinancial.netWorth >= 0 ? 'text-hig-text' : 'text-hig-red'}`}>
+                  style={{ borderRadius: 10, padding: '10px 8px', background: '#F9F9FB', border: '1px solid #F2F2F7', cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.background='#F2F2F7'}
+                  onMouseLeave={e => e.currentTarget.style.background='#F9F9FB'}>
+                  <p style={{ fontSize: 10, color: '#8E8E93', fontWeight: 600, marginBottom: 3 }}>{t('contactDetail.netWorth')}</p>
+                  <p style={{ fontSize: 14, fontWeight: 800, color: sidebarFinancial.netWorth >= 0 ? '#1C1C1E' : '#FF3B30', lineHeight: 1 }}>
                     {fmtRM(sidebarFinancial.netWorth)}
                   </p>
                 </button>
                 <button onClick={() => setTab('finances')}
-                  className="rounded-hig-sm p-2.5 bg-hig-gray-6 hover:bg-hig-gray-5 transition-colors text-left">
-                  <p className="text-hig-caption2 text-hig-text-secondary font-medium mb-0.5">{t('contactDetail.monthlyCashFlow')}</p>
-                  <p className={`text-hig-subhead font-bold leading-tight ${sidebarFinancial.monthlyCashFlow >= 0 ? 'text-hig-text' : 'text-hig-red'}`}>
+                  style={{ borderRadius: 10, padding: '10px 8px', background: '#F9F9FB', border: '1px solid #F2F2F7', cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.background='#F2F2F7'}
+                  onMouseLeave={e => e.currentTarget.style.background='#F9F9FB'}>
+                  <p style={{ fontSize: 10, color: '#8E8E93', fontWeight: 600, marginBottom: 3 }}>Monthly CF</p>
+                  <p style={{ fontSize: 14, fontWeight: 800, color: sidebarFinancial.monthlyCashFlow >= 0 ? '#1C1C1E' : '#FF3B30', lineHeight: 1 }}>
                     {fmtRM(sidebarFinancial.monthlyCashFlow)}
                   </p>
                 </button>
               </div>
               {isAdmin && (
                 <button onClick={launchCashFlow}
-                  className="w-full flex items-center gap-2 text-hig-caption1 text-hig-blue hover:text-hig-blue/80 transition-colors">
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#2E96FF', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 500 }}>
                   <BarChart2 size={13} />
-                  <span>View full projection →</span>
+                  View projection →
                 </button>
               )}
             </div>
@@ -1135,8 +1314,8 @@ export default function ContactDetailPage() {
           {/* ── Timeline Tab ────────────────────────────────────────────────── */}
           {tab === 'timeline' && (
             <div>
-              {/* Next-action suggestion */}
-              <NextActionBanner contact={contact} />
+              {/* Smart suggestions */}
+              <SmartSuggestions contact={contact} />
 
               {/* Quick Action Bar */}
               <QuickActionBar activeAction={activeAction} onSelect={setActiveAction} />
