@@ -77,9 +77,7 @@ export default function App() {
               <ErrorBoundary><ProtectionPlannerPage /></ErrorBoundary>
             } />
             <Route path="/library" element={<KnowledgeLibraryPage />} />
-            <Route path="/underwriting" element={
-              <AdminRoute><MedicalUnderwritingPage /></AdminRoute>
-            } />
+            <Route path="/underwriting" element={<MedicalUnderwritingPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/admin" element={
               <AdminRoute><AdminPage /></AdminRoute>

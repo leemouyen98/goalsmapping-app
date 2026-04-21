@@ -19,13 +19,13 @@
  *   • Safe-area & bottom-nav aware
  */
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import { Navigate } from 'react-router-dom'
 import {
   Stethoscope, Search, X, ChevronRight, ChevronLeft,
   Heart, Brain, Activity, Droplets, Wind, Utensils, Bone, Eye,
   Users, Flame, FlaskConical, ShieldAlert, Dna, Clock,
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
+// useAuth kept for potential future role-based features (e.g. bookmark sync)
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const BRAND = '#2E96FF'
@@ -338,8 +338,7 @@ function Spinner({ color = '#E5E5EA', accentColor = BRAND, size = 22 }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function MedicalUnderwritingPage() {
-  const { isAdmin } = useAuth()
-  if (!isAdmin) return <Navigate to="/dashboard" replace />
+  useAuth() // keep hook call for consistency
 
   // ── State ─────────────────────────────────────────────────────────────────
   const [manifest,        setManifest]        = useState([])
