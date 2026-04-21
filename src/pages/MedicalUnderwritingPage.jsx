@@ -1,14 +1,17 @@
 /**
- * MedicalUnderwritingPage v2
+ * MedicalUnderwritingPage v3
  * ─────────────────────────────────────────────────────────────────────
- * Responsive across iPhone, iPad & Desktop.
+ * Layout aligned with Knowledge Library Hub:
  *
- * Layout modes:
- *   Mobile  (< md / 768px)  — slide-panel navigation (Home → Conditions → Detail)
- *   Tablet  (md+  / 768px+) — category sidebar + content area
- *   Desktop (lg+  / 1024px) — full three-panel: category + condition + detail
+ * Mobile  (< 768px)  : iOS-style header strip (back arrow + title + actions)
+ *                      3-panel slide navigation (Home → Conditions → Detail)
+ *                      ⌘K / search icon toggles expandable search bar
+ * Tablet  (768–1023) : Collapsible category drawer (same as KL folder drawer)
+ *                      Header strip with drawer toggle + lang toggle
+ *                      Main area: conditions column + detail panel
+ * Desktop (≥ 1024px) : Persistent 3-column (categories | conditions | detail)
  *
- * Features:
+ * Features (unchanged):
  *   • Bilingual content toggle (双 / EN / 中)
  *   • EN+ZH pairs parsed and rendered together
  *   • Category icons (lucide-react) + colours
@@ -20,12 +23,12 @@
  */
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import {
-  Stethoscope, Search, X, ChevronRight, ChevronLeft,
+  Stethoscope, Search, X, ChevronRight, ChevronLeft, ArrowLeft,
+  PanelLeftClose, PanelLeftOpen,
   Heart, Brain, Activity, Droplets, Wind, Utensils, Bone, Eye,
   Users, Flame, FlaskConical, ShieldAlert, Dna, Clock,
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
-// useAuth kept for potential future role-based features (e.g. bookmark sync)
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const BRAND = '#2E96FF'
@@ -51,6 +54,21 @@ const CAT_ICONS = [
   Dna, Heart, Brain, Activity, Droplets, Wind,
   Utensils, Bone, Eye, Brain, Flame, Users, FlaskConical, ShieldAlert,
 ]
+
+// ── Responsive hook (matches Knowledge Library Hub) ───────────────────────────
+function useResponsive() {
+  const getBreakpoint = () => {
+    const w = window.innerWidth
+    return { isMobile: w < 768, isTablet: w >= 768 && w < 1024, isDesktop: w >= 1024 }
+  }
+  const [bp, setBp] = useState(getBreakpoint)
+  useEffect(() => {
+    const handler = () => setBp(getBreakpoint())
+    window.addEventListener('resize', handler, { passive: true })
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+  return bp
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function conditionUrl(category, condition) {
@@ -85,10 +103,8 @@ function parseMarkdown(raw) {
   let i = 0
   while (i < lines.length) {
     const line = lines[i]
-    // Skip Obsidian tag lines
     if (/^#[A-Za-z_/]/.test(line)) { i++; continue }
 
-    // Section headings — pair ## EN + ## ZH
     if (line.startsWith('## ')) {
       const en = line.slice(3).trim()
       const nxt = lines[i + 1] || ''
@@ -102,11 +118,9 @@ function parseMarkdown(raw) {
       continue
     }
 
-    // Obsidian image wikilink
     const wikiImg = line.match(/!\[\[(.+?)\]\]/)
     if (wikiImg) { blocks.push({ type: 'image', name: wikiImg[1].trim() }); i++; continue }
 
-    // Standard markdown link (YouTube or ignored)
     const mdLink = line.match(/!\[([^\]]*)\]\(([^)]+)\)/)
     if (mdLink) {
       const ytId = youTubeId(mdLink[2])
@@ -114,7 +128,6 @@ function parseMarkdown(raw) {
       i++; continue
     }
 
-    // Blockquote block — collect & parse as bilingual pairs
     if (line.startsWith('>')) {
       const bqLines = []
       while (i < lines.length && lines[i].startsWith('>')) {
@@ -139,7 +152,6 @@ function parseMarkdown(raw) {
       continue
     }
 
-    // Text paragraph — pair EN + ZH
     if (line.trim()) {
       if (!hasCJK(line)) {
         const nxt = lines[i + 1] || ''
@@ -303,7 +315,6 @@ function ConditionRow({ cond, active, color, onClick }) {
         background: active ? `${color}09` : 'transparent',
         border: 'none',
         outline: `0px solid transparent`,
-        // re-apply borderLeft (inline border resets the shorthand)
         cursor: 'pointer', textAlign: 'left',
         borderBottom: '1px solid rgba(0,0,0,0.045)',
         transition: 'background 0.12s',
@@ -312,7 +323,6 @@ function ConditionRow({ cond, active, color, onClick }) {
       onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(0,0,0,0.03)' }}
       onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
     >
-      {/* Active indicator */}
       {active && <span style={{ position: 'absolute', left: 0, top: 6, bottom: 6, width: 3, borderRadius: '0 3px 3px 0', background: color }} />}
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ fontSize: 13.5, fontWeight: active ? 600 : 400, color: active ? color : '#1C1C1E', margin: 0, lineHeight: 1.3 }}>{en}</p>
@@ -338,21 +348,25 @@ function Spinner({ color = '#E5E5EA', accentColor = BRAND, size = 22 }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function MedicalUnderwritingPage() {
-  useAuth() // keep hook call for consistency
+  useAuth()
+
+  const { isMobile, isTablet, isDesktop } = useResponsive()
 
   // ── State ─────────────────────────────────────────────────────────────────
-  const [manifest,        setManifest]        = useState([])
-  const [loadingManifest, setLoadingManifest] = useState(true)
-  const [selectedCat,     setSelectedCat]     = useState(null)
-  const [selectedCond,    setSelectedCond]    = useState(null)
-  const [condSearch,      setCondSearch]      = useState('')
-  const [globalSearch,    setGlobalSearch]    = useState('')
-  const [mdBlocks,        setMdBlocks]        = useState(null)
-  const [loadingMd,       setLoadingMd]       = useState(false)
-  const [mobilePanel,     setMobilePanel]     = useState(0)  // 0=home 1=conditions 2=detail
-  const [searchOpen,      setSearchOpen]      = useState(false)
-  const [lang,            setLang]            = useState(() => localStorage.getItem('uw-lang') || 'bilingual')
-  const [recent,          setRecent]          = useState(() => {
+  const [manifest,           setManifest]           = useState([])
+  const [loadingManifest,    setLoadingManifest]    = useState(true)
+  const [selectedCat,        setSelectedCat]        = useState(null)
+  const [selectedCond,       setSelectedCond]       = useState(null)
+  const [condSearch,         setCondSearch]         = useState('')
+  const [globalSearch,       setGlobalSearch]       = useState('')
+  const [mdBlocks,           setMdBlocks]           = useState(null)
+  const [loadingMd,          setLoadingMd]          = useState(false)
+  const [mobilePanel,        setMobilePanel]        = useState(0)   // 0=home 1=conditions 2=detail
+  const [drawerOpen,         setDrawerOpen]         = useState(false) // tablet category drawer
+  const [mobileSearchOpen,   setMobileSearchOpen]   = useState(false) // mobile panel 0 search
+  const [mobileCondSearch,   setMobileCondSearch]   = useState(false) // mobile panel 1 filter
+  const [lang,               setLang]               = useState(() => localStorage.getItem('uw-lang') || 'bilingual')
+  const [recent,             setRecent]             = useState(() => {
     try { return JSON.parse(localStorage.getItem('uw-recent') || '[]') } catch { return [] }
   })
   const searchRef   = useRef(null)
@@ -387,19 +401,28 @@ export default function MedicalUnderwritingPage() {
 
   useEffect(() => { localStorage.setItem('uw-lang', lang) }, [lang])
 
+  // Close drawer when going to desktop
+  useEffect(() => { if (isDesktop) setDrawerOpen(false) }, [isDesktop])
+
+  // Reset expandable search bars on mobile panel change
+  useEffect(() => {
+    setMobileSearchOpen(false)
+    setMobileCondSearch(false)
+  }, [mobilePanel])
+
   // ⌘K shortcut
   useEffect(() => {
     const handler = e => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
         searchRef.current?.focus()
-        setSearchOpen(true)
+        if (isMobile) setMobileSearchOpen(true)
       }
-      if (e.key === 'Escape') { setGlobalSearch(''); setSearchOpen(false) }
+      if (e.key === 'Escape') { setGlobalSearch('') }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [])
+  }, [isMobile])
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleLang = useCallback(v => setLang(v), [])
@@ -409,8 +432,9 @@ export default function MedicalUnderwritingPage() {
     if (!catObj) return
     setSelectedCat(catObj)
     setSelectedCond(cond)
-    if (fromSearch) { setGlobalSearch(''); setSearchOpen(false) }
+    if (fromSearch) setGlobalSearch('')
     setMobilePanel(2)
+    setDrawerOpen(false)
     setRecent(prev => {
       const entry = { category: catObj.category, condition: cond }
       const next  = [entry, ...prev.filter(r => r.condition !== cond)].slice(0, 8)
@@ -441,7 +465,7 @@ export default function MedicalUnderwritingPage() {
     return selectedCat.conditions.filter(c => c.toLowerCase().includes(q))
   }, [selectedCat, condSearch])
 
-  // ── Shared UI pieces ──────────────────────────────────────────────────────
+  // ── Shared UI helpers ─────────────────────────────────────────────────────
 
   function renderSearchBar({ value, onChange, placeholder = 'Search… (⌘K)', compact = false, inputRef }) {
     return (
@@ -536,98 +560,246 @@ export default function MedicalUnderwritingPage() {
     return <MarkdownContent blocks={mdBlocks} lang={lang} catColor={catColor} />
   }
 
-  function renderDetailHeader(showBack = false) {
-    if (!selectedCond) return null
-    return (
-      <div style={{ background: 'white', borderBottom: '1px solid rgba(0,0,0,0.07)', flexShrink: 0 }}>
-        {showBack && (
-          <div style={{ display: 'flex', alignItems: 'center', padding: '8px 8px 0' }}>
-            <button
-              onClick={() => setMobilePanel(1)}
-              style={{ display: 'flex', alignItems: 'center', gap: 2, minHeight: 44, padding: '0 8px', background: 'none', border: 'none', cursor: 'pointer', color: BRAND }}
-            >
-              <ChevronLeft size={22} style={{ color: BRAND }} />
-              <span style={{ fontSize: 16, color: BRAND }}>
-                {selectedCat?.category?.replace(/^\d+\.\s*/, '') || 'Back'}
-              </span>
-            </button>
-            <div style={{ flex: 1 }} />
-            <div style={{ paddingRight: 12 }}>
-              <LangToggle value={lang} onChange={handleLang} />
+  // ── Category Panel Content (used in desktop sidebar + tablet drawer) ───────
+  const CategoryPanelContent = ({ inDrawer = false }) => (
+    <>
+      {/* Header */}
+      <div style={{ padding: '14px 14px 10px', borderBottom: '1px solid rgba(0,0,0,0.06)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+            <div style={{ width: 30, height: 30, borderRadius: 9, background: `${BRAND}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Stethoscope size={14} style={{ color: BRAND }} />
             </div>
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 600, color: '#040E1C', margin: 0, lineHeight: 1.2 }}>UW Guide</p>
+              {!loadingManifest && (
+                <p style={{ fontSize: 10.5, color: '#8E8E93', margin: 0 }}>
+                  {manifest.reduce((s, c) => s + c.conditions.length, 0)} conditions
+                </p>
+              )}
+            </div>
+          </div>
+          {inDrawer && (
+            <button onClick={() => setDrawerOpen(false)}
+              style={{ width: 28, height: 28, borderRadius: 14, background: '#F2F2F7', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}>
+              <X size={13} style={{ color: '#6B7280' }} />
+            </button>
+          )}
+        </div>
+        <div style={{ position: 'relative' }}>
+          {renderSearchBar({ value: globalSearch, onChange: setGlobalSearch, inputRef: searchRef, compact: true })}
+          {renderSearchDropdown()}
+        </div>
+      </div>
+
+      {/* Categories label */}
+      {!globalSearch && (
+        <div style={{ padding: '8px 14px 4px', flexShrink: 0 }}>
+          <span style={{ fontSize: 9.5, fontWeight: 700, color: '#C7C7CC', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Categories</span>
+        </div>
+      )}
+
+      {/* Category list */}
+      <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 8 }}>
+        {loadingManifest ? (
+          <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 32 }}>
+            <Spinner size={20} />
+          </div>
+        ) : manifest.map((cat, idx) => {
+          const color  = CAT_COLORS[idx % CAT_COLORS.length]
+          const Icon   = CAT_ICONS[idx % CAT_ICONS.length] || Stethoscope
+          const active = selectedCat?.category === cat.category && !globalSearch
+          return (
+            <button key={cat.category}
+              onClick={() => { setGlobalSearch(''); setSelectedCat(active ? null : cat); if (inDrawer) setDrawerOpen(false) }}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', gap: 9,
+                padding: '8px 12px 8px 14px',
+                background: active ? `${color}10` : 'transparent',
+                border: 'none', cursor: 'pointer', textAlign: 'left',
+                position: 'relative', transition: 'background 0.12s', minHeight: 40,
+              }}
+              onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(0,0,0,0.04)' }}
+              onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
+            >
+              {active && <span style={{ position: 'absolute', left: 0, top: 4, bottom: 4, width: 3, borderRadius: '0 3px 3px 0', background: color }} />}
+              <div style={{ width: 26, height: 26, borderRadius: 8, background: active ? `${color}22` : `${color}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Icon size={12} style={{ color }} />
+              </div>
+              <span style={{ fontSize: 12, lineHeight: 1.35, flex: 1, color: active ? '#1C1C1E' : '#374151', fontWeight: active ? 600 : 400 }}>
+                {cat.category.replace(/^\d+\.\s*/, '')}
+              </span>
+              <span style={{ fontSize: 10, color: '#C7C7CC', flexShrink: 0 }}>{cat.conditions.length}</span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Recent conditions */}
+      {recent.length > 0 && !globalSearch && (
+        <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', padding: '8px 0 4px', flexShrink: 0 }}>
+          <p style={{ fontSize: 9.5, fontWeight: 700, color: '#C7C7CC', textTransform: 'uppercase', letterSpacing: '0.07em', padding: '0 14px 4px', margin: 0 }}>Recent</p>
+          {recent.slice(0, 4).map((r, i) => {
+            const cidx  = manifest.findIndex(c => c.category === r.category)
+            const color = cidx >= 0 ? CAT_COLORS[cidx] : BRAND
+            return (
+              <button key={i}
+                onClick={() => { openCondition(r.category, r.condition); if (inDrawer) setDrawerOpen(false) }}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 7,
+                  padding: '6px 14px', background: 'none', border: 'none', cursor: 'pointer',
+                  textAlign: 'left', minHeight: 34, transition: 'background 0.1s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
+              >
+                <Clock size={11} style={{ color: '#AEAEB2', flexShrink: 0 }} />
+                <span style={{ fontSize: 11.5, color: '#6B7280', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {engName(r.condition)}
+                </span>
+                <div style={{ width: 5, height: 5, borderRadius: '50%', background: color, flexShrink: 0 }} />
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </>
+  )
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MOBILE — iOS-style header strip + 3-panel slide navigation
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Mobile header (KL-aligned: icon/back + title + action icons)
+  const MobileHeader = () => (
+    <div style={{ background: 'white', borderBottom: '1px solid rgba(0,0,0,0.06)', flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 16px', height: 52 }}>
+        {/* Left: back or page icon */}
+        {mobilePanel > 0 ? (
+          <button
+            onClick={() => setMobilePanel(p => p - 1)}
+            style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(46,150,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', flexShrink: 0 }}>
+            <ArrowLeft size={18} style={{ color: BRAND }} />
+          </button>
+        ) : (
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(46,150,255,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Stethoscope size={17} style={{ color: BRAND }} />
           </div>
         )}
-        <div style={{ padding: showBack ? '6px 16px 14px' : '14px 24px 14px', display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <span style={{
-              display: 'inline-block', fontSize: 10.5, fontWeight: 600, color: catColor,
-              background: `${catColor}12`, padding: '2px 8px', borderRadius: 20, marginBottom: 5,
-            }}>
-              {selectedCat?.category?.replace(/^\d+\.\s*/, '')}
-            </span>
-            <h2 style={{ fontSize: showBack ? 20 : 19, fontWeight: 700, color: '#1C1C1E', margin: '0 0 2px', lineHeight: 1.25 }}>
-              {engName(selectedCond)}
-            </h2>
-            {cnName(selectedCond) && (
-              <p style={{ fontSize: 14, color: '#636366', margin: 0, fontFamily: '"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif' }}>
-                {cnName(selectedCond)}
-              </p>
-            )}
-          </div>
-          {!showBack && (
-            <div style={{ flexShrink: 0, paddingTop: 4 }}>
-              <LangToggle value={lang} onChange={handleLang} />
-            </div>
+
+        {/* Title + subtitle */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontSize: 16, fontWeight: 700, color: '#040E1C', margin: 0, lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {mobilePanel === 0 ? 'UW Guide'
+             : mobilePanel === 1 ? (selectedCat?.category?.replace(/^\d+\.\s*/, '') || 'Conditions')
+             : engName(selectedCond || '')}
+          </p>
+          {mobilePanel === 0 && !loadingManifest && manifest.length > 0 && (
+            <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>
+              {manifest.reduce((s, c) => s + c.conditions.length, 0)} conditions · {manifest.length} categories
+            </p>
+          )}
+          {mobilePanel === 1 && selectedCat && (
+            <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>
+              {selectedCat.conditions.length} conditions
+            </p>
+          )}
+          {mobilePanel === 2 && selectedCond && cnName(selectedCond) && (
+            <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0, fontFamily: '"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif' }}>
+              {cnName(selectedCond)}
+            </p>
+          )}
+        </div>
+
+        {/* Right: context-sensitive actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+          {mobilePanel === 0 && (
+            <button
+              onClick={() => { setMobileSearchOpen(v => !v); if (mobileSearchOpen) setGlobalSearch('') }}
+              style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: mobileSearchOpen ? 'rgba(46,150,255,0.10)' : 'transparent',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                border: 'none', cursor: 'pointer',
+                color: mobileSearchOpen ? BRAND : '#6B7280',
+              }}>
+              <Search size={18} />
+            </button>
+          )}
+          {mobilePanel === 1 && (
+            <button
+              onClick={() => setMobileCondSearch(v => !v)}
+              style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: mobileCondSearch ? 'rgba(46,150,255,0.10)' : (condSearch ? 'rgba(46,150,255,0.06)' : 'transparent'),
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                border: 'none', cursor: 'pointer',
+                color: (mobileCondSearch || condSearch) ? BRAND : '#6B7280',
+              }}>
+              <Search size={18} />
+            </button>
+          )}
+          {mobilePanel === 2 && selectedCond && (
+            <LangToggle value={lang} onChange={handleLang} />
           )}
         </div>
       </div>
-    )
-  }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // MOBILE LAYOUT  — slide-panel navigation
-  // ═══════════════════════════════════════════════════════════════════════════
+      {/* Expandable search bar — Panel 0 (global search) */}
+      {mobilePanel === 0 && mobileSearchOpen && (
+        <div style={{ padding: '0 16px 12px' }}>
+          <div style={{ position: 'relative' }}>
+            {renderSearchBar({ value: globalSearch, onChange: setGlobalSearch, placeholder: 'Search all conditions…', inputRef: searchRef })}
+            {renderSearchDropdown()}
+          </div>
+        </div>
+      )}
+
+      {/* Expandable filter bar — Panel 1 (condition filter) */}
+      {mobilePanel === 1 && mobileCondSearch && (
+        <div style={{ padding: '0 16px 12px' }}>
+          {renderSearchBar({ value: condSearch, onChange: setCondSearch, placeholder: 'Filter conditions…', compact: true })}
+        </div>
+      )}
+
+      {/* Category badge strip — Panel 2 */}
+      {mobilePanel === 2 && selectedCat && (
+        <div style={{ padding: '0 16px 10px' }}>
+          <span style={{ display: 'inline-block', fontSize: 10.5, fontWeight: 600, color: catColor, background: `${catColor}12`, padding: '2px 10px', borderRadius: 20 }}>
+            {selectedCat.category.replace(/^\d+\.\s*/, '')}
+          </span>
+        </div>
+      )}
+    </div>
+  )
+
   function renderMobile() {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', background: '#F2F2F7' }}>
         <style>{`
           @keyframes uw-slide-in-right { from { opacity: 0; transform: translateX(24px) } to { opacity: 1; transform: translateX(0) } }
           @keyframes uw-slide-in-left  { from { opacity: 0; transform: translateX(-24px) } to { opacity: 1; transform: translateX(0) } }
           @keyframes uw-spin           { to { transform: rotate(360deg) } }
         `}</style>
 
-        {/* Sliding viewport */}
+        {/* Unified iOS-style header */}
+        <MobileHeader />
+
+        {/* Sliding content panels */}
         <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
 
-          {/* ── Panel 0: Home ── */}
+          {/* ── Panel 0: Category grid (home) ── */}
           {mobilePanel === 0 && (
-            <div key="home" style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: '#F2F2F7', animation: 'uw-slide-in-left 0.22s ease' }}>
-              {/* Header */}
-              <div style={{ background: 'white', padding: '14px 16px 12px', borderBottom: '1px solid rgba(0,0,0,0.07)', flexShrink: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 11, background: `${BRAND}12`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Stethoscope size={17} style={{ color: BRAND }} />
-                  </div>
-                  <div>
-                    <p style={{ fontSize: 17, fontWeight: 700, color: '#1C1C1E', margin: 0, lineHeight: 1.2 }}>UW Guide</p>
-                    {!loadingManifest && (
-                      <p style={{ fontSize: 12, color: '#8E8E93', margin: 0 }}>
-                        {manifest.reduce((s, c) => s + c.conditions.length, 0)} conditions · {manifest.length} categories
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div style={{ position: 'relative' }}>
-                  {renderSearchBar({ value: globalSearch, onChange: setGlobalSearch, placeholder: 'Search all conditions…', inputRef: searchRef })}
-                  {renderSearchDropdown()}
-                </div>
-              </div>
-
-              {/* Scrollable content */}
-              <div style={{ flex: 1, overflowY: 'auto', padding: '14px 14px 24px', WebkitOverflowScrolling: 'touch' }}>
+            <div key="home" style={{
+              position: 'absolute', inset: 0,
+              overflowY: 'auto', background: '#F2F2F7',
+              animation: 'uw-slide-in-left 0.22s ease',
+              WebkitOverflowScrolling: 'touch',
+            }}>
+              <div style={{ padding: '14px 14px 24px' }}>
 
                 {/* Recent conditions */}
-                {recent.length > 0 && !globalSearch && (
+                {recent.length > 0 && !globalSearch && !mobileSearchOpen && (
                   <div style={{ marginBottom: 20 }}>
                     <p style={{ fontSize: 11, fontWeight: 700, color: '#AEAEB2', textTransform: 'uppercase', letterSpacing: '0.07em', margin: '0 4px 8px' }}>Recent</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -658,8 +830,8 @@ export default function MedicalUnderwritingPage() {
                   </div>
                 )}
 
-                {/* Category 2-col grid */}
-                {!loadingManifest && !globalSearch && (
+                {/* Category 2-column grid */}
+                {!loadingManifest && !mobileSearchOpen && (
                   <div>
                     <p style={{ fontSize: 11, fontWeight: 700, color: '#AEAEB2', textTransform: 'uppercase', letterSpacing: '0.07em', margin: '0 4px 8px' }}>Categories</p>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -704,37 +876,14 @@ export default function MedicalUnderwritingPage() {
             </div>
           )}
 
-          {/* ── Panel 1: Conditions ── */}
+          {/* ── Panel 1: Conditions list ── */}
           {mobilePanel === 1 && (
-            <div key="conds" style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: 'white', animation: 'uw-slide-in-right 0.22s ease' }}>
-              {/* Back header */}
-              <div style={{ flexShrink: 0, borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', padding: '4px 4px 0' }}>
-                  <button onClick={() => setMobilePanel(0)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 2, minHeight: 44, padding: '0 10px', background: 'none', border: 'none', cursor: 'pointer', color: BRAND }}
-                  >
-                    <ChevronLeft size={22} style={{ color: BRAND }} />
-                    <span style={{ fontSize: 16, color: BRAND }}>Back</span>
-                  </button>
-                </div>
-                {selectedCat && (
-                  <div style={{ padding: '2px 16px 10px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 34, height: 34, borderRadius: 10, background: `${catColor}14`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <CatIcon size={15} style={{ color: catColor }} />
-                    </div>
-                    <div>
-                      <p style={{ fontSize: 16, fontWeight: 700, color: '#1C1C1E', margin: 0, lineHeight: 1.2 }}>
-                        {selectedCat.category.replace(/^\d+\.\s*/, '')}
-                      </p>
-                      <p style={{ fontSize: 12, color: '#8E8E93', margin: 0 }}>{selectedCat.conditions.length} conditions</p>
-                    </div>
-                  </div>
-                )}
-                <div style={{ padding: '0 12px 10px' }}>
-                  {renderSearchBar({ value: condSearch, onChange: setCondSearch, placeholder: 'Filter…', compact: true })}
-                </div>
-              </div>
-              {/* List */}
+            <div key="conds" style={{
+              position: 'absolute', inset: 0,
+              display: 'flex', flexDirection: 'column',
+              background: 'white',
+              animation: 'uw-slide-in-right 0.22s ease',
+            }}>
               <div ref={condListRef} style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
                 {filteredConditions.length === 0
                   ? <p style={{ fontSize: 14, color: '#8E8E93', textAlign: 'center', padding: '28px 16px' }}>No match</p>
@@ -752,9 +901,13 @@ export default function MedicalUnderwritingPage() {
 
           {/* ── Panel 2: Detail ── */}
           {mobilePanel === 2 && (
-            <div key="detail" style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: '#FAFAFA', animation: 'uw-slide-in-right 0.22s ease' }}>
-              {renderDetailHeader(true)}
-              <div style={{ flex: 1, overflowY: 'auto', padding: '18px 16px 40px', WebkitOverflowScrolling: 'touch' }}>
+            <div key="detail" style={{
+              position: 'absolute', inset: 0,
+              display: 'flex', flexDirection: 'column',
+              background: '#FAFAFA',
+              animation: 'uw-slide-in-right 0.22s ease',
+            }}>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 40px', WebkitOverflowScrolling: 'touch' }}>
                 {renderDetailContent()}
               </div>
             </div>
@@ -766,260 +919,261 @@ export default function MedicalUnderwritingPage() {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // DESKTOP / TABLET LAYOUT
+  // DESKTOP + TABLET — persistent sidebar (desktop) or drawer (tablet)
   // ═══════════════════════════════════════════════════════════════════════════
   function renderDesktop() {
     return (
-      <div style={{ display: 'flex', height: '100%', background: '#F2F2F7' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#F2F2F7', position: 'relative', overflow: 'hidden' }}>
         <style>{`@keyframes uw-spin { to { transform: rotate(360deg) } }`}</style>
 
-        {/* ── Category panel ─────────────────────────────────────────────── */}
-        <div style={{
-          width: 220, flexShrink: 0, background: '#FAFAFA',
-          borderRight: '1px solid rgba(0,0,0,0.07)',
-          display: 'flex', flexDirection: 'column',
-        }}>
-          {/* Header + global search */}
-          <div style={{ padding: '14px 14px 10px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 10 }}>
-              <div style={{ width: 30, height: 30, borderRadius: 9, background: `${BRAND}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Stethoscope size={14} style={{ color: BRAND }} />
-              </div>
-              <div>
-                <p style={{ fontSize: 13, fontWeight: 700, color: '#1C1C1E', margin: 0, lineHeight: 1.2 }}>UW Guide</p>
-                {!loadingManifest && (
-                  <p style={{ fontSize: 10.5, color: '#8E8E93', margin: 0 }}>
-                    {manifest.reduce((s, c) => s + c.conditions.length, 0)} conditions
-                  </p>
-                )}
-              </div>
-            </div>
-            <div style={{ position: 'relative' }}>
-              {renderSearchBar({ value: globalSearch, onChange: setGlobalSearch, inputRef: searchRef, compact: true })}
-              {renderSearchDropdown()}
-            </div>
-          </div>
+        {/* ── Tablet: drawer backdrop ── */}
+        {isTablet && drawerOpen && (
+          <div
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.40)', backdropFilter: 'blur(2px)', zIndex: 40 }}
+            onClick={() => setDrawerOpen(false)}
+          />
+        )}
 
-          {!globalSearch && (
-            <div style={{ padding: '8px 14px 4px' }}>
-              <span style={{ fontSize: 9.5, fontWeight: 700, color: '#C7C7CC', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Categories</span>
-            </div>
-          )}
-
-          <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 8 }}>
-            {loadingManifest ? (
-              <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 32 }}>
-                <Spinner size={20} />
-              </div>
-            ) : manifest.map((cat, idx) => {
-              const color  = CAT_COLORS[idx % CAT_COLORS.length]
-              const Icon   = CAT_ICONS[idx % CAT_ICONS.length] || Stethoscope
-              const active = selectedCat?.category === cat.category && !globalSearch
-              return (
-                <button key={cat.category}
-                  onClick={() => { setGlobalSearch(''); setSelectedCat(active ? null : cat) }}
-                  style={{
-                    width: '100%', display: 'flex', alignItems: 'center', gap: 9,
-                    padding: '8px 12px 8px 14px',
-                    background: active ? `${color}10` : 'transparent',
-                    border: 'none', cursor: 'pointer', textAlign: 'left',
-                    position: 'relative', transition: 'background 0.12s', minHeight: 40,
-                  }}
-                  onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(0,0,0,0.04)' }}
-                  onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
-                >
-                  {active && <span style={{ position: 'absolute', left: 0, top: 4, bottom: 4, width: 3, borderRadius: '0 3px 3px 0', background: color }} />}
-                  <div style={{ width: 26, height: 26, borderRadius: 8, background: active ? `${color}22` : `${color}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Icon size={12} style={{ color }} />
-                  </div>
-                  <span style={{ fontSize: 12, lineHeight: 1.35, flex: 1, color: active ? '#1C1C1E' : '#374151', fontWeight: active ? 600 : 400 }}>
-                    {cat.category.replace(/^\d+\.\s*/, '')}
-                  </span>
-                  <span style={{ fontSize: 10, color: '#C7C7CC', flexShrink: 0 }}>{cat.conditions.length}</span>
-                </button>
-              )
-            })}
-          </div>
-
-          {/* Recent conditions (desktop) */}
-          {recent.length > 0 && !globalSearch && (
-            <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', padding: '8px 0 4px' }}>
-              <p style={{ fontSize: 9.5, fontWeight: 700, color: '#C7C7CC', textTransform: 'uppercase', letterSpacing: '0.07em', padding: '0 14px 4px', margin: 0 }}>Recent</p>
-              {recent.slice(0, 4).map((r, i) => {
-                const cidx  = manifest.findIndex(c => c.category === r.category)
-                const color = cidx >= 0 ? CAT_COLORS[cidx] : BRAND
-                return (
-                  <button key={i} onClick={() => openCondition(r.category, r.condition)}
-                    style={{
-                      width: '100%', display: 'flex', alignItems: 'center', gap: 7,
-                      padding: '6px 14px', background: 'none', border: 'none', cursor: 'pointer',
-                      textAlign: 'left', minHeight: 34, transition: 'background 0.1s',
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)' }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
-                  >
-                    <Clock size={11} style={{ color: '#AEAEB2', flexShrink: 0 }} />
-                    <span style={{ fontSize: 11.5, color: '#6B7280', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {engName(r.condition)}
-                    </span>
-                    <div style={{ width: 5, height: 5, borderRadius: '50%', background: color, flexShrink: 0 }} />
-                  </button>
-                )
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* ── Condition panel ─────────────────────────────────────────────── */}
-        {selectedCat && !globalSearch && (
+        {/* ── Tablet: category drawer (slides in from left) ── */}
+        {isTablet && (
           <div style={{
-            width: 252, flexShrink: 0, background: 'white',
+            position: 'fixed', left: 0, top: 0, bottom: 0,
+            width: 260, background: '#FAFAFA',
             borderRight: '1px solid rgba(0,0,0,0.07)',
             display: 'flex', flexDirection: 'column',
+            zIndex: 50,
+            transform: drawerOpen ? 'translateX(0)' : 'translateX(-100%)',
+            transition: 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
+            boxShadow: drawerOpen ? '4px 0 24px rgba(0,0,0,0.12)' : 'none',
           }}>
-            <div style={{ padding: '12px 14px 10px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 30, height: 30, borderRadius: 9, background: `${catColor}14`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <CatIcon size={14} style={{ color: catColor }} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: 13, fontWeight: 700, color: catColor, margin: 0, lineHeight: 1.2 }}>
-                  {selectedCat.category.replace(/^\d+\.\s*/, '')}
-                </p>
-                <p style={{ fontSize: 10.5, color: '#8E8E93', margin: 0 }}>{selectedCat.conditions.length} conditions</p>
-              </div>
-            </div>
-            <div style={{ padding: '8px 10px 6px' }}>
-              {renderSearchBar({ value: condSearch, onChange: setCondSearch, placeholder: 'Filter…', compact: true })}
-            </div>
-            <div ref={condListRef} style={{ flex: 1, overflowY: 'auto' }}>
-              {filteredConditions.length === 0
-                ? <p style={{ fontSize: 12.5, color: '#8E8E93', textAlign: 'center', padding: '22px 16px' }}>No match</p>
-                : filteredConditions.map(cond => (
-                  <ConditionRow key={cond} cond={cond}
-                    active={selectedCond === cond}
-                    color={catColor}
-                    onClick={() => openCondition(selectedCat, cond)}
-                  />
-                ))
-              }
-            </div>
+            <CategoryPanelContent inDrawer={true} />
           </div>
         )}
 
-        {/* ── Detail / Welcome / Search panel ─────────────────────────────── */}
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* ── Tablet: header strip (drawer toggle + breadcrumb + lang) ── */}
+        {isTablet && (
+          <div style={{
+            background: 'white', borderBottom: '1px solid rgba(0,0,0,0.06)',
+            flexShrink: 0, height: 52,
+            display: 'flex', alignItems: 'center', padding: '0 16px', gap: 10, zIndex: 10,
+          }}>
+            {/* Drawer toggle */}
+            <button
+              onClick={() => setDrawerOpen(v => !v)}
+              style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: drawerOpen ? 'rgba(46,150,255,0.08)' : 'transparent',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                border: 'none', cursor: 'pointer',
+                color: drawerOpen ? BRAND : '#6B7280', flexShrink: 0,
+              }}>
+              {drawerOpen ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
+            </button>
 
-          {/* Welcome */}
-          {!selectedCat && !globalSearch && (
-            <div style={{ flex: 1, overflowY: 'auto', padding: '36px 28px 48px' }}>
-              <div style={{ textAlign: 'center', marginBottom: 36 }}>
-                <div style={{ width: 66, height: 66, borderRadius: 20, background: `${BRAND}0E`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                  <Stethoscope size={28} strokeWidth={1.4} style={{ color: BRAND, opacity: 0.8 }} />
-                </div>
-                <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1C1C1E', margin: '0 0 6px' }}>Medical UW Guide</h2>
-                <p style={{ fontSize: 14, color: '#8E8E93', margin: 0 }}>
-                  {loadingManifest ? 'Loading…' : `${manifest.reduce((s, c) => s + c.conditions.length, 0)} conditions across ${manifest.length} categories`}
-                </p>
-              </div>
-              {!loadingManifest && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(145px, 1fr))', gap: 10, maxWidth: 780, margin: '0 auto' }}>
-                  {manifest.map((cat, idx) => {
-                    const color = CAT_COLORS[idx % CAT_COLORS.length]
-                    const Icon  = CAT_ICONS[idx % CAT_ICONS.length] || Stethoscope
-                    return (
-                      <button key={cat.category} onClick={() => setSelectedCat(cat)}
-                        style={{
-                          background: 'white', borderRadius: 15, padding: '14px 13px 12px',
-                          textAlign: 'left', border: '1px solid rgba(0,0,0,0.07)',
-                          boxShadow: '0 1px 4px rgba(0,0,0,0.04)', cursor: 'pointer',
-                          transition: 'all 0.15s', display: 'flex', flexDirection: 'column', gap: 8,
-                        }}
-                        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.10)' }}
-                        onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)' }}
-                      >
-                        <div style={{ width: 36, height: 36, borderRadius: 10, background: `${color}14`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <Icon size={16} style={{ color }} />
-                        </div>
-                        <div>
-                          <p style={{ fontSize: 12, fontWeight: 600, color: '#1C1C1E', lineHeight: 1.35, margin: 0 }}>
-                            {cat.category.replace(/^\d+\.\s*/, '')}
-                          </p>
-                          <p style={{ fontSize: 11, color: '#8E8E93', margin: '2px 0 0' }}>{cat.conditions.length} conditions</p>
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* No condition selected */}
-          {selectedCat && !selectedCond && !globalSearch && (
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 40, color: '#D1D1D6' }}>
-              <div style={{ width: 50, height: 50, borderRadius: 14, background: `${catColor}0D`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <CatIcon size={22} style={{ color: `${catColor}55` }} />
-              </div>
-              <p style={{ fontSize: 14, margin: 0, color: '#AEAEB2' }}>Select a condition from the list</p>
-            </div>
-          )}
-
-          {/* Inline search results (desktop — no dropdown on wide screen) */}
-          {globalSearch && (
-            <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px 48px' }}>
-              <p style={{ fontSize: 10.5, fontWeight: 700, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 14 }}>
-                {searchResults.length} result{searchResults.length !== 1 ? 's' : ''} for &ldquo;{globalSearch}&rdquo;
+            {/* Title / breadcrumb */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 15, fontWeight: 700, color: '#040E1C', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.25 }}>
+                {selectedCond
+                  ? engName(selectedCond)
+                  : selectedCat
+                    ? selectedCat.category.replace(/^\d+\.\s*/, '')
+                    : 'UW Guide'}
               </p>
-              {searchResults.length === 0 ? (
-                <p style={{ fontSize: 14, color: '#8E8E93' }}>No conditions found.</p>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 7, maxWidth: 640 }}>
-                  {searchResults.map((r, i) => {
-                    const cidx  = manifest.findIndex(c => c.category === r.category)
-                    const color = cidx >= 0 ? CAT_COLORS[cidx] : BRAND
-                    const Icon  = cidx >= 0 ? (CAT_ICONS[cidx] || Stethoscope) : Stethoscope
-                    return (
-                      <button key={i} onClick={() => openCondition(r.category, r.condition, true)}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: 12,
-                          padding: '10px 14px', borderRadius: 12, cursor: 'pointer',
-                          background: 'white', border: '1px solid rgba(0,0,0,0.07)',
-                          transition: 'all 0.12s', textAlign: 'left',
-                        }}
-                        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.08)' }}
-                        onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none' }}
-                      >
-                        <div style={{ width: 32, height: 32, borderRadius: 9, background: `${color}14`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <Icon size={14} style={{ color }} />
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontSize: 13.5, fontWeight: 500, color: '#1C1C1E', margin: 0 }}>{engName(r.condition)}</p>
-                          {cnName(r.condition) && <p style={{ fontSize: 11.5, color: '#8E8E93', margin: '1px 0 0' }}>{cnName(r.condition)}</p>}
-                        </div>
-                        <span style={{ fontSize: 10.5, color, background: `${color}12`, padding: '2px 8px', borderRadius: 20, flexShrink: 0, fontWeight: 600 }}>
-                          {r.category.replace(/^\d+\.\s*/, '')}
-                        </span>
-                        <ChevronRight size={13} style={{ color: '#C7C7CC', flexShrink: 0 }} />
-                      </button>
-                    )
-                  })}
-                </div>
+              {selectedCat && (
+                <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>
+                  {selectedCond
+                    ? selectedCat.category.replace(/^\d+\.\s*/, '')
+                    : `${selectedCat.conditions.length} conditions`}
+                </p>
               )}
+            </div>
+
+            {/* Language toggle (when condition is open) */}
+            {selectedCond && !globalSearch && (
+              <LangToggle value={lang} onChange={handleLang} />
+            )}
+          </div>
+        )}
+
+        {/* ── Main content row ── */}
+        <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
+
+          {/* ── Desktop only: persistent category sidebar ── */}
+          {isDesktop && (
+            <div style={{ width: 220, flexShrink: 0, background: '#FAFAFA', borderRight: '1px solid rgba(0,0,0,0.07)', display: 'flex', flexDirection: 'column' }}>
+              <CategoryPanelContent inDrawer={false} />
             </div>
           )}
 
-          {/* Condition detail */}
-          {selectedCond && !globalSearch && (
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              {renderDetailHeader(false)}
-              <div style={{ flex: 1, overflowY: 'auto', padding: '22px 28px 48px' }}>
-                <div style={{ maxWidth: 800 }}>
-                  {renderDetailContent()}
+          {/* ── Condition list panel (desktop + tablet when category selected) ── */}
+          {selectedCat && !globalSearch && (
+            <div style={{ width: 252, flexShrink: 0, background: 'white', borderRight: '1px solid rgba(0,0,0,0.07)', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ padding: '12px 14px 10px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                <div style={{ width: 30, height: 30, borderRadius: 9, background: `${catColor}14`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <CatIcon size={14} style={{ color: catColor }} />
                 </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: catColor, margin: 0, lineHeight: 1.2 }}>
+                    {selectedCat.category.replace(/^\d+\.\s*/, '')}
+                  </p>
+                  <p style={{ fontSize: 10.5, color: '#8E8E93', margin: 0 }}>{selectedCat.conditions.length} conditions</p>
+                </div>
+              </div>
+              <div style={{ padding: '8px 10px 6px', flexShrink: 0 }}>
+                {renderSearchBar({ value: condSearch, onChange: setCondSearch, placeholder: 'Filter…', compact: true })}
+              </div>
+              <div ref={condListRef} style={{ flex: 1, overflowY: 'auto' }}>
+                {filteredConditions.length === 0
+                  ? <p style={{ fontSize: 12.5, color: '#8E8E93', textAlign: 'center', padding: '22px 16px' }}>No match</p>
+                  : filteredConditions.map(cond => (
+                    <ConditionRow key={cond} cond={cond}
+                      active={selectedCond === cond}
+                      color={catColor}
+                      onClick={() => openCondition(selectedCat, cond)}
+                    />
+                  ))
+                }
               </div>
             </div>
           )}
 
+          {/* ── Detail / Welcome / Search results panel ── */}
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+
+            {/* Welcome screen */}
+            {!selectedCat && !globalSearch && (
+              <div style={{ flex: 1, overflowY: 'auto', padding: '36px 28px 48px' }}>
+                <div style={{ textAlign: 'center', marginBottom: 36 }}>
+                  <div style={{ width: 66, height: 66, borderRadius: 20, background: `${BRAND}0E`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                    <Stethoscope size={28} strokeWidth={1.4} style={{ color: BRAND, opacity: 0.8 }} />
+                  </div>
+                  <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1C1C1E', margin: '0 0 6px' }}>Medical UW Guide</h2>
+                  <p style={{ fontSize: 14, color: '#8E8E93', margin: 0 }}>
+                    {loadingManifest ? 'Loading…' : `${manifest.reduce((s, c) => s + c.conditions.length, 0)} conditions across ${manifest.length} categories`}
+                  </p>
+                </div>
+                {!loadingManifest && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(145px, 1fr))', gap: 10, maxWidth: 780, margin: '0 auto' }}>
+                    {manifest.map((cat, idx) => {
+                      const color = CAT_COLORS[idx % CAT_COLORS.length]
+                      const Icon  = CAT_ICONS[idx % CAT_ICONS.length] || Stethoscope
+                      return (
+                        <button key={cat.category} onClick={() => setSelectedCat(cat)}
+                          style={{
+                            background: 'white', borderRadius: 15, padding: '14px 13px 12px',
+                            textAlign: 'left', border: '1px solid rgba(0,0,0,0.07)',
+                            boxShadow: '0 1px 4px rgba(0,0,0,0.04)', cursor: 'pointer',
+                            transition: 'all 0.15s', display: 'flex', flexDirection: 'column', gap: 8,
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.10)' }}
+                          onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)' }}
+                        >
+                          <div style={{ width: 36, height: 36, borderRadius: 10, background: `${color}14`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Icon size={16} style={{ color }} />
+                          </div>
+                          <div>
+                            <p style={{ fontSize: 12, fontWeight: 600, color: '#1C1C1E', lineHeight: 1.35, margin: 0 }}>
+                              {cat.category.replace(/^\d+\.\s*/, '')}
+                            </p>
+                            <p style={{ fontSize: 11, color: '#8E8E93', margin: '2px 0 0' }}>{cat.conditions.length} conditions</p>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* No condition selected yet */}
+            {selectedCat && !selectedCond && !globalSearch && (
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 40 }}>
+                <div style={{ width: 50, height: 50, borderRadius: 14, background: `${catColor}0D`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <CatIcon size={22} style={{ color: `${catColor}55` }} />
+                </div>
+                <p style={{ fontSize: 14, margin: 0, color: '#AEAEB2' }}>Select a condition from the list</p>
+              </div>
+            )}
+
+            {/* Inline search results */}
+            {globalSearch && (
+              <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px 48px' }}>
+                <p style={{ fontSize: 10.5, fontWeight: 700, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 14 }}>
+                  {searchResults.length} result{searchResults.length !== 1 ? 's' : ''} for &ldquo;{globalSearch}&rdquo;
+                </p>
+                {searchResults.length === 0 ? (
+                  <p style={{ fontSize: 14, color: '#8E8E93' }}>No conditions found.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 7, maxWidth: 640 }}>
+                    {searchResults.map((r, i) => {
+                      const cidx  = manifest.findIndex(c => c.category === r.category)
+                      const color = cidx >= 0 ? CAT_COLORS[cidx] : BRAND
+                      const Icon  = cidx >= 0 ? (CAT_ICONS[cidx] || Stethoscope) : Stethoscope
+                      return (
+                        <button key={i} onClick={() => openCondition(r.category, r.condition, true)}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 12,
+                            padding: '10px 14px', borderRadius: 12, cursor: 'pointer',
+                            background: 'white', border: '1px solid rgba(0,0,0,0.07)',
+                            transition: 'all 0.12s', textAlign: 'left',
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.08)' }}
+                          onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none' }}
+                        >
+                          <div style={{ width: 32, height: 32, borderRadius: 9, background: `${color}14`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <Icon size={14} style={{ color }} />
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ fontSize: 13.5, fontWeight: 500, color: '#1C1C1E', margin: 0 }}>{engName(r.condition)}</p>
+                            {cnName(r.condition) && <p style={{ fontSize: 11.5, color: '#8E8E93', margin: '1px 0 0' }}>{cnName(r.condition)}</p>}
+                          </div>
+                          <span style={{ fontSize: 10.5, color, background: `${color}12`, padding: '2px 8px', borderRadius: 20, flexShrink: 0, fontWeight: 600 }}>
+                            {r.category.replace(/^\d+\.\s*/, '')}
+                          </span>
+                          <ChevronRight size={13} style={{ color: '#C7C7CC', flexShrink: 0 }} />
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Condition detail */}
+            {selectedCond && !globalSearch && (
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                {/* Desktop: detail header bar with condition title + lang toggle */}
+                {isDesktop && (
+                  <div style={{ background: 'white', borderBottom: '1px solid rgba(0,0,0,0.07)', flexShrink: 0 }}>
+                    <div style={{ padding: '14px 24px', display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <span style={{ display: 'inline-block', fontSize: 10.5, fontWeight: 600, color: catColor, background: `${catColor}12`, padding: '2px 8px', borderRadius: 20, marginBottom: 5 }}>
+                          {selectedCat?.category?.replace(/^\d+\.\s*/, '')}
+                        </span>
+                        <h2 style={{ fontSize: 19, fontWeight: 700, color: '#1C1C1E', margin: '0 0 2px', lineHeight: 1.25 }}>
+                          {engName(selectedCond)}
+                        </h2>
+                        {cnName(selectedCond) && (
+                          <p style={{ fontSize: 14, color: '#636366', margin: 0, fontFamily: '"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif' }}>
+                            {cnName(selectedCond)}
+                          </p>
+                        )}
+                      </div>
+                      <div style={{ flexShrink: 0, paddingTop: 4 }}>
+                        <LangToggle value={lang} onChange={handleLang} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div style={{ flex: 1, overflowY: 'auto', padding: '22px 28px 48px' }}>
+                  <div style={{ maxWidth: 800 }}>
+                    {renderDetailContent()}
+                  </div>
+                </div>
+              </div>
+            )}
+
+          </div>
         </div>
       </div>
     )
@@ -1028,14 +1182,16 @@ export default function MedicalUnderwritingPage() {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Mobile */}
-      <div className="md:hidden" style={{ flex: 1, minHeight: 0 }}>
-        {renderMobile()}
-      </div>
-      {/* Tablet + Desktop */}
-      <div className="hidden md:flex" style={{ flex: 1, minHeight: 0 }}>
-        {renderDesktop()}
-      </div>
+      {isMobile && (
+        <div style={{ flex: 1, minHeight: 0 }}>
+          {renderMobile()}
+        </div>
+      )}
+      {!isMobile && (
+        <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
+          {renderDesktop()}
+        </div>
+      )}
     </div>
   )
 }
