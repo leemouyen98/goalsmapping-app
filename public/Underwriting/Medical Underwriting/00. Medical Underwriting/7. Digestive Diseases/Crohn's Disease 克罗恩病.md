@@ -1,11 +1,13 @@
 #Medical_Underwriting/Digestive_Diseases
 
-Ulcerative colitis is a long-term condition in which the colon and rectum become inflamed. It can cause severe bouts of bloody diarrhoea, abdominal cramps, severe pain, fatigue, fever and significant weight loss.
-溃疡性结肠炎是结肠及直肠长期反复发炎的疾病，可引起严重的血性腹泻、腹部痉挛、剧痛、疲劳、发烧及明显体重减轻。
+Crohn's disease is a long-term inflammatory bowel disease (IBD) that causes inflammation throughout the digestive tract. It most commonly affects the end of the small intestine and the beginning of the large intestine. Symptoms include abdominal pain, severe diarrhoea, fatigue, weight loss and malnutrition.
+克罗恩病是一种慢性炎症性肠病（IBD），可引起消化道各处炎症，最常见于小肠末端及大肠起始部位。主要症状包括腹痛、严重腹泻、疲劳、体重减轻及营养不良。
 
-![[Colitis 01.png]]
+![[Crohn's Disease 01.png]]
 
-![Ulcerative Colitis](https://youtu.be/LHN2YlZRKYU)
+![[Crohn's Disease 02.png]]
+
+![Crohn's Disease](https://youtu.be/x5PGGsaFGNA)
 
 ## FREQUENTLY ASKED QUESTIONS
 ## 常见问题
@@ -33,20 +35,20 @@ Ulcerative colitis is a long-term condition in which the colon and rectum become
 ## EXAMPLE OF DISCLOSURE
 ## 披露示例
 
-> Diagnosed with ulcerative colitis on dd/mm/yy by Dr xxx of yy hospital. Colonoscopy has been performed — found to be due to infection. Well discharged. Report attached.
-> 由 yy 医院 Dr xxx 医生于 dd/mm/yy 诊断患有溃疡性结肠炎。已进行结肠镜检查，发现为感染所致。康复出院。报告随附。
-> Fully recovered after 1 week of medication.
-> 服药1周后完全康复。
+> Diagnosed with Crohn's disease on dd/mm/yy by Dr xxx of yy hospital. OGDS & colonoscopy have been performed. Well discharged. Report attached.
+> 由 yy 医院 Dr xxx 医生于 dd/mm/yy 诊断患有克罗恩病。已完成胃镜（OGDS）及结肠镜检查，康复出院，报告随附。
+> On regular medical follow-up.
+> 进行定期医疗随访。
 
 ## UNDERWRITING OUTCOMES
 ## 核保结果
 
-> Life / TPD / CI:
-> 人寿保险 / 全残保险 / 严重疾病保险：
+> Life:
+> 人寿保险：
 > – Standard case
 > – 标准承保
 >
-> Medical insurance:
-> 医疗保险：
-> – Exclusion
-> – 除外承保
+> TPD / CI / Medical insurance:
+> 全残保险 / 严重疾病保险 / 医疗保险：
+> – Decline case
+> – 拒保

@@ -1,9 +1,10 @@
 #Medical_Underwriting/Digestive_Diseases
 
-Is a chronic digestive disease characterized by inflammation of the inner lining of the colon. Infection, loss of blood supply in the colon and Inflammatory Bowel Disease (IBD) are all possible causes of an inflamed colon.
+Colitis is a chronic digestive disease characterised by inflammation of the inner lining of the colon. It can be caused by infection, reduced blood supply to the colon, or Inflammatory Bowel Disease (IBD).
+结肠炎是以结肠内壁发炎为特征的慢性消化系统疾病，可由感染、结肠供血不足或炎症性肠病（IBD）引起。
 
-# EXAMPLE CASE OF HOSPITAL ADMISSION
-# 住院案例示例
+## EXAMPLE CASE OF HOSPITAL ADMISSION
+## 住院案例示例
 
 > COLITIS + COLONOSCOPY IN ONE OF PRIVATE HOSPITAL ON APRIL 2010 (3 DAYS ADMISSION) IN PENANG.
 > COLITIS + COLONOSCOPY 在某私立医院 于4月2010 (3 天住院) （槟城）.
@@ -19,43 +20,43 @@ Is a chronic digestive disease characterized by inflammation of the inner lining
 > All information disclosed in this page serves as references only.
 > 本页所披露的所有信息仅供参考。
 
-# FREQUENTLY ASKED QUESTIONS
-# 常见问题
+## FREQUENTLY ASKED QUESTIONS
+## 常见问题
 
-> 1) Actual & date diagnosis ?
+> 1) Actual date of diagnosis?
 > 1) 实际诊断日期？
-> 2) Any investigation tests such endoscopy, blood & urine tests etc... ? If yes, please state the dates & results.
+> 2) Any investigation tests such as endoscopy, blood & urine tests, etc.? If yes, please state the dates & results.
 > 2) 是否进行过任何检查（如内镜、血液及尿液检查等）？如是，请说明日期及结果。
-> 3) On medication / treatment ? If yes, what type & period of treatment.
+> 3) On medication / treatment? If yes, what type & period of treatment.
 > 3) 是否在服药/接受治疗？如是，说明治疗类型及疗程。
-> 4) Still on medical follow up ? If yes, how frequent (weekly / monthly etc) ?
+> 4) Still on medical follow-up? If yes, how frequent (weekly / monthly, etc.)?
 > 4) 是否仍在进行医疗随访？如是，多久一次（每周/每月等）？
 
-# COMMON REQUIREMENTS
-# 一般所需文件
+## COMMON REQUIREMENTS
+## 所需文件
 
 > 1) From client / doctor
 > 1) 来自客户 / 医生
-> a) Any relevant reports such as blood / urine / scan test ?
+> a) Any relevant reports such as blood / urine / scan test?
 > a) 任何相关报告，如血液/尿液/扫描检查？
 >
 > 2) Medical attendant report (MAR) / Attending physician statement (APS)
 > 2) 医疗随行报告（MAR）/ 主治医生声明（APS）
 
-# EXAMPLE OF DISCLOSURE
-# 披露示例
+## EXAMPLE OF DISCLOSURE
+## 披露示例
 
-> Diagnosed to colitis on dd/mm/yy by Dr xxx of yy hospital. Colonoscopy has been performed & was found due to infection. Well discharged. Report is attached.
+> Diagnosed with colitis on dd/mm/yy by Dr xxx of yy hospital. Colonoscopy has been performed — found to be due to infection. Well discharged. Report attached.
 > 由 yy 医院 Dr xxx 医生于 dd/mm/yy 诊断患有结肠炎。已进行结肠镜检查，发现为感染所致。康复出院。报告随附。
-> Fully recovered after 1week of medication.
+> Fully recovered after 1 week of medication.
 > 服药1周后完全康复。
 
-# POSSIBILITIES OF UNDERWRITING OUTCOMES
-# 核保结果可能性
+## UNDERWRITING OUTCOMES
+## 核保结果
 
-> Life / TPD/ CI:
+> Life / TPD / CI:
 > 人寿保险 / 全残保险 / 严重疾病保险：
-> – standard case
+> – Standard case
 > – 标准承保
 >
 > Medical insurance:
