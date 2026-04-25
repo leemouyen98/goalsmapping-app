@@ -301,8 +301,10 @@ function ContentSkeleton() {
 function CategoryCardSkeleton() {
   return (
     <div style={{ background: 'white', borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.07)' }}>
-      <SkeletonLine w="100%" h={72} br={0} />
-      <div style={{ padding: '10px 12px 12px' }}>
+      <div style={{ padding: '12px 12px 0' }}>
+        <SkeletonLine w={36} h={36} br={10} />
+      </div>
+      <div style={{ padding: '8px 12px 12px' }}>
         <SkeletonLine w="75%" h={12} br={5} mb={6} />
         <SkeletonLine w="35%" h={10} br={5} />
       </div>
@@ -1223,31 +1225,21 @@ export default function MedicalUnderwritingPage() {
                               minHeight: 120,
                             }}
                           >
-                            {/* Colored header strip */}
-                            <div style={{
-                              height: 64, background: `linear-gradient(135deg, ${hexAlpha(color, 0.15)} 0%, ${hexAlpha(color, 0.06)} 100%)`,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              position: 'relative', overflow: 'hidden',
-                            }}>
-                              {/* Decorative circle */}
-                              <div style={{
-                                position: 'absolute', right: -12, top: -12,
-                                width: 60, height: 60, borderRadius: '50%',
-                                background: hexAlpha(color, 0.1),
-                              }} />
-                              <div style={{ width: 38, height: 38, borderRadius: 11, background: hexAlpha(color, 0.18), display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
-                                <Icon size={18} style={{ color }} />
+                            {/* Icon */}
+                            <div style={{ padding: '12px 12px 0' }}>
+                              <div style={{ width: 36, height: 36, borderRadius: 10, background: hexAlpha(color, 0.12), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Icon size={16} style={{ color }} />
                               </div>
                             </div>
                             {/* Text */}
-                            <div style={{ padding: '9px 11px 11px' }}>
+                            <div style={{ padding: '8px 12px 12px' }}>
                               {(() => { const { primary, secondary } = catLabel(cat.category, lang); return (
                                 <>
                                   <p style={{ fontSize: 12.5, fontWeight: 600, color: '#1C1C1E', lineHeight: 1.3, margin: 0 }}>{primary}</p>
                                   {secondary && <p style={{ fontSize: 10, color: '#9CA3AF', lineHeight: 1.25, margin: '2px 0 0' }}>{secondary}</p>}
                                 </>
                               )})()}
-                              <p style={{ fontSize: 11, color: color, fontWeight: 600, margin: '4px 0 0' }}>{cat.conditions.length}</p>
+                              <p style={{ fontSize: 11, color, fontWeight: 600, margin: '4px 0 0' }}>{cat.conditions.length}</p>
                             </div>
                           </button>
                         )
@@ -1523,19 +1515,13 @@ export default function MedicalUnderwritingPage() {
                           onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = `0 8px 24px ${hexAlpha(color, 0.18)}` }}
                           onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.05)' }}
                         >
-                          {/* Color header strip */}
-                          <div style={{
-                            height: 60,
-                            background: `linear-gradient(135deg, ${hexAlpha(color, 0.15)} 0%, ${hexAlpha(color, 0.06)} 100%)`,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            position: 'relative', overflow: 'hidden',
-                          }}>
-                            <div style={{ position: 'absolute', right: -10, top: -10, width: 55, height: 55, borderRadius: '50%', background: hexAlpha(color, 0.1) }} />
-                            <div style={{ width: 34, height: 34, borderRadius: 10, background: hexAlpha(color, 0.18), display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
+                          {/* Icon */}
+                          <div style={{ padding: '12px 12px 0' }}>
+                            <div style={{ width: 34, height: 34, borderRadius: 10, background: hexAlpha(color, 0.12), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               <Icon size={15} style={{ color }} />
                             </div>
                           </div>
-                          <div style={{ padding: '9px 12px 11px' }}>
+                          <div style={{ padding: '8px 12px 12px' }}>
                             {(() => { const { primary, secondary } = catLabel(cat.category, lang); return (
                               <>
                                 <p style={{ fontSize: 12, fontWeight: 600, color: '#1C1C1E', lineHeight: 1.3, margin: 0 }}>{primary}</p>
