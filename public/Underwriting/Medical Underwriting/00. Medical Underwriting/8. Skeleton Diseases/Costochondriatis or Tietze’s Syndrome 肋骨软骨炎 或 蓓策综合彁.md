@@ -1,9 +1,9 @@
 #Medical_Underwriting/Skeleton_Diseases
 
-Musculoskeletal disorders are injuries or conditions affecting the muscles, nerves, tendons, joints, cartilage and spinal discs. Work-related musculoskeletal disorders (WMSD) arise when the work environment or the performance of work contributes significantly to the condition.
-肌肉骨骼疾病是肌肉、神经、肌腱、关节、软骨及椎间盘的损伤或病变。工作相关肌肉骨骼疾病（WMSD）是指工作环境或作业方式对病情有重大影响的情况。
+Costochondritis is a painful swelling of the chest, over the junction of rib bone and cartilage. Tietze syndrome involves inflammation at the costochondral joint — where the ribs connect to the breastbone — causing chest pain and localised swelling. It is typically treated with rest and over-the-counter medication.
+肋软骨炎是胸部肋骨在骨与软骨交界处出现的疼痛性肿胀。蒂策综合征是肋骨与胸骨连接处（肋软骨关节）受刺激而发炎，引起胸痛及局部肿胀，通常以休息及非处方药治疗。
 
-![[Musculoskeletal Disorders 01.png]]
+![[Costochondratis 01.png]]
 
 ## FREQUENTLY ASKED QUESTIONS
 ## 常见问题
@@ -34,20 +34,20 @@ Musculoskeletal disorders are injuries or conditions affecting the muscles, nerv
 ## EXAMPLE OF DISCLOSURE
 ## 披露示例
 
-> Diagnosed with musculoskeletal disorder 5 years ago. Consulted Dr xxx of yy hospital.
-> 5年前诊断患有肌肉骨骼疾病，已咨询 yy 医院 Dr xxx 医生。
-> On medication & regular medical follow-up currently.
-> 目前在服药并定期随访。
+> Diagnosed with costochondritis on dd/mm/yy. Consulted Dr xxx of yy hospital — X-ray & ECG performed, both normal. Reports attached.
+> 于 dd/mm/yy 诊断患有肋软骨炎，已咨询 yy 医院 Dr xxx 医生，X光及心电图检查结果正常，报告随附。
+> On painkillers when necessary.
+> 必要时服用止痛药。
 
 ## UNDERWRITING OUTCOMES
 ## 核保结果
 
-> Life:
-> 人寿保险：
+> Life / TPD / CI:
+> 人寿保险 / 全残保险 / 严重疾病保险：
 > – Standard case
 > – 标准承保
 >
-> TPD / CI / Medical insurance:
-> 全残保险 / 严重疾病保险 / 医疗保险：
-> – KIV Exclusion, depends on severity / residual impairment / complications
-> – 备查除外承保，取决于严重程度/残余障碍/并发症
+> Medical insurance:
+> 医疗保险：
+> – Exclusion
+> – 除外承保
