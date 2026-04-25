@@ -18,7 +18,7 @@ import {
   Plus, Search, Trash2, Tag, MoreHorizontal,
   ChevronRight, Phone, AlertCircle,
   Target, Shield, CheckCircle2,
-  LayoutList, Columns, Clock, AlertTriangle,
+  LayoutList, Columns, AlertTriangle,
   SortAsc,
 } from 'lucide-react'
 
@@ -177,9 +177,7 @@ function StatsBar({ contacts, activeFilter, onFilter }) {
   const stats = useMemo(() => {
     const now = new Date()
     now.setHours(0,0,0,0)
-    const thisMonth = now.getMonth()
-    const thisYear  = now.getFullYear()
-    let clients = 0, prospects = 0, overdue = 0, stale = 0, tasks = 0, review = 0, birthdays = 0
+    let clients = 0, prospects = 0, overdue = 0, stale = 0
     contacts.forEach(c => {
       const stage = getEffectiveStage(c)
       if (stage === 'Client') clients++
@@ -189,28 +187,20 @@ function StatsBar({ contacts, activeFilter, onFilter }) {
         const d = new Date(c.reviewDate)
         d.setHours(0,0,0,0)
         if (d < now) overdue++
-        if (d.getMonth() === thisMonth && d.getFullYear() === thisYear) review++
       }
       // Stale: no activity in 90+ days
       const last = getLastActivity(c)
       if (!last || (Date.now() - last) / 86400000 > 90) stale++
-      // Pending tasks
-      if ((c.tasks || []).some(task => task.status !== 'completed')) tasks++
-      // Birthdays this month
-      if (c.dob && new Date(c.dob).getMonth() === thisMonth) birthdays++
     })
-    return { total: contacts.length, clients, prospects, overdue, stale, tasks, review, birthdays }
+    return { total: contacts.length, clients, prospects, overdue, stale }
   }, [contacts])
 
   const pills = [
-    { key: 'all',       label: t('contacts.filterAll'),          value: stats.total,     color: '#2E96FF' },
-    { key: 'clients',   label: t('contacts.filterClients'),       value: stats.clients,   color: '#34C759' },
-    { key: 'prospects', label: t('contacts.filterPipeline'),      value: stats.prospects, color: '#FF9500' },
-    { key: 'tasks',     label: 'Pending Tasks',                   value: stats.tasks,     color: '#FF9500' },
-    { key: 'overdue',   label: t('contacts.filterReviewDue'),     value: stats.overdue,   color: '#AF52DE' },
-    { key: 'review',    label: 'Reviews This Month',              value: stats.review,    color: '#AF52DE' },
-    { key: 'birthdays', label: 'Birthdays This Month',            value: stats.birthdays, color: '#FF2D55' },
-    { key: 'stale',     label: t('contacts.filterNoActivity'),    value: stats.stale,     color: '#FF3B30' },
+    { key: 'all',       label: t('contacts.filterAll'),       value: stats.total,     color: '#2E96FF' },
+    { key: 'clients',   label: t('contacts.filterClients'),   value: stats.clients,   color: '#34C759' },
+    { key: 'prospects', label: t('contacts.filterPipeline'),  value: stats.prospects, color: '#FF9500' },
+    { key: 'overdue',   label: t('contacts.filterReviewDue'), value: stats.overdue,   color: '#AF52DE' },
+    { key: 'stale',     label: t('contacts.filterNoActivity'),value: stats.stale,     color: '#FF3B30' },
   ]
 
   return (
@@ -573,21 +563,6 @@ export default function ContactsPage() {
         const last = getLastActivity(c)
         return !last || (Date.now() - last) / 86400000 > 90
       })
-    } else if (filter === 'tasks') {
-      list = list.filter(c =>
-        (c.tasks || []).some(task => task.status !== 'completed')
-      )
-    } else if (filter === 'review') {
-      const thisMonth = now.getMonth()
-      const thisYear  = now.getFullYear()
-      list = list.filter(c => {
-        if (!c.reviewDate) return false
-        const d = new Date(c.reviewDate)
-        return d.getMonth() === thisMonth && d.getFullYear() === thisYear
-      })
-    } else if (filter === 'birthdays') {
-      const thisMonth = now.getMonth()
-      list = list.filter(c => c.dob && new Date(c.dob).getMonth() === thisMonth)
     }
 
     // Sort
