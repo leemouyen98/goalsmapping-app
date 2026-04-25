@@ -62,6 +62,41 @@ const CAT_ICONS = [
   Utensils, Bone, Eye, Brain, Flame, Users, FlaskConical, ShieldAlert,
 ]
 
+// ── Category bilingual names ───────────────────────────────────────────────────
+const CAT_ZH = {
+  'Cancer, Tumour & Blood Diseases':           '癌症、肿瘤及血液疾病',
+  'Cardiovascular Diseases':                   '心血管疾病',
+  'Brain & Nervous Diseases':                  '脑部及神经疾病',
+  'Endocrine Diseases':                        '内分泌疾病',
+  'Urinary Diseases':                          '泌尿疾病',
+  'Respiratory Diseases':                      '呼吸系统疾病',
+  'Digestive Diseases':                        '消化系统疾病',
+  'Skeleton Diseases':                         '骨骼疾病',
+  'Specific Sense Diseases':                   '特殊感觉器官疾病',
+  'Mental Diseases':                           '精神疾病',
+  'Biliary Diseases':                          '胆道疾病',
+  'Sexually Transmitted Disease (STD) & AIDS': '性病及艾滋病',
+}
+
+/**
+ * Returns the category name(s) to display.
+ *   lang='en'        → English only
+ *   lang='zh'        → Chinese (falls back to English if no translation)
+ *   lang='bilingual' → { primary: EN, secondary: ZH }
+ */
+function catLabel(rawCategory, lang) {
+  const en = rawCategory.replace(/^\d+\.\s*/, '')
+  const zh = CAT_ZH[en] || ''
+  if (lang === 'zh')        return { primary: zh || en, secondary: '' }
+  if (lang === 'bilingual') return { primary: en, secondary: zh }
+  return { primary: en, secondary: '' }
+}
+
+/** Convenience: just the primary display string (for compact / single-line contexts) */
+function catPrimary(rawCategory, lang) {
+  return catLabel(rawCategory, lang).primary
+}
+
 // ── Global CSS (injected once) ─────────────────────────────────────────────────
 const GLOBAL_CSS = `
   @keyframes uw-spin     { to { transform: rotate(360deg) } }
@@ -631,7 +666,7 @@ function SearchDropdown({ query, results, manifest, onSelect }) {
 }
 
 // ── CategoryPanelContent (sidebar + drawer) ────────────────────────────────────
-function CategoryPanelContent({ manifest, loadingManifest, selectedCat, globalSearch, setGlobalSearch, setSelectedCat, recent, setDrawerOpen, openCondition, searchRef, inDrawer = false }) {
+function CategoryPanelContent({ manifest, loadingManifest, selectedCat, globalSearch, setGlobalSearch, setSelectedCat, recent, setDrawerOpen, openCondition, searchRef, lang = 'en', inDrawer = false }) {
   const debouncedGlobal = useDebounced(globalSearch)
 
   const searchResults = useMemo(() => {
@@ -732,13 +767,20 @@ function CategoryPanelContent({ manifest, loadingManifest, selectedCat, globalSe
               }}>
                 <Icon size={12} style={{ color }} />
               </div>
-              <span style={{
-                fontSize: 12, lineHeight: 1.35, flex: 1,
-                color: active ? '#1C1C1E' : '#374151',
-                fontWeight: active ? 600 : 400,
-              }}>
-                {cat.category.replace(/^\d+\.\s*/, '')}
-              </span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <span style={{
+                  fontSize: 12, lineHeight: 1.3, display: 'block',
+                  color: active ? '#1C1C1E' : '#374151',
+                  fontWeight: active ? 600 : 400,
+                }}>
+                  {catPrimary(cat.category, lang)}
+                </span>
+                {lang === 'bilingual' && CAT_ZH[cat.category.replace(/^\d+\.\s*/, '')] && (
+                  <span style={{ fontSize: 9.5, color: '#AEAEB2', display: 'block', lineHeight: 1.2, marginTop: 1 }}>
+                    {CAT_ZH[cat.category.replace(/^\d+\.\s*/, '')]}
+                  </span>
+                )}
+              </div>
               <span style={{
                 fontSize: 10, color: active ? color : '#C7C7CC',
                 background: active ? hexAlpha(color, 0.1) : 'transparent',
@@ -1026,7 +1068,7 @@ export default function MedicalUnderwritingPage() {
                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               }}>
                 {mobilePanel === 0 ? 'UW Guide'
-                 : mobilePanel === 1 ? (selectedCat?.category?.replace(/^\d+\.\s*/, '') || 'Conditions')
+                 : mobilePanel === 1 ? (selectedCat ? catPrimary(selectedCat.category, lang) : 'Conditions')
                  : engName(selectedCond || '')}
               </p>
               {mobilePanel === 0 && !loadingManifest && manifest.length > 0 && (
@@ -1110,7 +1152,7 @@ export default function MedicalUnderwritingPage() {
                 background: hexAlpha(catColor, 0.1), padding: '3px 10px 3px 8px', borderRadius: 20,
               }}>
                 <CatIcon size={10} style={{ color: catColor }} />
-                {selectedCat.category.replace(/^\d+\.\s*/, '')}
+                {catPrimary(selectedCat.category, lang)}
               </span>
             </div>
           )}
@@ -1199,10 +1241,13 @@ export default function MedicalUnderwritingPage() {
                             </div>
                             {/* Text */}
                             <div style={{ padding: '9px 11px 11px' }}>
-                              <p style={{ fontSize: 12.5, fontWeight: 600, color: '#1C1C1E', lineHeight: 1.3, margin: 0 }}>
-                                {cat.category.replace(/^\d+\.\s*/, '')}
-                              </p>
-                              <p style={{ fontSize: 11, color: color, fontWeight: 600, margin: '3px 0 0' }}>{cat.conditions.length}</p>
+                              {(() => { const { primary, secondary } = catLabel(cat.category, lang); return (
+                                <>
+                                  <p style={{ fontSize: 12.5, fontWeight: 600, color: '#1C1C1E', lineHeight: 1.3, margin: 0 }}>{primary}</p>
+                                  {secondary && <p style={{ fontSize: 10, color: '#9CA3AF', lineHeight: 1.25, margin: '2px 0 0' }}>{secondary}</p>}
+                                </>
+                              )})()}
+                              <p style={{ fontSize: 11, color: color, fontWeight: 600, margin: '4px 0 0' }}>{cat.conditions.length}</p>
                             </div>
                           </button>
                         )
@@ -1315,6 +1360,7 @@ export default function MedicalUnderwritingPage() {
               setGlobalSearch={setGlobalSearch} setSelectedCat={setSelectedCat}
               recent={recent} setDrawerOpen={setDrawerOpen}
               openCondition={openCondition} searchRef={searchRef}
+              lang={lang}
               inDrawer={true}
             />
           </div>
@@ -1345,11 +1391,11 @@ export default function MedicalUnderwritingPage() {
 
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ fontSize: 15, fontWeight: 700, color: '#040E1C', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.25 }}>
-                {selectedCond ? engName(selectedCond) : selectedCat ? selectedCat.category.replace(/^\d+\.\s*/, '') : 'UW Guide'}
+                {selectedCond ? engName(selectedCond) : selectedCat ? catPrimary(selectedCat.category, lang) : 'UW Guide'}
               </p>
               {selectedCat && (
                 <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>
-                  {selectedCond ? selectedCat.category.replace(/^\d+\.\s*/, '') : `${selectedCat.conditions.length} conditions`}
+                  {selectedCond ? catPrimary(selectedCat.category, lang) : `${selectedCat.conditions.length} conditions`}
                 </p>
               )}
             </div>
@@ -1372,6 +1418,7 @@ export default function MedicalUnderwritingPage() {
                 setGlobalSearch={setGlobalSearch} setSelectedCat={setSelectedCat}
                 recent={recent} setDrawerOpen={setDrawerOpen}
                 openCondition={openCondition} searchRef={searchRef}
+                lang={lang}
                 inDrawer={false}
               />
             </div>
@@ -1392,7 +1439,7 @@ export default function MedicalUnderwritingPage() {
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: 13, fontWeight: 700, color: catColor, margin: 0, lineHeight: 1.2 }}>
-                    {selectedCat.category.replace(/^\d+\.\s*/, '')}
+                    {catPrimary(selectedCat.category, lang)}
                   </p>
                   <p style={{ fontSize: 10.5, color: '#8E8E93', margin: 0 }}>
                     {filteredConditions.length !== selectedCat.conditions.length
@@ -1489,10 +1536,13 @@ export default function MedicalUnderwritingPage() {
                             </div>
                           </div>
                           <div style={{ padding: '9px 12px 11px' }}>
-                            <p style={{ fontSize: 12, fontWeight: 600, color: '#1C1C1E', lineHeight: 1.35, margin: 0 }}>
-                              {cat.category.replace(/^\d+\.\s*/, '')}
-                            </p>
-                            <p style={{ fontSize: 11, color, fontWeight: 600, margin: '3px 0 0' }}>{cat.conditions.length} conditions</p>
+                            {(() => { const { primary, secondary } = catLabel(cat.category, lang); return (
+                              <>
+                                <p style={{ fontSize: 12, fontWeight: 600, color: '#1C1C1E', lineHeight: 1.3, margin: 0 }}>{primary}</p>
+                                {secondary && <p style={{ fontSize: 10, color: '#9CA3AF', lineHeight: 1.25, margin: '2px 0 0' }}>{secondary}</p>}
+                              </>
+                            )})()}
+                            <p style={{ fontSize: 11, color, fontWeight: 600, margin: '4px 0 0' }}>{cat.conditions.length} conditions</p>
                           </div>
                         </button>
                       )
@@ -1554,7 +1604,7 @@ export default function MedicalUnderwritingPage() {
                             {cnName(r.condition) && <p style={{ fontSize: 11.5, color: '#8E8E93', margin: '1px 0 0' }}>{cnName(r.condition)}</p>}
                           </div>
                           <span style={{ fontSize: 10.5, color, background: hexAlpha(color, 0.1), padding: '2px 8px', borderRadius: 20, flexShrink: 0, fontWeight: 600 }}>
-                            {r.category.replace(/^\d+\.\s*/, '')}
+                            {catPrimary(r.category, lang)}
                           </span>
                           <ChevronRight size={13} style={{ color: '#C7C7CC', flexShrink: 0 }} />
                         </button>
@@ -1589,7 +1639,7 @@ export default function MedicalUnderwritingPage() {
                           color: catColor, background: hexAlpha(catColor, 0.1),
                           padding: '2px 8px', borderRadius: 20, marginBottom: 5,
                         }}>
-                          {selectedCat?.category?.replace(/^\d+\.\s*/, '')}
+                          {selectedCat ? catPrimary(selectedCat.category, lang) : ''}
                         </span>
                         <h2 style={{ fontSize: 20, fontWeight: 700, color: '#1C1C1E', margin: '0 0 3px', lineHeight: 1.22 }}>
                           {engName(selectedCond)}
