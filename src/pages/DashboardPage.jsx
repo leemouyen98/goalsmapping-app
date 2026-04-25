@@ -626,19 +626,19 @@ export default function DashboardPage() {
             color={stats.pending > 0 ? '#FF9500' : '#34C759'} loading={contactsLoading}
             value={stats.pending}
             sub={stats.pending === 0 ? t('dashboard.statAllClear') : t('dashboard.statAcrossContacts')}
-            onClick={() => navigate('/contacts')}
+            onClick={() => navigate('/contacts?filter=tasks')}
           />
           <StatCard
             icon={CalendarClock} label={t('dashboard.statReviewsMonth')} color="#AF52DE" loading={contactsLoading}
             value={stats.reviewsMonth}
             sub={stats.reviewsMonth === 0 ? t('dashboard.statNoneScheduled') : t('dashboard.statScheduled')}
-            onClick={() => navigate('/contacts')}
+            onClick={() => navigate('/contacts?filter=review')}
           />
           <StatCard
             icon={Cake} label={t('dashboard.statBirthdaysMonth')} color="#FF2D55" loading={contactsLoading}
             value={stats.bdays}
             sub={stats.bdays === 0 ? t('dashboard.statNoneBirthday') : t('dashboard.statThisMonth')}
-            onClick={() => navigate('/contacts')}
+            onClick={() => navigate('/contacts?filter=birthdays')}
           />
         </div>
 
