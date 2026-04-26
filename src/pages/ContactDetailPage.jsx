@@ -8,7 +8,7 @@
  * · All existing functionality preserved
  */
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useContacts } from '../hooks/useContacts'
 import { useAuth } from '../hooks/useAuth'
@@ -227,12 +227,23 @@ function getNextActions(contact) {
 // Stage selector (shown in sidebar)
 function StageSelector({ stage, onChange }) {
   const [open, setOpen] = useState(false)
+  const [dropPos, setDropPos] = useState({ top: 0, left: 0 })
+  const btnRef = useRef(null)
   const s = STAGE_MAP[stage] || STAGE_MAP.Lead
 
+  const handleToggle = () => {
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect()
+      setDropPos({ top: r.bottom + 4, left: r.left })
+    }
+    setOpen(o => !o)
+  }
+
   return (
-    <div style={{ position: 'relative' }}>
+    <div>
       <button
-        onClick={() => setOpen(o => !o)}
+        ref={btnRef}
+        onClick={handleToggle}
         style={{
           display: 'flex', alignItems: 'center', gap: 6,
           padding: '4px 10px', borderRadius: 20,
@@ -247,12 +258,12 @@ function StageSelector({ stage, onChange }) {
 
       {open && (
         <>
-          <div className="fixed inset-0 z-20" onClick={() => setOpen(false)} />
+          <div className="fixed inset-0 z-[50]" onClick={() => setOpen(false)} />
           <div style={{
-            position: 'absolute', top: '100%', left: 0, marginTop: 4,
+            position: 'fixed', top: dropPos.top, left: dropPos.left,
             background: 'white', borderRadius: 10,
             boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-            border: '1px solid #F2F2F7', zIndex: 30, overflow: 'hidden',
+            border: '1px solid #F2F2F7', zIndex: 51, overflow: 'hidden',
             minWidth: 140,
           }}>
             {STAGES.map(opt => (
