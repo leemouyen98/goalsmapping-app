@@ -25,7 +25,7 @@ import ImageViewerModal from '../components/layout/ImageViewerModal'
 import PDFThumbnail from '../components/library/PDFThumbnail'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
-const BRAND = '#2E96FF'
+// FOLDER_PALETTE: dynamic per-folder accent colors — must stay as runtime values
 const FOLDER_PALETTE = [
   '#2E96FF', '#34C759', '#FF9500', '#AF52DE',
   '#FF2D55', '#30B0C7', '#5856D6', '#FF6B35',
@@ -67,6 +67,7 @@ function fileTypeLabel(mime) {
   return sub ? sub.slice(0, 6).toUpperCase() : 'File'
 }
 
+// fileColor: returns dynamic hex color per mime type — kept as runtime value
 function fileColor(mime) {
   if (mime === 'application/pdf') return '#FF3B30'
   if (mime?.startsWith('image/')) return '#34C759'
@@ -101,23 +102,27 @@ function TextInputModal({ title, placeholder, initial = '', confirmLabel = 'Save
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl p-6 w-full sm:w-80">
-        <p className="font-semibold text-[#040E1C] mb-4">{title}</p>
-        <input ref={ref} value={value} onChange={e => setValue(e.target.value)}
+      <div className="bg-hig-card rounded-t-3xl sm:rounded-2xl shadow-2xl p-6 w-full sm:w-80">
+        <p className="font-semibold text-hig-navy mb-4">{title}</p>
+        <input
+          ref={ref}
+          value={value}
+          onChange={e => setValue(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && value.trim()) onConfirm(value.trim()) }}
           placeholder={placeholder}
-          className="w-full border border-gray-200 rounded-xl px-3 py-3 text-sm outline-none focus:border-[#2E96FF] mb-4"
+          className="w-full border border-hig-gray-4 rounded-xl px-3 py-3 text-hig-subhead text-hig-text outline-none focus:border-hig-blue mb-4"
           style={{ fontSize: 16 /* prevents iOS zoom */ }}
         />
         <div className="flex gap-2">
-          <button onClick={onClose}
-            className="flex-1 py-3 text-sm rounded-xl text-gray-500 font-medium"
-            style={{ background: '#F2F2F7' }}>
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 text-hig-subhead rounded-xl text-hig-text-secondary font-medium bg-hig-bg">
             Cancel
           </button>
-          <button onClick={() => value.trim() && onConfirm(value.trim())} disabled={!value.trim()}
-            className="flex-1 py-3 text-sm rounded-xl text-white font-medium disabled:opacity-40 transition-colors"
-            style={{ background: BRAND }}>
+          <button
+            onClick={() => value.trim() && onConfirm(value.trim())}
+            disabled={!value.trim()}
+            className="flex-1 py-3 text-hig-subhead rounded-xl text-white font-medium bg-hig-blue hover:bg-blue-600 transition-colors disabled:opacity-40">
             {confirmLabel}
           </button>
         </div>
@@ -130,17 +135,17 @@ function ConfirmModal({ message, confirmLabel = 'Delete', onConfirm, onClose }) 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl p-6 w-full sm:w-80">
-        <p className="text-[#040E1C] text-sm mb-6 leading-relaxed">{message}</p>
+      <div className="bg-hig-card rounded-t-3xl sm:rounded-2xl shadow-2xl p-6 w-full sm:w-80">
+        <p className="text-hig-text text-hig-subhead mb-6 leading-relaxed">{message}</p>
         <div className="flex gap-2">
-          <button onClick={onClose}
-            className="flex-1 py-3 text-sm rounded-xl text-gray-500 font-medium"
-            style={{ background: '#F2F2F7' }}>
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 text-hig-subhead rounded-xl text-hig-text-secondary font-medium bg-hig-bg">
             Cancel
           </button>
-          <button onClick={onConfirm}
-            className="flex-1 py-3 text-sm rounded-xl text-white font-medium"
-            style={{ background: '#FF3B30' }}>
+          <button
+            onClick={onConfirm}
+            className="flex-1 py-3 text-hig-subhead rounded-xl text-white font-medium bg-hig-red hover:bg-red-600 transition-colors">
             {confirmLabel}
           </button>
         </div>
@@ -166,21 +171,23 @@ function FilterSheet({ sortBy, sortDir, typeFilter, onSort, onTypeFilter, onClos
   return (
     <div className="fixed inset-0 z-50 flex items-end" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full bg-white rounded-t-3xl shadow-2xl pb-safe" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 24px)' }}>
+      <div className="relative w-full bg-hig-card rounded-t-3xl shadow-2xl" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 24px)' }}>
         {/* Handle */}
         <div className="flex justify-center pt-3 pb-1">
-          <div style={{ width: 36, height: 4, borderRadius: 2, background: '#D1D5DB' }} />
+          <div className="w-9 h-1 rounded-sm bg-hig-gray-4" />
         </div>
         <div className="px-5 pb-2 pt-2 flex items-center justify-between">
-          <span style={{ fontSize: 17, fontWeight: 600, color: '#040E1C' }}>Sort & Filter</span>
-          <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 15, background: '#F2F2F7', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}>
-            <X size={14} style={{ color: '#6B7280' }} />
+          <span className="text-hig-headline font-semibold text-hig-navy">Sort &amp; Filter</span>
+          <button
+            onClick={onClose}
+            className="w-[30px] h-[30px] rounded-full bg-hig-bg flex items-center justify-center border-none cursor-pointer">
+            <X size={14} className="text-hig-text-secondary" />
           </button>
         </div>
 
         {/* Sort section */}
         <div className="px-5 pt-3 pb-2">
-          <p style={{ fontSize: 12, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Sort by</p>
+          <p className="text-hig-caption1 font-bold text-hig-text-secondary uppercase tracking-wider mb-2.5">Sort by</p>
           <div className="flex flex-col gap-1">
             {sortOptions.map(({ k, l }) => {
               const active = sortBy === k
@@ -188,14 +195,18 @@ function FilterSheet({ sortBy, sortDir, typeFilter, onSort, onTypeFilter, onClos
               return (
                 <button key={k} onClick={() => onSort(k)}
                   className="flex items-center justify-between rounded-xl px-4 transition-colors"
-                  style={{ height: 48, background: active ? 'rgba(46,150,255,0.08)' : 'transparent', border: `1px solid ${active ? BRAND : 'transparent'}`, cursor: 'pointer' }}>
-                  <span style={{ fontSize: 15, color: active ? BRAND : '#111827', fontWeight: active ? 600 : 400 }}>{l}</span>
+                  style={{
+                    height: 48,
+                    background: active ? 'rgba(46,150,255,0.08)' : 'transparent',
+                    border: `1px solid ${active ? '#2E96FF' : 'transparent'}`,
+                    cursor: 'pointer',
+                  }}>
+                  <span style={{ fontSize: 15, color: active ? '#2E96FF' : undefined, fontWeight: active ? 600 : 400 }}
+                    className={active ? '' : 'text-hig-text'}>{l}</span>
                   {active && (
-                    <div className="flex items-center gap-1">
-                      <span style={{ fontSize: 12, color: BRAND }}>{dir === 'asc' ? '↑ A–Z' : '↓ Z–A'}</span>
-                    </div>
+                    <span className="text-hig-caption1 text-hig-blue">{dir === 'asc' ? '↑ A–Z' : '↓ Z–A'}</span>
                   )}
-                  {!active && <ChevronRight size={16} style={{ color: '#D1D5DB' }} />}
+                  {!active && <ChevronRight size={16} className="text-hig-gray-4" />}
                 </button>
               )
             })}
@@ -203,11 +214,11 @@ function FilterSheet({ sortBy, sortDir, typeFilter, onSort, onTypeFilter, onClos
         </div>
 
         {/* Divider */}
-        <div style={{ height: 1, background: '#F2F2F7', margin: '8px 20px' }} />
+        <div className="h-px bg-hig-bg mx-5 my-2" />
 
         {/* Type section */}
         <div className="px-5 pt-2 pb-4">
-          <p style={{ fontSize: 12, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>File type</p>
+          <p className="text-hig-caption1 font-bold text-hig-text-secondary uppercase tracking-wider mb-2.5">File type</p>
           <div className="flex flex-wrap gap-2">
             {typeOptions.map(({ k, l }) => {
               const active = typeFilter === k
@@ -216,9 +227,9 @@ function FilterSheet({ sortBy, sortDir, typeFilter, onSort, onTypeFilter, onClos
                   className="flex items-center gap-1.5 transition-all"
                   style={{
                     height: 36, padding: '0 14px', borderRadius: 18,
-                    border: `1px solid ${active ? BRAND : 'rgba(0,0,0,0.1)'}`,
+                    border: `1px solid ${active ? '#2E96FF' : 'rgba(0,0,0,0.1)'}`,
                     background: active ? 'rgba(46,150,255,0.08)' : 'transparent',
-                    color: active ? BRAND : '#374151',
+                    color: active ? '#2E96FF' : undefined,
                     fontSize: 14, fontWeight: active ? 600 : 400, cursor: 'pointer',
                   }}>
                   {active && <Check size={13} style={{ flexShrink: 0 }} />}
@@ -236,20 +247,20 @@ function FilterSheet({ sortBy, sortDir, typeFilter, onSort, onTypeFilter, onClos
 // ── Sort Arrow (desktop) ───────────────────────────────────────────────────────
 function SortArrow({ field, sortBy, sortDir }) {
   const active = sortBy === field
-  if (!active) return <ChevronDown size={10} style={{ color: '#D1D5DB', marginLeft: 2, flexShrink: 0 }} />
+  if (!active) return <ChevronDown size={10} className="ml-0.5 shrink-0 text-hig-gray-4" />
   return sortDir === 'asc'
-    ? <ChevronUp size={10} style={{ color: BRAND, marginLeft: 2, flexShrink: 0 }} />
-    : <ChevronDown size={10} style={{ color: BRAND, marginLeft: 2, flexShrink: 0 }} />
+    ? <ChevronUp   size={10} className="ml-0.5 shrink-0 text-hig-blue" />
+    : <ChevronDown size={10} className="ml-0.5 shrink-0 text-hig-blue" />
 }
 
 // ── Skeleton card ──────────────────────────────────────────────────────────────
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-2xl overflow-hidden animate-pulse" style={{ border: '1px solid rgba(0,0,0,0.06)' }}>
-      <div style={{ height: 120, background: '#F2F2F7' }} />
-      <div style={{ padding: '10px 12px 12px' }}>
-        <div style={{ height: 12, background: '#F2F2F7', borderRadius: 6, marginBottom: 6, width: '70%' }} />
-        <div style={{ height: 10, background: '#F2F2F7', borderRadius: 6, width: '45%' }} />
+    <div className="bg-hig-card rounded-2xl overflow-hidden animate-pulse border border-black/[0.06]">
+      <div className="h-[120px] bg-hig-bg" />
+      <div className="px-3 pt-2.5 pb-3">
+        <div className="h-3 bg-hig-bg rounded-md mb-1.5 w-[70%]" />
+        <div className="h-2.5 bg-hig-bg rounded-md w-[45%]" />
       </div>
     </div>
   )
@@ -257,14 +268,15 @@ function SkeletonCard() {
 
 function SkeletonList() {
   return (
-    <div className="bg-white rounded-2xl overflow-hidden animate-pulse" style={{ border: '1px solid rgba(0,0,0,0.07)' }}>
+    <div className="bg-hig-card rounded-2xl overflow-hidden animate-pulse border border-black/[0.07]">
       {[1,2,3,4,5].map(i => (
-        <div key={i} className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: i < 5 ? '1px solid rgba(0,0,0,0.04)' : 'none' }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: '#F2F2F7', flexShrink: 0 }} />
-          <div style={{ flex: 1 }}>
-            <div style={{ height: 11, background: '#F2F2F7', borderRadius: 5, width: `${50 + i * 10}%` }} />
+        <div key={i} className="flex items-center gap-3 px-4 py-3"
+          style={{ borderBottom: i < 5 ? '1px solid rgba(0,0,0,0.04)' : 'none' }}>
+          <div className="w-8 h-8 rounded-lg bg-hig-bg shrink-0" />
+          <div className="flex-1">
+            <div className="h-2.5 bg-hig-bg rounded-md" style={{ width: `${50 + i * 10}%` }} />
           </div>
-          <div style={{ width: 38, height: 20, borderRadius: 10, background: '#F2F2F7' }} />
+          <div className="w-9 h-5 rounded-full bg-hig-bg" />
         </div>
       ))}
     </div>
@@ -275,9 +287,8 @@ function SkeletonList() {
 function FolderCard({ folder, color, isAdmin, onOpen, onRename, onDelete, compact }) {
   return (
     <div
-      className="group bg-white rounded-2xl overflow-hidden cursor-pointer"
+      className="group bg-hig-card rounded-2xl overflow-hidden cursor-pointer border border-black/[0.07]"
       style={{
-        border: '1px solid rgba(0,0,0,0.07)',
         boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
         transition: 'box-shadow 0.2s, transform 0.2s',
       }}
@@ -285,7 +296,7 @@ function FolderCard({ folder, color, isAdmin, onOpen, onRename, onDelete, compac
       onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.05)'; e.currentTarget.style.transform = 'none' }}
       onClick={onOpen}
     >
-      {/* Gradient thumbnail */}
+      {/* Gradient thumbnail — color is dynamic per folder */}
       <div style={{
         height: compact ? 72 : 88,
         background: `linear-gradient(135deg, ${color}18 0%, ${color}08 100%)`,
@@ -303,12 +314,12 @@ function FolderCard({ folder, color, isAdmin, onOpen, onRename, onDelete, compac
         {isAdmin && (
           <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
             <button onClick={onRename}
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:text-[#2E96FF] transition-colors"
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-hig-text-secondary hover:text-hig-blue transition-colors"
               style={{ background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(6px)', border: '1px solid rgba(0,0,0,0.08)' }}>
               <Pencil size={11} />
             </button>
             <button onClick={onDelete}
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:text-red-500 transition-colors"
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-hig-text-secondary hover:text-hig-red transition-colors"
               style={{ background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(6px)', border: '1px solid rgba(0,0,0,0.08)' }}>
               <Trash2 size={11} />
             </button>
@@ -318,10 +329,11 @@ function FolderCard({ folder, color, isAdmin, onOpen, onRename, onDelete, compac
 
       {/* Footer */}
       <div style={{ padding: compact ? '9px 12px 11px' : '11px 14px 13px' }}>
-        <p style={{ fontSize: compact ? 12 : 13, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 3 }}>
+        <p className="text-hig-text font-semibold truncate mb-0.5"
+          style={{ fontSize: compact ? 12 : 13 }}>
           {folder.name}
         </p>
-        <p className="flex items-center gap-1" style={{ fontSize: 10.5, color: '#9CA3AF' }}>
+        <p className="flex items-center gap-1 text-hig-text-secondary" style={{ fontSize: 10.5 }}>
           Open <ChevronRight size={9} />
         </p>
       </div>
@@ -333,14 +345,13 @@ function FolderCard({ folder, color, isAdmin, onOpen, onRename, onDelete, compac
 function GridCard({ file, token, isAdmin, isStarred, onOpen, onStar, onRename, onDelete, compact }) {
   const isPDF  = file.mime_type === 'application/pdf'
   const Icon   = fileIcon(file.mime_type)
-  const color  = fileColor(file.mime_type)
+  const color  = fileColor(file.mime_type)  // dynamic per mime type
   const label  = fileTypeLabel(file.mime_type)
 
   return (
     <div
-      className="group bg-white rounded-2xl overflow-hidden cursor-pointer"
+      className="group bg-hig-card rounded-2xl overflow-hidden cursor-pointer border border-black/[0.07]"
       style={{
-        border: '1px solid rgba(0,0,0,0.07)',
         boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
         transition: 'box-shadow 0.2s, transform 0.2s',
       }}
@@ -349,20 +360,17 @@ function GridCard({ file, token, isAdmin, isStarred, onOpen, onStar, onRename, o
       onClick={onOpen}
     >
       {/* Thumbnail */}
-      <div style={{ position: 'relative', height: compact ? 120 : 148, overflow: 'hidden' }}>
+      <div className="relative overflow-hidden" style={{ height: compact ? 120 : 148 }}>
         {isPDF ? (
           <PDFThumbnail fileId={file.id} token={token} />
         ) : (
-          <div style={{
-            width: '100%', height: '100%',
-            background: `${color}0D`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
+          <div className="w-full h-full flex items-center justify-center"
+            style={{ background: `${color}0D` }}>
             <Icon size={compact ? 32 : 38} style={{ color, opacity: 0.75 }} />
           </div>
         )}
 
-        {/* Type badge */}
+        {/* Type badge — color is dynamic per mime type */}
         <div style={{
           position: 'absolute', bottom: 7, left: 8,
           fontSize: 9.5, fontWeight: 700, color,
@@ -373,23 +381,23 @@ function GridCard({ file, token, isAdmin, isStarred, onOpen, onStar, onRename, o
           {label}
         </div>
 
-        {/* Star badge — top left, always visible if starred */}
+        {/* Star badge */}
         {isStarred && (
-          <div style={{ position: 'absolute', top: 7, left: 8, pointerEvents: 'none' }}>
+          <div className="absolute top-[7px] left-2 pointer-events-none">
             <Star size={12} fill="#FF9500" stroke="#FF9500" />
           </div>
         )}
 
-        {/* Admin actions — top right on hover */}
+        {/* Admin actions */}
         {isAdmin && (
           <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
             <button onClick={onRename}
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:text-[#2E96FF] transition-colors"
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-hig-text-secondary hover:text-hig-blue transition-colors"
               style={{ background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(6px)', border: '1px solid rgba(0,0,0,0.08)' }}>
               <Pencil size={11} />
             </button>
             <button onClick={onDelete}
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:text-red-500 transition-colors"
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-hig-text-secondary hover:text-hig-red transition-colors"
               style={{ background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(6px)', border: '1px solid rgba(0,0,0,0.08)' }}>
               <Trash2 size={11} />
             </button>
@@ -398,26 +406,33 @@ function GridCard({ file, token, isAdmin, isStarred, onOpen, onStar, onRename, o
       </div>
 
       {/* Footer */}
-      <div style={{ padding: '9px 12px 11px' }}>
+      <div className="px-3 pt-2.5 pb-3">
         <div className="flex items-start gap-1.5">
-          <button onClick={onStar} title={isStarred ? 'Unpin' : 'Pin'}
-            className="shrink-0 mt-0.5"
-            style={{ opacity: isStarred ? 1 : 0.2, transition: 'opacity 0.15s', background: 'none', border: 'none', cursor: 'pointer', padding: 2, margin: -2 }}
+          <button
+            onClick={onStar}
+            title={isStarred ? 'Unpin' : 'Pin'}
+            className="shrink-0 mt-0.5 p-0.5 -m-0.5"
+            style={{
+              opacity: isStarred ? 1 : 0.2,
+              transition: 'opacity 0.15s',
+              background: 'none', border: 'none', cursor: 'pointer',
+            }}
             onMouseEnter={e => { e.currentTarget.style.opacity = '1' }}
             onMouseLeave={e => { if (!isStarred) e.currentTarget.style.opacity = '0.2' }}>
             <Star size={12} fill={isStarred ? '#FF9500' : 'none'} stroke={isStarred ? '#FF9500' : '#C7C7CC'} strokeWidth={2} />
           </button>
-          <p style={{
-            fontSize: compact ? 11.5 : 12.5, fontWeight: 500, color: '#111827',
-            lineHeight: 1.35, overflow: 'hidden',
-            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-          }}>
+          <p className="text-hig-text font-medium leading-tight"
+            style={{
+              fontSize: compact ? 11.5 : 12.5,
+              overflow: 'hidden', display: '-webkit-box',
+              WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+            }}>
             {file.name}
           </p>
         </div>
-        <div className="flex items-center justify-between" style={{ marginTop: 5 }}>
-          <p style={{ fontSize: 10, color: '#9CA3AF' }}>{fmtBytes(file.size)}</p>
-          <p style={{ fontSize: 10, color: '#C4C4C4' }}>{fmtDateShort(file.uploaded_at)}</p>
+        <div className="flex items-center justify-between mt-1.5">
+          <p className="text-hig-text-secondary" style={{ fontSize: 10 }}>{fmtBytes(file.size)}</p>
+          <p className="text-hig-gray-3" style={{ fontSize: 10 }}>{fmtDateShort(file.uploaded_at)}</p>
         </div>
       </div>
     </div>
@@ -427,23 +442,20 @@ function GridCard({ file, token, isAdmin, isStarred, onOpen, onStar, onRename, o
 // ── File List Row ──────────────────────────────────────────────────────────────
 function ListRow({ file, isLast, isAdmin, isStarred, onOpen, onStar, onRename, onDelete, isMobile }) {
   const Icon  = fileIcon(file.mime_type)
-  const color = fileColor(file.mime_type)
+  const color = fileColor(file.mime_type)  // dynamic per mime type
   const label = fileTypeLabel(file.mime_type)
-  const isPDF = file.mime_type === 'application/pdf'
 
   return (
     <div
-      className="group flex items-center cursor-pointer transition-colors"
+      className="group flex items-center cursor-pointer transition-colors hover:bg-gray-50"
       style={{
         padding: isMobile ? '12px 16px' : '10px 16px',
         borderBottom: isLast ? 'none' : '1px solid rgba(0,0,0,0.04)',
         minHeight: isMobile ? 56 : 44,
       }}
-      onMouseEnter={e => { e.currentTarget.style.background = '#F9FAFB' }}
-      onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
       onClick={onOpen}
     >
-      {/* Icon */}
+      {/* Icon — color is dynamic */}
       <div style={{
         width: isMobile ? 36 : 30, height: isMobile ? 36 : 30,
         borderRadius: isMobile ? 9 : 7, flexShrink: 0,
@@ -455,47 +467,49 @@ function ListRow({ file, isLast, isAdmin, isStarred, onOpen, onStar, onRename, o
       </div>
 
       {/* Name */}
-      <div style={{ flex: 1, minWidth: 0, marginRight: 8 }}>
-        <span style={{ fontSize: isMobile ? 14 : 13, fontWeight: 500, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
+      <div className="flex-1 min-w-0 mr-2">
+        <span className="text-hig-text font-medium overflow-hidden text-ellipsis whitespace-nowrap block"
+          style={{ fontSize: isMobile ? 14 : 13 }}>
           {file.name}
         </span>
         {isMobile && (
-          <span style={{ fontSize: 11.5, color: '#9CA3AF' }}>
+          <span className="text-hig-text-secondary" style={{ fontSize: 11.5 }}>
             {fmtBytes(file.size)} · {fmtDateShort(file.uploaded_at)}
           </span>
         )}
       </div>
 
-      {/* Type badge */}
-      <div style={{ flexShrink: 0, marginRight: isMobile ? 8 : 0 }}>
-        <span style={{ fontSize: 10.5, fontWeight: 600, color, background: `${color}12`, padding: '2px 8px', borderRadius: 20 }}>
+      {/* Type badge — color is dynamic */}
+      <div className="shrink-0" style={{ marginRight: isMobile ? 8 : 0 }}>
+        <span style={{
+          fontSize: 10.5, fontWeight: 600, color,
+          background: `${color}12`, padding: '2px 8px', borderRadius: 20,
+        }}>
           {label}
         </span>
       </div>
 
       {/* Desktop: Size */}
       {!isMobile && (
-        <div style={{ width: 70, fontSize: 12, color: '#6B7280', flexShrink: 0 }}>
+        <div className="text-hig-text-secondary shrink-0" style={{ width: 70, fontSize: 12 }}>
           {fmtBytes(file.size)}
         </div>
       )}
 
       {/* Desktop: Date */}
       {!isMobile && (
-        <div style={{ width: 112, fontSize: 12, color: '#9CA3AF', flexShrink: 0 }}>
+        <div className="text-hig-text-secondary shrink-0" style={{ width: 112, fontSize: 12 }}>
           {fmtDate(file.uploaded_at)}
         </div>
       )}
 
       {/* Actions */}
-      <div
-        style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0, marginLeft: 4 }}
-        onClick={e => e.stopPropagation()}
-      >
-        <button onClick={onStar}
-          className="flex items-center justify-center rounded-lg"
+      <div className="flex items-center gap-0.5 shrink-0 ml-1" onClick={e => e.stopPropagation()}>
+        <button
+          onClick={onStar}
+          className="flex items-center justify-center rounded-lg w-8 h-8"
           style={{
-            width: 32, height: 32, border: 'none', background: 'transparent', cursor: 'pointer',
+            border: 'none', background: 'transparent', cursor: 'pointer',
             opacity: isStarred ? 1 : 0.25, transition: 'opacity 0.15s',
           }}
           onMouseEnter={e => { e.currentTarget.style.opacity = '1' }}
@@ -506,13 +520,13 @@ function ListRow({ file, isLast, isAdmin, isStarred, onOpen, onStar, onRename, o
         {isAdmin && (
           <>
             <button onClick={onRename}
-              className="flex items-center justify-center rounded-lg opacity-0 group-hover:opacity-100 hover:text-[#2E96FF] transition-all"
-              style={{ width: 32, height: 32, border: 'none', background: 'transparent', cursor: 'pointer', color: '#9CA3AF' }}>
+              className="flex items-center justify-center rounded-lg w-8 h-8 opacity-0 group-hover:opacity-100 text-hig-text-secondary hover:text-hig-blue transition-all"
+              style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}>
               <Pencil size={13} />
             </button>
             <button onClick={onDelete}
-              className="flex items-center justify-center rounded-lg opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all"
-              style={{ width: 32, height: 32, border: 'none', background: 'transparent', cursor: 'pointer', color: '#9CA3AF' }}>
+              className="flex items-center justify-center rounded-lg w-8 h-8 opacity-0 group-hover:opacity-100 text-hig-text-secondary hover:text-hig-red transition-all"
+              style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}>
               <Trash2 size={13} />
             </button>
           </>
@@ -525,11 +539,11 @@ function ListRow({ file, isLast, isAdmin, isStarred, onOpen, onStar, onRename, o
 // ── Section divider ────────────────────────────────────────────────────────────
 function SectionDivider({ icon, label, count }) {
   return (
-    <div className="flex items-center gap-2" style={{ marginBottom: 10 }}>
+    <div className="flex items-center gap-2 mb-2.5">
       {icon}
-      <span style={{ fontSize: 10.5, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{label}</span>
+      <span className="text-hig-caption2 font-bold text-hig-text-secondary uppercase tracking-widest">{label}</span>
       {count != null && (
-        <span style={{ fontSize: 10, fontWeight: 600, color: '#9CA3AF', background: 'rgba(0,0,0,0.06)', padding: '1px 6px', borderRadius: 20 }}>{count}</span>
+        <span className="text-hig-caption2 font-semibold text-hig-text-secondary bg-black/[0.06] px-1.5 py-px rounded-full">{count}</span>
       )}
     </div>
   )
@@ -752,7 +766,7 @@ export default function KnowledgeLibraryPage() {
   // Active filter count for mobile badge
   const activeFilterCount = [typeFilter !== 'all', sortBy !== 'name' || sortDir !== 'asc'].filter(Boolean).length
 
-  // Grid column style — responsive
+  // Grid column style — responsive (inline: grid-template-columns cannot be expressed as static Tailwind)
   function gridStyle() {
     if (isMobile) return { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }
     if (isTablet) return { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }
@@ -763,36 +777,38 @@ export default function KnowledgeLibraryPage() {
   const FolderPanel = ({ inDrawer }) => (
     <>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3.5" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+      <div className="flex items-center justify-between px-4 py-3.5 border-b border-black/[0.06]">
         <div className="flex items-center gap-2.5">
-          <div style={{ width: 30, height: 30, borderRadius: 9, background: 'rgba(46,150,255,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Library size={15} style={{ color: BRAND }} />
+          <div className="w-[30px] h-[30px] rounded-[9px] bg-hig-blue/10 flex items-center justify-center shrink-0">
+            <Library size={15} className="text-hig-blue" />
           </div>
-          <span style={{ fontSize: 13, fontWeight: 600, color: '#040E1C' }}>Knowledge Library</span>
+          <span className="text-hig-subhead font-semibold text-hig-navy">Knowledge Library</span>
         </div>
         {inDrawer && (
-          <button onClick={() => setDrawerOpen(false)}
-            style={{ width: 28, height: 28, borderRadius: 14, background: '#F2F2F7', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}>
-            <X size={13} style={{ color: '#6B7280' }} />
+          <button
+            onClick={() => setDrawerOpen(false)}
+            className="w-7 h-7 rounded-full bg-hig-bg flex items-center justify-center border-none cursor-pointer">
+            <X size={13} className="text-hig-text-secondary" />
           </button>
         )}
       </div>
 
       {/* Breadcrumb */}
       {folderStack.length > 0 && (
-        <div className="px-3 py-2" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)', background: 'rgba(0,0,0,0.018)' }}>
+        <div className="px-3 py-2 border-b border-black/[0.05] bg-black/[0.018]">
           <div className="flex items-center flex-wrap gap-0.5">
-            <button onClick={() => { navigateTo(-1); if (inDrawer) setDrawerOpen(false) }}
-              className="px-1.5 py-0.5 rounded text-xs font-medium hover:text-[#2E96FF] transition-colors"
-              style={{ color: '#6B7280' }}>
+            <button
+              onClick={() => { navigateTo(-1); if (inDrawer) setDrawerOpen(false) }}
+              className="px-1.5 py-0.5 rounded text-xs font-medium text-hig-text-secondary hover:text-hig-blue transition-colors">
               Library
             </button>
             {folderStack.map((crumb, i) => (
               <span key={crumb.id} className="flex items-center gap-0.5">
-                <ChevronRight size={10} style={{ color: '#D1D5DB' }} />
-                <button onClick={() => { navigateTo(i); if (inDrawer) setDrawerOpen(false) }}
-                  className="px-1.5 py-0.5 rounded text-xs font-medium transition-colors truncate max-w-[80px]"
-                  style={{ color: i === folderStack.length - 1 ? BRAND : '#6B7280' }}
+                <ChevronRight size={10} className="text-hig-gray-4" />
+                <button
+                  onClick={() => { navigateTo(i); if (inDrawer) setDrawerOpen(false) }}
+                  className="px-1.5 py-0.5 rounded text-xs font-medium transition-colors truncate max-w-[80px] hover:text-hig-blue"
+                  style={{ color: i === folderStack.length - 1 ? '#2E96FF' : undefined }}
                   title={crumb.name}>
                   {crumb.name}
                 </button>
@@ -803,13 +819,14 @@ export default function KnowledgeLibraryPage() {
       )}
 
       {/* Section header */}
-      <div className="flex items-center justify-between px-4 py-2" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-        <span style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+      <div className="flex items-center justify-between px-4 py-2 border-b border-black/[0.05]">
+        <span className="text-hig-caption2 font-bold text-hig-text-secondary uppercase tracking-wider">
           {folderStack.length === 0 ? 'Folders' : 'Subfolders'}
         </span>
         {isAdmin && (
-          <button onClick={() => setModal({ type: 'createFolder' })}
-            style={{ width: 24, height: 24, borderRadius: 6, background: 'rgba(46,150,255,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', color: BRAND }}>
+          <button
+            onClick={() => setModal({ type: 'createFolder' })}
+            className="w-6 h-6 rounded-md bg-hig-blue/10 flex items-center justify-center border-none cursor-pointer text-hig-blue">
             <Plus size={13} />
           </button>
         )}
@@ -819,12 +836,12 @@ export default function KnowledgeLibraryPage() {
       <div className="flex-1 overflow-y-auto py-1.5">
         {loadingFolders ? (
           <div className="flex items-center justify-center py-10">
-            <Loader size={15} className="animate-spin" style={{ color: '#D1D5DB' }} />
+            <Loader size={15} className="animate-spin text-hig-gray-4" />
           </div>
         ) : subfolders.length === 0 ? (
           <div className="flex flex-col items-center py-10 px-4 gap-2">
-            <FolderOpen size={24} strokeWidth={1.4} style={{ color: '#D1D5DB' }} />
-            <p style={{ fontSize: 12, color: '#9CA3AF', textAlign: 'center' }}>
+            <FolderOpen size={24} strokeWidth={1.4} className="text-hig-gray-4" />
+            <p className="text-hig-caption1 text-hig-text-secondary text-center">
               {isAdmin ? `No ${folderStack.length > 0 ? 'subfolders' : 'folders'} yet` : 'No folders available'}
             </p>
           </div>
@@ -834,31 +851,30 @@ export default function KnowledgeLibraryPage() {
             return (
               <div
                 key={folder.id}
-                className="group relative flex items-center mx-1.5 rounded-xl cursor-pointer transition-colors"
+                className="group relative flex items-center mx-1.5 rounded-xl cursor-pointer transition-colors hover:bg-black/[0.04]"
                 onClick={() => { drillInto(folder); if (inDrawer) setDrawerOpen(false) }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
               >
-                <div className="absolute left-0 top-1 bottom-1 rounded-r opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ width: 3, background: accent }} />
+                {/* Accent bar — dynamic per folder */}
+                <div className="absolute left-0 top-1 bottom-1 rounded-r w-[3px] opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ background: accent }} />
                 <div className="flex items-center gap-2 flex-1 min-w-0 px-2.5 py-2.5 pl-4">
                   <Folder size={14} style={{ color: accent, flexShrink: 0 }} />
-                  <span style={{ fontSize: 13, color: '#111827', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span className="text-hig-subhead text-hig-text flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
                     {folder.name}
                   </span>
                   {isAdmin ? (
                     <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
                       <button onClick={() => setModal({ type: 'renameFolder', target: folder })}
-                        className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-[#2E96FF] transition-colors">
+                        className="w-6 h-6 flex items-center justify-center rounded text-hig-text-secondary hover:text-hig-blue transition-colors">
                         <Pencil size={10} />
                       </button>
                       <button onClick={() => setModal({ type: 'deleteFolder', target: folder })}
-                        className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-red-500 transition-colors">
+                        className="w-6 h-6 flex items-center justify-center rounded text-hig-text-secondary hover:text-hig-red transition-colors">
                         <Trash2 size={10} />
                       </button>
                     </div>
                   ) : (
-                    <ChevronRight size={12} style={{ color: '#D1D5DB', flexShrink: 0 }} />
+                    <ChevronRight size={12} className="text-hig-gray-4 shrink-0" />
                   )}
                 </div>
               </div>
@@ -871,27 +887,28 @@ export default function KnowledgeLibraryPage() {
 
   // ── Mobile Header Strip ────────────────────────────────────────────────────
   const MobileHeader = () => (
-    <div style={{ background: 'white', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-      <div className="flex items-center gap-2 px-4" style={{ height: 52 }}>
+    <div className="bg-hig-card border-b border-black/[0.06]">
+      <div className="flex items-center gap-2 px-4 h-[52px]">
         {/* Back or Library icon */}
         {folderStack.length > 0 ? (
-          <button onClick={goBack}
-            style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(46,150,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', flexShrink: 0 }}>
-            <ArrowLeft size={18} style={{ color: BRAND }} />
+          <button
+            onClick={goBack}
+            className="w-9 h-9 rounded-[10px] bg-hig-blue/[0.08] flex items-center justify-center border-none cursor-pointer shrink-0">
+            <ArrowLeft size={18} className="text-hig-blue" />
           </button>
         ) : (
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(46,150,255,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Library size={17} style={{ color: BRAND }} />
+          <div className="w-9 h-9 rounded-[10px] bg-hig-blue/10 flex items-center justify-center shrink-0">
+            <Library size={17} className="text-hig-blue" />
           </div>
         )}
 
         {/* Title */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: 16, fontWeight: 700, color: '#040E1C', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <div className="flex-1 min-w-0">
+          <p className="text-hig-navy font-bold overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: 16 }}>
             {currentFolderName || 'Knowledge Library'}
           </p>
           {folderStack.length > 1 && (
-            <p style={{ fontSize: 11, color: '#9CA3AF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <p className="text-hig-text-secondary overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: 11 }}>
               {folderStack.slice(0, -1).map(f => f.name).join(' › ')}
             </p>
           )}
@@ -899,62 +916,51 @@ export default function KnowledgeLibraryPage() {
 
         {/* Right actions */}
         <div className="flex items-center gap-1">
-          {/* Search toggle (only in folder) */}
+          {/* Search toggle — color depends on mobileSearch state */}
           {currentFolderId && (
-            <button onClick={() => setMobileSearch(v => !v)}
+            <button
+              onClick={() => setMobileSearch(v => !v)}
+              className="w-9 h-9 rounded-[10px] flex items-center justify-center border-none cursor-pointer"
               style={{
-                width: 36, height: 36, borderRadius: 10,
                 background: mobileSearch ? 'rgba(46,150,255,0.10)' : 'transparent',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: 'none', cursor: 'pointer',
-                color: mobileSearch ? BRAND : '#6B7280',
+                color: mobileSearch ? '#2E96FF' : undefined,
               }}>
-              <Search size={18} />
+              <Search size={18} className={mobileSearch ? '' : 'text-hig-text-secondary'} />
             </button>
           )}
 
-          {/* Filter / sort (only in folder) */}
+          {/* Filter / sort — badge + color depend on activeFilterCount */}
           {currentFolderId && (
-            <div style={{ position: 'relative' }}>
-              <button onClick={() => setFilterSheet(true)}
+            <div className="relative">
+              <button
+                onClick={() => setFilterSheet(true)}
+                className="w-9 h-9 rounded-[10px] flex items-center justify-center border-none cursor-pointer"
                 style={{
-                  width: 36, height: 36, borderRadius: 10,
                   background: activeFilterCount > 0 ? 'rgba(46,150,255,0.10)' : 'transparent',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  border: 'none', cursor: 'pointer',
-                  color: activeFilterCount > 0 ? BRAND : '#6B7280',
+                  color: activeFilterCount > 0 ? '#2E96FF' : undefined,
                 }}>
-                <SlidersHorizontal size={18} />
+                <SlidersHorizontal size={18} className={activeFilterCount > 0 ? '' : 'text-hig-text-secondary'} />
               </button>
               {activeFilterCount > 0 && (
-                <div style={{
-                  position: 'absolute', top: 4, right: 4, width: 8, height: 8, borderRadius: 4,
-                  background: BRAND, border: '2px solid white',
-                }} />
+                <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-hig-blue border-2 border-white" />
               )}
             </div>
           )}
 
-          {/* View toggle (only in folder) */}
+          {/* View toggle */}
           {currentFolderId && (
-            <button onClick={() => changeView(viewMode === 'grid' ? 'list' : 'grid')}
-              style={{
-                width: 36, height: 36, borderRadius: 10, background: 'transparent',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: 'none', cursor: 'pointer', color: '#6B7280',
-              }}>
+            <button
+              onClick={() => changeView(viewMode === 'grid' ? 'list' : 'grid')}
+              className="w-9 h-9 rounded-[10px] bg-transparent flex items-center justify-center border-none cursor-pointer text-hig-text-secondary">
               {viewMode === 'grid' ? <List size={18} /> : <LayoutGrid size={18} />}
             </button>
           )}
 
           {/* Folder panel toggle (tablet only) */}
           {isTablet && (
-            <button onClick={() => setDrawerOpen(v => !v)}
-              style={{
-                width: 36, height: 36, borderRadius: 10, background: 'transparent',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: 'none', cursor: 'pointer', color: '#6B7280',
-              }}>
+            <button
+              onClick={() => setDrawerOpen(v => !v)}
+              className="w-9 h-9 rounded-[10px] bg-transparent flex items-center justify-center border-none cursor-pointer text-hig-text-secondary">
               {drawerOpen ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
             </button>
           )}
@@ -964,24 +970,24 @@ export default function KnowledgeLibraryPage() {
       {/* Expandable search bar */}
       {mobileSearch && currentFolderId && (
         <div className="px-4 pb-3">
-          <div style={{ position: 'relative' }}>
-            <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', pointerEvents: 'none' }} />
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-hig-text-secondary pointer-events-none" />
             <input
               autoFocus
-              value={search} onChange={e => setSearch(e.target.value)}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
               placeholder="Search in this folder…"
+              className="w-full pl-9 pr-9 py-2.5 text-hig-callout text-hig-navy rounded-xl outline-none"
               style={{
-                width: '100%', paddingLeft: 36, paddingRight: search ? 36 : 12,
-                paddingTop: 10, paddingBottom: 10,
-                fontSize: 15, color: '#040E1C',
-                border: '1.5px solid rgba(46,150,255,0.3)', borderRadius: 12,
-                outline: 'none', background: 'rgba(46,150,255,0.04)',
-                boxSizing: 'border-box',
+                border: '1.5px solid rgba(46,150,255,0.3)',
+                background: 'rgba(46,150,255,0.04)',
+                fontSize: 15,
               }}
             />
             {search && (
-              <button onClick={() => setSearch('')}
-                style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-hig-text-secondary bg-none border-none cursor-pointer p-1">
                 <X size={14} />
               </button>
             )}
@@ -996,27 +1002,30 @@ export default function KnowledgeLibraryPage() {
     if (!currentFolderId) return null
     return (
       <div
-        className="flex items-center gap-2 px-5 bg-white flex-wrap"
-        style={{ borderBottom: '1px solid rgba(0,0,0,0.06)', minHeight: 52, paddingTop: 9, paddingBottom: 9 }}
+        className="flex items-center gap-2 px-5 bg-hig-card flex-wrap border-b border-black/[0.06]"
+        style={{ minHeight: 52, paddingTop: 9, paddingBottom: 9 }}
       >
         {/* Breadcrumb */}
-        <div style={{ minWidth: 0, marginRight: 6 }}>
+        <div className="min-w-0 mr-1.5">
           <div className="flex items-center gap-1 flex-wrap">
-            <button onClick={() => navigateTo(-1)}
-              style={{ fontSize: 11, color: '#9CA3AF', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-              className="hover:text-[#2E96FF] transition-colors">
+            <button
+              onClick={() => navigateTo(-1)}
+              className="text-hig-text-secondary hover:text-hig-blue transition-colors"
+              style={{ fontSize: 11, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
               Library
             </button>
             {folderStack.map((crumb, i) => (
-              <span key={crumb.id} className="flex items-center gap-1" style={{ flexShrink: 0 }}>
-                <span style={{ fontSize: 11, color: '#D1D5DB' }}>/</span>
-                <button onClick={() => navigateTo(i)}
+              <span key={crumb.id} className="flex items-center gap-1 shrink-0">
+                <span className="text-hig-gray-4" style={{ fontSize: 11 }}>/</span>
+                <button
+                  onClick={() => navigateTo(i)}
+                  className="hover:text-hig-blue transition-colors truncate max-w-[120px]"
                   style={{
-                    fontSize: 11, fontWeight: i === folderStack.length - 1 ? 600 : 400,
-                    color: i === folderStack.length - 1 ? '#111827' : '#9CA3AF',
+                    fontSize: 11,
+                    fontWeight: i === folderStack.length - 1 ? 600 : 400,
+                    color: i === folderStack.length - 1 ? '#1C1C1E' : undefined,
                     background: 'none', border: 'none', cursor: 'pointer', padding: 0,
                   }}
-                  className="hover:text-[#2E96FF] transition-colors truncate max-w-[120px]"
                   title={crumb.name}>
                   {crumb.name}
                 </button>
@@ -1024,7 +1033,7 @@ export default function KnowledgeLibraryPage() {
             ))}
           </div>
           {!loadingFiles && (
-            <p style={{ fontSize: 10.5, color: '#C4C4C4', marginTop: 1 }}>
+            <p className="text-hig-gray-3 mt-px" style={{ fontSize: 10.5 }}>
               {files.length} {files.length === 1 ? 'file' : 'files'}
               {filteredFiles.length !== files.length && ` · ${filteredFiles.length} shown`}
               {starredIds.size > 0 && ` · ${starredIds.size} pinned`}
@@ -1035,51 +1044,56 @@ export default function KnowledgeLibraryPage() {
         {/* Controls */}
         <div className="flex items-center gap-2 ml-auto flex-wrap">
           {/* Search */}
-          <div style={{ position: 'relative' }}>
-            <Search size={12} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', pointerEvents: 'none' }} />
+          <div className="relative">
+            <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-hig-text-secondary pointer-events-none" />
             <input
-              value={search} onChange={e => setSearch(e.target.value)}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
               placeholder="Search files…"
               style={{
-                paddingLeft: 26, paddingRight: search ? 26 : 10, paddingTop: 5, paddingBottom: 5,
+                paddingLeft: 26, paddingRight: search ? 26 : 10,
+                paddingTop: 5, paddingBottom: 5,
                 fontSize: 12, color: '#040E1C', width: 148,
                 border: '1px solid rgba(0,0,0,0.11)', borderRadius: 8,
                 outline: 'none', background: 'white', transition: 'border-color 0.15s',
               }}
-              onFocus={e => { e.target.style.borderColor = BRAND }}
+              onFocus={e => { e.target.style.borderColor = '#2E96FF' }}
               onBlur={e  => { e.target.style.borderColor = 'rgba(0,0,0,0.11)' }}
             />
             {search && (
-              <button onClick={() => setSearch('')}
-                style={{ position: 'absolute', right: 7, top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-hig-text-secondary bg-none border-none cursor-pointer p-0">
                 <X size={11} />
               </button>
             )}
           </div>
 
-          <div style={{ width: 1, height: 18, background: 'rgba(0,0,0,0.08)', flexShrink: 0 }} />
+          <div className="w-px h-[18px] bg-black/[0.08] shrink-0" />
 
-          {/* Type filter */}
-          <div className="flex items-center" style={{ gap: 3 }}>
+          {/* Type filter — active state drives inline color/bg */}
+          <div className="flex items-center gap-[3px]">
             {[{ k: 'all', l: 'All' }, { k: 'pdf', l: 'PDF' }, { k: 'image', l: 'Image' }, { k: 'other', l: 'Other' }].map(({ k, l }) => {
               const on = typeFilter === k
               return (
                 <button key={k} onClick={() => setTypeFilter(k)} style={{
                   fontSize: 11, fontWeight: 500, padding: '3px 9px', borderRadius: 20,
-                  border: `1px solid ${on ? BRAND : 'rgba(0,0,0,0.1)'}`,
+                  border: `1px solid ${on ? '#2E96FF' : 'rgba(0,0,0,0.1)'}`,
                   background: on ? 'rgba(46,150,255,0.08)' : 'transparent',
-                  color: on ? BRAND : '#6B7280', cursor: 'pointer', transition: 'all 0.12s',
-                }}>
+                  color: on ? '#2E96FF' : undefined,
+                  cursor: 'pointer', transition: 'all 0.12s',
+                }}
+                className={on ? '' : 'text-hig-text-secondary'}>
                   {l}
                 </button>
               )
             })}
           </div>
 
-          <div style={{ width: 1, height: 18, background: 'rgba(0,0,0,0.08)', flexShrink: 0 }} />
+          <div className="w-px h-[18px] bg-black/[0.08] shrink-0" />
 
-          {/* Sort */}
-          <div className="flex items-center rounded-lg overflow-hidden" style={{ border: '1px solid rgba(0,0,0,0.1)' }}>
+          {/* Sort — active state drives inline color/bg */}
+          <div className="flex items-center rounded-lg overflow-hidden border border-black/[0.1]">
             {[{ k: 'name', l: 'Name' }, { k: 'date', l: 'Date' }, { k: 'size', l: 'Size' }].map(({ k, l }, i, arr) => {
               const on = sortBy === k
               return (
@@ -1087,32 +1101,33 @@ export default function KnowledgeLibraryPage() {
                   style={{
                     padding: '4px 9px', fontSize: 11, fontWeight: on ? 600 : 500,
                     background: on ? 'rgba(46,150,255,0.1)' : 'transparent',
-                    color: on ? BRAND : '#6B7280',
-                    border: 'none', borderRight: i < arr.length - 1 ? '1px solid rgba(0,0,0,0.08)' : 'none',
+                    color: on ? '#2E96FF' : undefined,
+                    border: 'none',
+                    borderRight: i < arr.length - 1 ? '1px solid rgba(0,0,0,0.08)' : 'none',
                     cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'all 0.12s',
-                  }}>
+                  }}
+                  className={on ? '' : 'text-hig-text-secondary'}>
                   {l}
                   {on
-                    ? (sortDir === 'asc' ? <ChevronUp size={10} style={{ marginLeft: 1 }} /> : <ChevronDown size={10} style={{ marginLeft: 1 }} />)
-                    : <ChevronDown size={10} style={{ marginLeft: 1, opacity: 0.3 }} />}
+                    ? (sortDir === 'asc' ? <ChevronUp size={10} className="ml-px" /> : <ChevronDown size={10} className="ml-px" />)
+                    : <ChevronDown size={10} className="ml-px opacity-30" />}
                 </button>
               )
             })}
           </div>
 
-          {/* View toggle */}
-          <div className="flex items-center rounded-lg overflow-hidden" style={{ border: '1px solid rgba(0,0,0,0.1)' }}>
+          {/* View toggle — active state drives inline color/bg */}
+          <div className="flex items-center rounded-lg overflow-hidden border border-black/[0.1]">
             {[{ mode: 'grid', Icon: LayoutGrid }, { mode: 'list', Icon: List }].map(({ mode, Icon }) => {
               const on = viewMode === mode
               return (
                 <button key={mode} onClick={() => changeView(mode)}
+                  className="w-7 h-7 flex items-center justify-center border-none cursor-pointer transition-all"
                   style={{
-                    width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
                     background: on ? 'rgba(46,150,255,0.1)' : 'transparent',
-                    color: on ? BRAND : '#9CA3AF',
-                    border: 'none', cursor: 'pointer', transition: 'all 0.12s',
+                    color: on ? '#2E96FF' : undefined,
                   }}>
-                  <Icon size={13} />
+                  <Icon size={13} className={on ? '' : 'text-hig-text-secondary'} />
                 </button>
               )
             })}
@@ -1122,11 +1137,9 @@ export default function KnowledgeLibraryPage() {
           {isAdmin && (
             <>
               <button
-                onClick={() => fileInputRef.current?.click()} disabled={uploading}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white font-medium disabled:opacity-50 transition-colors"
-                style={{ background: BRAND, fontSize: 12 }}
-                onMouseEnter={e => { if (!uploading) e.currentTarget.style.background = '#1a7ee0' }}
-                onMouseLeave={e => { e.currentTarget.style.background = BRAND }}>
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white font-medium text-hig-footnote bg-hig-blue hover:bg-blue-600 disabled:opacity-50 transition-colors">
                 {uploading ? <Loader size={13} className="animate-spin" /> : <Upload size={13} />}
                 {uploading ? 'Uploading…' : 'Upload'}
               </button>
@@ -1154,23 +1167,23 @@ export default function KnowledgeLibraryPage() {
 
     if (files.length === 0) {
       return (
-        <div className="flex flex-col items-center justify-center" style={{ paddingTop: 80, gap: 14 }}>
+        <div className="flex flex-col items-center justify-center gap-3.5" style={{ paddingTop: 80 }}>
           {isAdmin ? (
             <>
-              <div style={{ width: 64, height: 64, borderRadius: 20, border: '2px dashed #D1D5DB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Upload size={22} strokeWidth={1.4} style={{ color: '#D1D5DB' }} />
+              <div className="w-16 h-16 rounded-2xl border-2 border-dashed border-hig-gray-4 flex items-center justify-center">
+                <Upload size={22} strokeWidth={1.4} className="text-hig-gray-4" />
               </div>
-              <div style={{ textAlign: 'center' }}>
-                <p style={{ fontSize: 14, fontWeight: 500, color: '#9CA3AF', marginBottom: 4 }}>No files yet</p>
-                <p style={{ fontSize: 12, color: '#C4C4C4' }}>
+              <div className="text-center">
+                <p className="text-hig-subhead font-medium text-hig-text-secondary mb-1">No files yet</p>
+                <p className="text-hig-footnote text-hig-gray-3">
                   {isMobile ? 'Tap the + button to upload' : 'Drag & drop or click Upload to add files'}
                 </p>
               </div>
             </>
           ) : (
             <>
-              <FolderOpen size={36} strokeWidth={1.2} style={{ color: '#D1D5DB' }} />
-              <p style={{ fontSize: 14, color: '#9CA3AF' }}>No files in this folder</p>
+              <FolderOpen size={36} strokeWidth={1.2} className="text-hig-gray-4" />
+              <p className="text-hig-subhead text-hig-text-secondary">No files in this folder</p>
             </>
           )}
         </div>
@@ -1179,11 +1192,12 @@ export default function KnowledgeLibraryPage() {
 
     if (filteredFiles.length === 0) {
       return (
-        <div className="flex flex-col items-center justify-center" style={{ paddingTop: 80, gap: 12 }}>
-          <Search size={28} strokeWidth={1.3} style={{ color: '#D1D5DB' }} />
-          <p style={{ fontSize: 14, color: '#9CA3AF' }}>No files match "{search}"</p>
-          <button onClick={() => { setSearch(''); setTypeFilter('all') }}
-            style={{ fontSize: 13, color: BRAND, background: 'rgba(46,150,255,0.08)', border: 'none', cursor: 'pointer', padding: '8px 16px', borderRadius: 8 }}>
+        <div className="flex flex-col items-center justify-center gap-3" style={{ paddingTop: 80 }}>
+          <Search size={28} strokeWidth={1.3} className="text-hig-gray-4" />
+          <p className="text-hig-subhead text-hig-text-secondary">No files match "{search}"</p>
+          <button
+            onClick={() => { setSearch(''); setTypeFilter('all') }}
+            className="text-hig-subhead text-hig-blue bg-hig-blue/[0.08] border-none cursor-pointer px-4 py-2 rounded-lg">
             Clear filters
           </button>
         </div>
@@ -1228,21 +1242,32 @@ export default function KnowledgeLibraryPage() {
     // List view
     return (
       <div style={{ padding: isMobile ? '14px 14px 80px' : '20px 20px 20px' }}>
-        <div className="bg-white rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(0,0,0,0.07)', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+        <div className="bg-hig-card rounded-2xl overflow-hidden border border-black/[0.07]"
+          style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
           {/* Sortable header — desktop only */}
           {!isMobile && (
-            <div className="flex items-center px-4 py-2" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)', background: '#FAFAFA' }}>
-              <button onClick={() => toggleSort('name')} className="flex items-center flex-1" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                <span style={{ fontSize: 10, fontWeight: 700, color: sortBy === 'name' ? BRAND : '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Name</span>
+            <div className="flex items-center px-4 py-2 border-b border-black/[0.05] bg-gray-50">
+              <button onClick={() => toggleSort('name')} className="flex items-center flex-1 bg-none border-none cursor-pointer p-0">
+                <span className="uppercase tracking-wider font-bold"
+                  style={{ fontSize: 10, color: sortBy === 'name' ? '#2E96FF' : undefined }}
+                  {...(sortBy !== 'name' && { className: 'text-hig-text-secondary uppercase tracking-wider font-bold' })}>
+                  Name
+                </span>
                 <SortArrow field="name" sortBy={sortBy} sortDir={sortDir} />
               </button>
-              <div style={{ width: 58, fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Type</div>
-              <button onClick={() => toggleSort('size')} className="flex items-center" style={{ width: 70, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                <span style={{ fontSize: 10, fontWeight: 700, color: sortBy === 'size' ? BRAND : '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Size</span>
+              <div className="text-hig-text-secondary uppercase tracking-wider font-bold" style={{ width: 58, fontSize: 10 }}>Type</div>
+              <button onClick={() => toggleSort('size')} className="flex items-center bg-none border-none cursor-pointer p-0" style={{ width: 70 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: sortBy === 'size' ? '#2E96FF' : undefined }}
+                  className={sortBy !== 'size' ? 'text-hig-text-secondary uppercase tracking-wider' : 'uppercase tracking-wider'}>
+                  Size
+                </span>
                 <SortArrow field="size" sortBy={sortBy} sortDir={sortDir} />
               </button>
-              <button onClick={() => toggleSort('date')} className="flex items-center" style={{ width: 112, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                <span style={{ fontSize: 10, fontWeight: 700, color: sortBy === 'date' ? BRAND : '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Uploaded</span>
+              <button onClick={() => toggleSort('date')} className="flex items-center bg-none border-none cursor-pointer p-0" style={{ width: 112 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: sortBy === 'date' ? '#2E96FF' : undefined }}
+                  className={sortBy !== 'date' ? 'text-hig-text-secondary uppercase tracking-wider' : 'uppercase tracking-wider'}>
+                  Uploaded
+                </span>
                 <SortArrow field="date" sortBy={sortBy} sortDir={sortDir} />
               </button>
               <div style={{ width: isAdmin ? 104 : 36 }} />
@@ -1253,9 +1278,10 @@ export default function KnowledgeLibraryPage() {
           {pinnedFiles.length > 0 && (
             <>
               {hasSections && (
-                <div className="flex items-center gap-2 px-4 py-2" style={{ background: 'rgba(255,149,0,0.04)', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                <div className="flex items-center gap-2 px-4 py-2 border-b border-black/[0.04]"
+                  style={{ background: 'rgba(255,149,0,0.04)' }}>
                   <Star size={10} fill="#FF9500" stroke="#FF9500" />
-                  <span style={{ fontSize: 10, fontWeight: 700, color: '#FF9500', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Pinned</span>
+                  <span className="text-hig-caption2 font-bold uppercase tracking-widest" style={{ color: '#FF9500' }}>Pinned</span>
                 </div>
               )}
               {pinnedFiles.map((f, i) => (
@@ -1272,8 +1298,8 @@ export default function KnowledgeLibraryPage() {
           {restFiles.length > 0 && (
             <>
               {hasSections && (
-                <div className="flex items-center gap-2 px-4 py-2" style={{ background: '#FAFAFA', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.07em' }}>All Files</span>
+                <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-black/[0.04]">
+                  <span className="text-hig-caption2 font-bold text-hig-text-secondary uppercase tracking-widest">All Files</span>
                 </div>
               )}
               {restFiles.map((f, i) => (
@@ -1303,18 +1329,15 @@ export default function KnowledgeLibraryPage() {
           {isDesktop && (
             <div className="flex items-end justify-between mb-6">
               <div>
-                <h1 style={{ fontSize: 20, fontWeight: 700, color: '#040E1C', marginBottom: 4 }}>Knowledge Library</h1>
-                <p style={{ fontSize: 13, color: '#9CA3AF' }}>
+                <h1 className="text-hig-title3 text-hig-navy mb-1">Knowledge Library</h1>
+                <p className="text-hig-footnote text-hig-text-secondary">
                   {subfolders.length === 0 ? 'No folders yet' : `${subfolders.length} ${subfolders.length === 1 ? 'folder' : 'folders'}`}
                 </p>
               </div>
               {isAdmin && (
                 <button
                   onClick={() => setModal({ type: 'createFolder' })}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-white"
-                  style={{ background: BRAND, fontSize: 13 }}
-                  onMouseEnter={e => { e.currentTarget.style.background = '#1a7ee0' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = BRAND }}>
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-white bg-hig-blue hover:bg-blue-600 transition-colors text-hig-footnote">
                   <Plus size={14} /> New Folder
                 </button>
               )}
@@ -1324,16 +1347,13 @@ export default function KnowledgeLibraryPage() {
           {/* Mobile section label */}
           {isMobile && subfolders.length > 0 && (
             <div className="flex items-center justify-between mb-3">
-              <p style={{ fontSize: 12, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <p className="text-hig-caption1 font-bold text-hig-text-secondary uppercase tracking-wider">
                 {subfolders.length} {subfolders.length === 1 ? 'Folder' : 'Folders'}
               </p>
               {isAdmin && (
-                <button onClick={() => setModal({ type: 'createFolder' })}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 4, padding: '5px 12px',
-                    borderRadius: 18, border: 'none', background: 'rgba(46,150,255,0.10)',
-                    color: BRAND, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                  }}>
+                <button
+                  onClick={() => setModal({ type: 'createFolder' })}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-full border-none bg-hig-blue/10 text-hig-blue text-hig-caption1 font-semibold cursor-pointer">
                   <Plus size={12} /> New Folder
                 </button>
               )}
@@ -1358,19 +1378,20 @@ export default function KnowledgeLibraryPage() {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center" style={{ paddingTop: 60, gap: 16 }}>
-              <div style={{ width: 64, height: 64, borderRadius: 20, background: 'rgba(46,150,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Library size={28} strokeWidth={1.3} style={{ color: BRAND, opacity: 0.6 }} />
+            <div className="flex flex-col items-center justify-center gap-4" style={{ paddingTop: 60 }}>
+              <div className="w-16 h-16 rounded-2xl bg-hig-blue/[0.08] flex items-center justify-center">
+                <Library size={28} strokeWidth={1.3} className="text-hig-blue opacity-60" />
               </div>
-              <div style={{ textAlign: 'center' }}>
-                <p style={{ fontSize: 15, fontWeight: 600, color: '#6B7280', marginBottom: 4 }}>Library is empty</p>
-                <p style={{ fontSize: 13, color: '#9CA3AF' }}>
+              <div className="text-center">
+                <p className="text-hig-callout font-semibold text-hig-text-secondary mb-1">Library is empty</p>
+                <p className="text-hig-footnote text-hig-text-secondary">
                   {isAdmin ? 'Create your first folder to get started' : 'No folders have been created yet'}
                 </p>
               </div>
               {isAdmin && (
-                <button onClick={() => setModal({ type: 'createFolder' })}
-                  style={{ padding: '10px 24px', borderRadius: 12, background: BRAND, color: 'white', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer' }}>
+                <button
+                  onClick={() => setModal({ type: 'createFolder' })}
+                  className="px-6 py-2.5 rounded-xl bg-hig-blue text-white text-hig-subhead font-semibold border-none cursor-pointer hover:bg-blue-600 transition-colors">
                   Create Folder
                 </button>
               )}
@@ -1385,22 +1406,25 @@ export default function KnowledgeLibraryPage() {
   const SubfolderPills = () => {
     if (loadingFolders || subfolders.length === 0) return null
     return (
-      <div style={{ padding: isMobile ? '10px 14px 0' : '12px 20px 0', borderBottom: '1px solid rgba(0,0,0,0.05)', background: 'white' }}>
-        <p style={{ fontSize: 10, fontWeight: 700, color: '#C4C4C4', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Subfolders</p>
-        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 10, scrollbarWidth: 'none' }}>
+      <div className="border-b border-black/[0.05] bg-hig-card"
+        style={{ padding: isMobile ? '10px 14px 0' : '12px 20px 0' }}>
+        <p className="text-hig-caption2 font-bold text-hig-gray-3 uppercase tracking-wider mb-2">Subfolders</p>
+        <div className="flex gap-1.5 overflow-x-auto pb-2.5 uw-no-scrollbar">
           {subfolders.map((sf, i) => (
-            <button key={sf.id} onClick={() => drillInto(sf)}
-              className="flex items-center gap-1.5 transition-all"
+            <button
+              key={sf.id}
+              onClick={() => drillInto(sf)}
+              className="flex items-center gap-1.5 transition-all shrink-0 min-h-[34px]"
               style={{
-                flexShrink: 0, padding: '6px 12px 6px 9px', borderRadius: 20,
+                padding: '6px 12px 6px 9px', borderRadius: 20,
                 border: '1px solid rgba(0,0,0,0.1)', background: 'white',
                 cursor: 'pointer', fontSize: isMobile ? 13 : 12, color: '#374151',
-                minHeight: 34,
               }}
               onMouseEnter={e => {
-                e.currentTarget.style.borderColor = FOLDER_PALETTE[i % FOLDER_PALETTE.length]
-                e.currentTarget.style.color = FOLDER_PALETTE[i % FOLDER_PALETTE.length]
-                e.currentTarget.style.background = `${FOLDER_PALETTE[i % FOLDER_PALETTE.length]}08`
+                const c = FOLDER_PALETTE[i % FOLDER_PALETTE.length]
+                e.currentTarget.style.borderColor = c
+                e.currentTarget.style.color = c
+                e.currentTarget.style.background = `${c}08`
               }}
               onMouseLeave={e => {
                 e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)'
@@ -1418,7 +1442,7 @@ export default function KnowledgeLibraryPage() {
 
   // ── Main Render ────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-full" style={{ background: '#F2F2F7', position: 'relative', overflow: 'hidden' }}>
+    <div className="flex h-full bg-hig-bg relative overflow-hidden">
 
       {/* ══════════════════════════════════════════════════════════════════════
           LEFT PANEL — desktop: persistent | tablet: drawer | mobile: hidden
@@ -1427,27 +1451,26 @@ export default function KnowledgeLibraryPage() {
       {/* Tablet drawer backdrop */}
       {isTablet && drawerOpen && (
         <div
-          className="fixed inset-0 bg-black/40 z-40"
-          style={{ backdropFilter: 'blur(2px)' }}
+          className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm"
           onClick={() => setDrawerOpen(false)}
         />
       )}
 
       {/* Persistent sidebar (desktop) */}
       {isDesktop && (
-        <div className="shrink-0 flex flex-col" style={{ width: 240, background: '#FAFAFA', borderRight: '1px solid rgba(0,0,0,0.07)', zIndex: 10 }}>
+        <div className="shrink-0 flex flex-col z-10 border-r border-black/[0.07]"
+          style={{ width: 240, background: '#FAFAFA' }}>
           <FolderPanel inDrawer={false} />
         </div>
       )}
 
-      {/* Drawer (tablet) */}
+      {/* Drawer (tablet) — transform is dynamic based on drawerOpen state */}
       {isTablet && (
         <div
-          className="fixed left-0 top-0 bottom-0 flex flex-col"
+          className="fixed left-0 top-0 bottom-0 flex flex-col z-50 border-r border-black/[0.07]"
           style={{
-            width: 260, background: '#FAFAFA',
-            borderRight: '1px solid rgba(0,0,0,0.07)',
-            zIndex: 50,
+            width: 260,
+            background: '#FAFAFA',
             transform: drawerOpen ? 'translateX(0)' : 'translateX(-100%)',
             transition: 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
             boxShadow: drawerOpen ? '4px 0 24px rgba(0,0,0,0.12)' : 'none',
@@ -1470,25 +1493,25 @@ export default function KnowledgeLibraryPage() {
 
         {/* Content area */}
         <div
-          className="flex-1 overflow-y-auto"
-          style={{ position: 'relative' }}
+          className="flex-1 overflow-y-auto relative"
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
           {/* Drag-and-drop overlay */}
           {isDragOver && currentFolderId && isAdmin && (
-            <div style={{
-              position: 'absolute', inset: 10, zIndex: 40,
-              background: 'rgba(46,150,255,0.06)', border: '2px dashed #2E96FF', borderRadius: 14,
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              gap: 10, pointerEvents: 'none',
-            }}>
-              <div style={{ width: 52, height: 52, borderRadius: 16, background: 'rgba(46,150,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Upload size={22} style={{ color: BRAND }} />
+            <div className="absolute z-40 flex flex-col items-center justify-center gap-2.5 pointer-events-none"
+              style={{
+                inset: 10,
+                background: 'rgba(46,150,255,0.06)',
+                border: '2px dashed #2E96FF',
+                borderRadius: 14,
+              }}>
+              <div className="w-[52px] h-[52px] rounded-2xl bg-hig-blue/[0.12] flex items-center justify-center">
+                <Upload size={22} className="text-hig-blue" />
               </div>
-              <p style={{ fontSize: 14, fontWeight: 600, color: BRAND }}>Drop to upload</p>
-              <p style={{ fontSize: 12, color: '#60A5FA' }}>into {folderStack[folderStack.length - 1]?.name}</p>
+              <p className="text-hig-subhead font-semibold text-hig-blue">Drop to upload</p>
+              <p className="text-hig-footnote text-blue-400">into {folderStack[folderStack.length - 1]?.name}</p>
             </div>
           )}
 
@@ -1497,7 +1520,7 @@ export default function KnowledgeLibraryPage() {
 
           {/* Inside a folder */}
           {currentFolderId && (
-            <div style={{ paddingBottom: 0 }}>
+            <div>
               <SubfolderPills />
               <FileContent />
             </div>
@@ -1509,21 +1532,16 @@ export default function KnowledgeLibraryPage() {
       {isAdmin && currentFolderId && !isDesktop && (
         <>
           <button
-            onClick={() => fileInputRef.current?.click()} disabled={uploading}
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="fixed z-30 flex items-center justify-center text-white border-none cursor-pointer hover:scale-105 transition-transform"
             style={{
-              position: 'fixed',
               bottom: 'calc(72px + env(safe-area-inset-bottom) + 16px)',
               right: 16,
               width: 52, height: 52, borderRadius: 26,
-              background: uploading ? '#9CA3AF' : BRAND,
-              color: 'white', border: 'none', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: uploading ? '#9CA3AF' : '#2E96FF',
               boxShadow: '0 4px 16px rgba(46,150,255,0.40)',
-              transition: 'background 0.2s, transform 0.15s',
-              zIndex: 30,
-            }}
-            onMouseEnter={e => { if (!uploading) e.currentTarget.style.transform = 'scale(1.07)' }}
-            onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)' }}>
+            }}>
             {uploading
               ? <Loader size={20} className="animate-spin" />
               : <Upload size={20} />}

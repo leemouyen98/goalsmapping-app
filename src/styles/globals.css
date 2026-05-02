@@ -127,4 +127,32 @@
   .hig-badge-blue {
     @apply hig-badge bg-blue-50 text-hig-blue;
   }
+
+  /* ── Underwriting utility classes ────────────────────────────── */
+  .uw-no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .uw-no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .uw-press {
+    transition: transform 0.12s, opacity 0.12s;
+  }
+  .uw-press:active {
+    transform: scale(0.95);
+    opacity: 0.75;
+  }
+}
+
+@layer utilities {
+  /* uw-progress: used for the animated progress bar fill */
+  @keyframes uw-progress {
+    from { width: 0% }
+    to   { width: 85% }
+  }
+  .animate-uw-progress {
+    animation: uw-progress 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
 }

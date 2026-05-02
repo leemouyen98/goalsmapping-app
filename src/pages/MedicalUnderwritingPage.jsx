@@ -97,21 +97,6 @@ function catPrimary(rawCategory, lang) {
   return catLabel(rawCategory, lang).primary
 }
 
-// ── Global CSS (injected once) ─────────────────────────────────────────────────
-const GLOBAL_CSS = `
-  @keyframes uw-spin     { to { transform: rotate(360deg) } }
-  @keyframes uw-shimmer  { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-  @keyframes uw-slide-in-right { from{opacity:0;transform:translateX(28px)} to{opacity:1;transform:translateX(0)} }
-  @keyframes uw-slide-in-left  { from{opacity:0;transform:translateX(-28px)} to{opacity:1;transform:translateX(0)} }
-  @keyframes uw-fade-in        { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes uw-progress       { from{width:0%} to{width:85%} }
-  @keyframes uw-pop-in         { 0%{opacity:0;transform:scale(0.8) translateY(8px)} 100%{opacity:1;transform:scale(1) translateY(0)} }
-  .uw-no-scrollbar::-webkit-scrollbar { display:none }
-  .uw-no-scrollbar { -ms-overflow-style:none; scrollbar-width:none }
-  .uw-press { transition: transform 0.12s, opacity 0.12s }
-  .uw-press:active { transform: scale(0.95); opacity: 0.75 }
-`
-
 // ── Responsive hook ────────────────────────────────────────────────────────────
 function useResponsive() {
   const getBreakpoint = () => {
@@ -253,12 +238,14 @@ function parseMarkdown(raw) {
 // ── SkeletonLine — shimmer loading placeholder ─────────────────────────────────
 function SkeletonLine({ w = '100%', h = 13, br = 7, mb = 0, opacity = 1 }) {
   return (
-    <div style={{
-      width: w, height: h, borderRadius: br, marginBottom: mb, opacity,
-      background: 'linear-gradient(90deg, #F2F2F7 25%, #E8E8ED 50%, #F2F2F7 75%)',
-      backgroundSize: '200% 100%',
-      animation: 'uw-shimmer 1.6s ease-in-out infinite',
-    }} />
+    <div
+      className="animate-shimmer"
+      style={{
+        width: w, height: h, borderRadius: br, marginBottom: mb, opacity,
+        background: 'linear-gradient(90deg, #F2F2F7 25%, #E8E8ED 50%, #F2F2F7 75%)',
+        backgroundSize: '200% 100%',
+      }}
+    />
   )
 }
 
@@ -535,6 +522,7 @@ function BackToTopButton({ scrollRef, color = BRAND, visible }) {
   return (
     <button
       onClick={() => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+      className="animate-pop-in"
       style={{
         position: 'absolute', bottom: 24, right: 20, zIndex: 20,
         width: 38, height: 38, borderRadius: '50%',
@@ -542,7 +530,6 @@ function BackToTopButton({ scrollRef, color = BRAND, visible }) {
         boxShadow: `0 4px 16px ${hexAlpha(color, 0.4)}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         border: 'none', cursor: 'pointer',
-        animation: 'uw-pop-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1)',
       }}
     >
       <ArrowUp size={16} style={{ color: 'white' }} />
@@ -555,10 +542,10 @@ function ProgressBar({ active, color }) {
   if (!active) return null
   return (
     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, zIndex: 30, overflow: 'hidden' }}>
-      <div style={{
-        height: '100%', background: color,
-        animation: 'uw-progress 2.5s cubic-bezier(0.4, 0, 0.6, 1) forwards',
-      }} />
+      <div
+        className="animate-uw-progress h-full"
+        style={{ background: color }}
+      />
     </div>
   )
 }
@@ -613,14 +600,15 @@ function SearchBar({ value, onChange, placeholder = 'Search… (⌘K)', compact 
 function SearchDropdown({ query, results, manifest, onSelect }) {
   if (!query) return null
   return (
-    <div style={{
-      position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 100,
-      background: 'white', borderRadius: 14,
-      boxShadow: '0 8px 32px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.08)',
-      border: '1px solid rgba(0,0,0,0.08)',
-      overflow: 'hidden', maxHeight: 380, overflowY: 'auto',
-      animation: 'uw-fade-in 0.15s ease',
-    }}>
+    <div
+      className="animate-uw-fade"
+      style={{
+        position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 100,
+        background: 'white', borderRadius: 14,
+        boxShadow: '0 8px 32px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.08)',
+        border: '1px solid rgba(0,0,0,0.08)',
+        overflow: 'hidden', maxHeight: 380, overflowY: 'auto',
+      }}>
       {results.length === 0 ? (
         <div style={{ padding: '20px 16px', textAlign: 'center' }}>
           <Search size={24} style={{ color: '#D1D1D6', margin: '0 auto 8px', display: 'block' }} />
@@ -1130,7 +1118,7 @@ export default function MedicalUnderwritingPage() {
 
           {/* Expandable global search — Panel 0 */}
           {mobilePanel === 0 && mobileSearchOpen && (
-            <div style={{ padding: '0 14px 12px', animation: 'uw-fade-in 0.15s ease' }}>
+            <div className="animate-uw-fade" style={{ padding: '0 14px 12px' }}>
               <div style={{ position: 'relative' }}>
                 <SearchBar value={globalSearch} onChange={setGlobalSearch} placeholder="Search all conditions…" inputRef={searchRef} autoFocus={true} />
                 <SearchDropdown query={debouncedGlobal} results={searchResults} manifest={manifest} onSelect={(cat, cond, f) => { openCondition(cat, cond, f); setMobileSearchOpen(false) }} />
@@ -1140,7 +1128,7 @@ export default function MedicalUnderwritingPage() {
 
           {/* Expandable filter bar — Panel 1 */}
           {mobilePanel === 1 && mobileCondSearch && (
-            <div style={{ padding: '0 14px 12px', animation: 'uw-fade-in 0.15s ease' }}>
+            <div className="animate-uw-fade" style={{ padding: '0 14px 12px' }}>
               <SearchBar value={condSearch} onChange={setCondSearch} placeholder="Filter conditions…" compact={true} autoFocus={true} />
             </div>
           )}
@@ -1165,10 +1153,9 @@ export default function MedicalUnderwritingPage() {
 
           {/* Panel 0: Home — category grid + recent chips */}
           {mobilePanel === 0 && (
-            <div key="home" style={{
+            <div key="home" className="animate-slide-in-left" style={{
               position: 'absolute', inset: 0,
               overflowY: 'auto', background: '#F2F2F7',
-              animation: 'uw-slide-in-left 0.24s cubic-bezier(0.4, 0, 0.2, 1)',
               WebkitOverflowScrolling: 'touch',
             }}>
               <div style={{ padding: '14px 0 32px' }}>
@@ -1262,11 +1249,10 @@ export default function MedicalUnderwritingPage() {
 
           {/* Panel 1: Conditions list */}
           {mobilePanel === 1 && (
-            <div key="conds" style={{
+            <div key="conds" className="animate-slide-in-right" style={{
               position: 'absolute', inset: 0,
               display: 'flex', flexDirection: 'column',
               background: 'white',
-              animation: 'uw-slide-in-right 0.24s cubic-bezier(0.4, 0, 0.2, 1)',
             }}>
               <div ref={condListRef} style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
                 {filteredConditions.length === 0 ? (
@@ -1293,11 +1279,10 @@ export default function MedicalUnderwritingPage() {
 
           {/* Panel 2: Detail */}
           {mobilePanel === 2 && (
-            <div key="detail" style={{
+            <div key="detail" className="animate-slide-in-right" style={{
               position: 'absolute', inset: 0,
               display: 'flex', flexDirection: 'column',
               background: '#FAFAFA',
-              animation: 'uw-slide-in-right 0.24s cubic-bezier(0.4, 0, 0.2, 1)',
             }}>
               {/* Progress bar */}
               <ProgressBar active={loadingMd} color={catColor} />
@@ -1668,7 +1653,6 @@ export default function MedicalUnderwritingPage() {
   // ── Root render ────────────────────────────────────────────────────────────
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <style>{GLOBAL_CSS}</style>
       {isMobile ? (
         <div style={{ flex: 1, minHeight: 0 }}>{renderMobile()}</div>
       ) : (
