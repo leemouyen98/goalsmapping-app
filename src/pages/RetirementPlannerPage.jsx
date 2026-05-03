@@ -90,7 +90,7 @@ export default function RetirementPlannerPage() {
           ].map((s, idx) => (
             <div key={s.n} className="flex items-center">
               {idx > 0 && (
-                <div className="w-12 h-px mx-1" style={{ backgroundColor: '#bdbdbd' }} />
+                <div className="w-12 h-px mx-1 bg-hig-gray-4" />
               )}
               <button
                 onClick={() => setStep(s.n)}
@@ -103,14 +103,14 @@ export default function RetirementPlannerPage() {
                       ? { backgroundColor: '#2E96FF', color: '#fff' }
                       : step > s.n
                         ? { backgroundColor: '#2E96FF', color: '#fff' }
-                        : { backgroundColor: 'transparent', color: '#9e9e9e', border: '2px solid #9e9e9e' }
+                        : { backgroundColor: 'transparent', color: '#C7C7CC', border: '2px solid #C7C7CC' }
                   }
                 >
                   {step > s.n ? '✓' : s.n}
                 </span>
                 <span
                   className="text-sm font-medium"
-                  style={{ color: step === s.n ? '#2E96FF' : step > s.n ? '#2E96FF' : '#9e9e9e' }}
+                  style={{ color: step === s.n ? '#2E96FF' : step > s.n ? '#2E96FF' : '#C7C7CC' }}
                 >
                   {s.label}
                 </span>

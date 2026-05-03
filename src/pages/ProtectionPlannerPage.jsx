@@ -4,7 +4,7 @@ import { useContacts } from '../hooks/useContacts'
 import { useLanguage } from '../hooks/useLanguage'
 import { getAge } from '../lib/formatters'
 import { formatRMFull, protectionNeed, generateProtectionSummary } from '../lib/calculations'
-import { ArrowLeft, X, Plus, Trash2, Settings, ChevronDown, ChevronUp, AlertTriangle, CheckCircle, TrendingDown, ShieldAlert, Presentation } from 'lucide-react'
+import { ArrowLeft, X, Plus, Trash2, Settings, ChevronDown, ChevronUp, AlertTriangle, CheckCircle, TrendingDown, ShieldAlert, Presentation, Info } from 'lucide-react'
 import NumberInput from '../components/ui/NumberInput'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -164,7 +164,7 @@ export default function ProtectionPlannerPage() {
           ].map((s, idx) => (
             <div key={s.n} className="flex items-center">
               {idx > 0 && (
-                <div className="w-12 h-px mx-1" style={{ backgroundColor: '#bdbdbd' }} />
+                <div className="w-12 h-px mx-1 bg-hig-gray-4" />
               )}
               <button
                 onClick={() => setStep(s.n)}
@@ -174,17 +174,17 @@ export default function ProtectionPlannerPage() {
                   className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 transition-colors"
                   style={
                     step === s.n
-                      ? { backgroundColor: '#1976d2', color: '#fff' }
+                      ? { backgroundColor: '#2E96FF', color: '#fff' }
                       : step > s.n
-                        ? { backgroundColor: '#1976d2', color: '#fff' }
-                        : { backgroundColor: 'transparent', color: '#9e9e9e', border: '2px solid #9e9e9e' }
+                        ? { backgroundColor: '#2E96FF', color: '#fff' }
+                        : { backgroundColor: 'transparent', color: '#C7C7CC', border: '2px solid #C7C7CC' }
                   }
                 >
                   {step > s.n ? '✓' : s.n}
                 </span>
                 <span
                   className="text-sm font-medium"
-                  style={{ color: step === s.n ? '#1976d2' : step > s.n ? '#1976d2' : '#9e9e9e' }}
+                  style={{ color: step === s.n ? '#2E96FF' : step > s.n ? '#2E96FF' : '#C7C7CC' }}
                 >
                   {s.label}
                 </span>
@@ -322,90 +322,88 @@ function ProtectionBasicInfo({ plan, updatePlan, setNeed, onContinue, monthlyInc
   }
 
   return (
-    <>
-    {/* pb-16 keeps content above the fixed footer */}
-    <div className="flex flex-col gap-6 pb-24 lg:flex-row">
-      {/* Left: Form */}
+    <div className="flex flex-col gap-5 pb-24 lg:flex-row">
+
+      {/* ── Left: Form ── */}
       <div className="flex-1 space-y-4">
-        <div className="bg-white rounded p-5" style={{ border: '1px solid rgba(0,0,0,0.12)' }}>
-          {/* GoalsMapper-style page header with icon */}
+
+        {/* Needs Analysis card */}
+        <div className="hig-card p-5">
           <div className="flex items-start gap-3 mb-5">
             <div
-              className="w-9 h-9 rounded flex items-center justify-center shrink-0"
-              style={{ background: 'linear-gradient(135deg,#a78bfa,#6366f1)' }}
+              className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0"
+              style={{ background: 'rgba(99,102,241,0.12)' }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              </svg>
+              <ShieldAlert size={17} style={{ color: '#6366f1' }} />
             </div>
             <div>
-              <h3 className="text-[16px] font-bold text-gray-900">{t('protection.needsAnalysisTitle')}</h3>
-              <p className="text-[13px] text-gray-500 mt-0.5">{t('protection.needsAnalysisDesc')}</p>
+              <h3 className="text-hig-callout font-bold text-hig-text">{t('protection.needsAnalysisTitle')}</h3>
+              <p className="text-hig-footnote text-hig-text-secondary mt-0.5">{t('protection.needsAnalysisDesc')}</p>
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3.5">
             {RISKS.map((risk) => (
-              <div key={risk} className="rounded overflow-hidden bg-white" style={{ border: '1px solid rgba(0,0,0,0.12)' }}>
-                {/* GoalsMapper-style coloured header band */}
+              <div key={risk} className="rounded-hig-sm border border-hig-gray-5 overflow-hidden">
+                {/* Coloured header band — dynamic colour kept inline */}
                 <div
-                  className="flex items-center gap-3 px-4 py-3"
+                  className="flex items-center gap-3 px-4 py-2.5"
                   style={{ backgroundColor: RISK_HEADER_BG[risk] }}
                 >
                   <span
-                    className="w-4 h-4 rounded-full shrink-0"
-                    style={{ backgroundColor: RISK_COLOUR[risk], opacity: 0.85 }}
+                    className="w-3.5 h-3.5 rounded-full shrink-0"
+                    style={{ backgroundColor: RISK_COLOUR[risk] }}
                   />
-                  <h4 className="text-[15px] font-semibold text-gray-900">{riskLabels[risk]}</h4>
+                  <h4 className="text-hig-subhead font-semibold text-hig-text">{riskLabels[risk]}</h4>
                 </div>
 
-                {/* Form body — GoalsMapper layout: Lump Sum full-width, then Monthly + Period side-by-side */}
+                {/* Form body */}
                 <div className="px-4 pt-3 pb-4 space-y-3">
-                  {/* Row 1: Lump Sum — full width */}
+                  {/* Lump Sum — full width */}
                   <div>
-                    <label className="block text-[13px] font-semibold text-gray-800 mb-1.5">
-                      {t('protection.lumpSum')} <span className="font-normal text-gray-400">{t('common.required')}</span>
+                    <label className="hig-label">
+                      {t('protection.lumpSum')} <span className="font-normal text-hig-gray-3">{t('common.required')}</span>
                     </label>
-                    <div className="flex items-center h-10 rounded px-3 bg-white" style={{ border: '1px solid #c4c4c4' }}>
-                      <span className="text-gray-500 text-sm mr-1.5 shrink-0">RM</span>
+                    <div className="flex items-center border border-hig-gray-4 rounded-hig-sm px-3 h-10 bg-white transition-all focus-within:border-hig-blue focus-within:ring-2 focus-within:ring-hig-blue/20">
+                      <span className="text-hig-text-secondary text-hig-footnote mr-1.5 shrink-0">RM</span>
                       <NumberInput
                         value={plan.needs[risk].lumpSum}
                         onChange={(num) => setNeed(risk, 'lumpSum', num)}
-                        className="border-0 p-0 flex-1 text-[15px] text-gray-900 bg-transparent focus:outline-none w-full"
+                        className="border-0 p-0 flex-1 text-hig-subhead text-hig-text bg-transparent focus:outline-none w-full"
                         placeholder="0"
                       />
                     </div>
                   </div>
 
-                  {/* Row 2: Monthly Expenses + Period side-by-side */}
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {/* Monthly + Period */}
+                  <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
                     <div>
-                      <label className="block text-[13px] font-semibold text-gray-800 mb-1.5">
-                        {t('protection.monthlyExpensesLabel')} <span className="font-normal text-gray-400">{t('common.required')}</span>
+                      <label className="hig-label">
+                        {t('protection.monthlyExpensesLabel')} <span className="font-normal text-hig-gray-3">{t('common.required')}</span>
                       </label>
-                      <div className="flex items-center h-10 rounded px-3 bg-white" style={{ border: '1px solid #c4c4c4' }}>
-                        <span className="text-gray-500 text-sm mr-1.5 shrink-0">RM</span>
+                      <div className="flex items-center border border-hig-gray-4 rounded-hig-sm px-3 h-10 bg-white transition-all focus-within:border-hig-blue focus-within:ring-2 focus-within:ring-hig-blue/20">
+                        <span className="text-hig-text-secondary text-hig-footnote mr-1.5 shrink-0">RM</span>
                         <NumberInput
                           value={plan.needs[risk].monthly}
                           onChange={(num) => setNeed(risk, 'monthly', num)}
-                          className="border-0 p-0 flex-1 text-[15px] text-gray-900 bg-transparent focus:outline-none w-full"
+                          className="border-0 p-0 flex-1 text-hig-subhead text-hig-text bg-transparent focus:outline-none w-full"
                           placeholder="0"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[13px] font-semibold text-gray-800 mb-1.5">
-                        {t('common.period')} <span className="font-normal text-gray-400">{t('common.required')}</span>
+                      <label className="hig-label">
+                        {t('common.period')} <span className="font-normal text-hig-gray-3">{t('common.required')}</span>
                       </label>
-                      <div className="flex items-center h-10 rounded overflow-hidden bg-white" style={{ border: '1px solid #c4c4c4' }}>
+                      <div className="flex items-center border border-hig-gray-4 rounded-hig-sm overflow-hidden bg-white transition-all focus-within:border-hig-blue focus-within:ring-2 focus-within:ring-hig-blue/20">
                         <input
                           type="number"
                           value={plan.needs[risk].period || ''}
                           onChange={(e) => setNeed(risk, 'period', e.target.value)}
-                          className="flex-1 border-0 px-3 h-full text-[15px] text-gray-900 bg-transparent focus:outline-none"
+                          className="flex-1 border-0 px-3 h-10 text-hig-subhead text-hig-text bg-transparent focus:outline-none"
                           placeholder="0"
                         />
-                        <span className="pr-3 text-gray-400 text-sm shrink-0">{t('common.years')}</span>
+                        <span className="pr-3 text-hig-gray-3 text-hig-footnote shrink-0">{t('common.years')}</span>
                       </div>
                     </div>
                   </div>
@@ -415,112 +413,92 @@ function ProtectionBasicInfo({ plan, updatePlan, setNeed, onContinue, monthlyInc
           </div>
         </div>
 
-        {/* ── Planning Parameters card — GoalsMapper style ── */}
-        <div
-          className="bg-white rounded-lg"
-          style={{ border: '1px solid rgb(238,238,238)', padding: '16px 24px', boxShadow: 'rgba(0,0,0,0.15) 0px 0px 6px 0px' }}
-        >
-          {/* Header row: icon + title + subtitle */}
+        {/* Planning Parameters card */}
+        <div className="hig-card p-5">
           <div className="flex items-start gap-3 mb-4">
             <div
-              className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-              style={{ backgroundColor: 'rgb(241,232,245)' }}
+              className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0"
+              style={{ background: 'rgba(99,102,241,0.12)' }}
             >
-              {/* Settings/gear icon */}
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="rgb(147,51,234)" aria-hidden="true">
-                <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
-              </svg>
+              <Settings size={17} style={{ color: '#6366f1' }} />
             </div>
             <div>
-              <p className="text-[15px] font-bold text-gray-900 leading-snug">{t('protection.planningParamsTitle')}</p>
-              <p className="text-[13px] text-gray-500 mt-0.5">{t('protection.planningParamsDesc')}</p>
+              <p className="text-hig-subhead font-bold text-hig-text leading-snug">{t('protection.planningParamsTitle')}</p>
+              <p className="text-hig-footnote text-hig-text-secondary mt-0.5">{t('protection.planningParamsDesc')}</p>
             </div>
           </div>
 
-          {/* Info box — GoalsMapper light-blue alert */}
-          <div
-            className="flex gap-3 mb-5 rounded"
-            style={{ backgroundColor: 'rgb(229,246,253)', padding: '6px 16px', borderRadius: '4px' }}
-          >
-            <svg className="shrink-0 mt-2.5" width="16" height="16" viewBox="0 0 24 24" fill="rgb(1,100,145)">
-              <path d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z"/>
-            </svg>
-            <p className="text-[13px] py-1.5" style={{ color: 'rgb(1,67,97)' }}>
-              <strong>{t('protection.inflationRateShort')}</strong>{' '}{t('protection.planningParamsInflationDesc')}<br/>
+          {/* Info note */}
+          <div className="flex gap-2.5 mb-5 bg-hig-blue/[0.05] border border-hig-blue/20 rounded-hig-sm px-3.5 py-2.5">
+            <Info size={14} className="text-hig-blue shrink-0 mt-0.5" />
+            <p className="text-hig-footnote text-hig-text leading-relaxed">
+              <strong>{t('protection.inflationRateShort')}</strong>{' '}{t('protection.planningParamsInflationDesc')}{' '}
               <strong>{t('protection.returnRateShort')}</strong>{' '}{t('protection.planningParamsReturnDesc')}
             </p>
           </div>
 
-          {/* Two inputs side by side */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {/* Inflation Rate */}
+          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
             <div>
-              <label className="block text-[13px] font-semibold text-gray-900 mb-1.5">
-                {t('protection.inflationRatePct')} <span className="font-normal text-gray-400">{t('common.required')}</span>
+              <label className="hig-label">
+                {t('protection.inflationRatePct')} <span className="font-normal text-hig-gray-3">{t('common.required')}</span>
               </label>
-              <div className="flex items-center h-10 rounded px-3 bg-white" style={{ border: '1px solid #c4c4c4' }}>
+              <div className="flex items-center border border-hig-gray-4 rounded-hig-sm px-3 h-10 bg-white transition-all focus-within:border-hig-blue focus-within:ring-2 focus-within:ring-hig-blue/20">
                 <input
                   type="number"
-                  min="0"
-                  max="10"
-                  step="0.5"
+                  min="0" max="10" step="0.5"
                   value={plan.inflationRate ?? 4}
                   onChange={(e) => updatePlan({ inflationRate: parseFloat(e.target.value) || 0 })}
-                  className="flex-1 border-0 p-0 text-[15px] text-gray-900 bg-transparent focus:outline-none w-full"
+                  className="flex-1 border-0 p-0 text-hig-subhead text-hig-text bg-transparent focus:outline-none w-full"
                 />
-                <span className="text-gray-400 text-sm shrink-0">%</span>
+                <span className="text-hig-gray-3 text-hig-footnote shrink-0">%</span>
               </div>
-              <p className="text-[12px] text-gray-400 mt-1">{t('protection.inflationRateMinMax')}</p>
+              <p className="text-hig-caption1 text-hig-gray-3 mt-1">{t('protection.inflationRateMinMax')}</p>
             </div>
 
-            {/* Investment Return Rate */}
             <div>
-              <label className="block text-[13px] font-semibold text-gray-900 mb-1.5">
-                {t('protection.returnRatePct')} <span className="font-normal text-gray-400">{t('common.required')}</span>
+              <label className="hig-label">
+                {t('protection.returnRatePct')} <span className="font-normal text-hig-gray-3">{t('common.required')}</span>
               </label>
-              <div className="flex items-center h-10 rounded px-3 bg-white" style={{ border: '1px solid #c4c4c4' }}>
+              <div className="flex items-center border border-hig-gray-4 rounded-hig-sm px-3 h-10 bg-white transition-all focus-within:border-hig-blue focus-within:ring-2 focus-within:ring-hig-blue/20">
                 <input
                   type="number"
-                  min="0"
-                  max="10"
-                  step="0.5"
+                  min="0" max="10" step="0.5"
                   value={plan.returnRate ?? 1}
                   onChange={(e) => updatePlan({ returnRate: parseFloat(e.target.value) || 0 })}
-                  className="flex-1 border-0 p-0 text-[15px] text-gray-900 bg-transparent focus:outline-none w-full"
+                  className="flex-1 border-0 p-0 text-hig-subhead text-hig-text bg-transparent focus:outline-none w-full"
                 />
-                <span className="text-gray-400 text-sm shrink-0">%</span>
+                <span className="text-hig-gray-3 text-hig-footnote shrink-0">%</span>
               </div>
             </div>
           </div>
         </div>
-      </div>{/* /flex-1 left column */}
+      </div>
 
-      {/* Right: GoalsMapper Protection Progress panel */}
+      {/* ── Right: Protection Progress panel ── */}
       <div className="w-full lg:w-72 shrink-0">
-        <div className="bg-white rounded p-5 lg:sticky lg:top-4" style={{ border: '1px solid rgba(0,0,0,0.12)' }}>
-          <h3 className="text-[15px] font-semibold text-gray-900">{t('protection.protectionProgress')}</h3>
-          <p className="text-[13px] text-gray-500 mt-0.5 mb-5">{t('protection.protectionProgressDesc')}</p>
+        <div className="hig-card p-5 lg:sticky lg:top-4">
+          <h3 className="text-hig-subhead font-semibold text-hig-text">{t('protection.protectionProgress')}</h3>
+          <p className="text-hig-footnote text-hig-text-secondary mt-0.5 mb-5">{t('protection.protectionProgressDesc')}</p>
 
-          <div className="space-y-5">
+          <div className="space-y-4">
             {needsSummary.map(({ risk, total }) => (
               <div key={risk}>
-                <p className="text-[13px] font-bold text-gray-900 mb-2">{riskLabels[risk]}</p>
-                {/* Full-width solid colour bar — GoalsMapper style */}
-                <div className="h-2.5 rounded-full w-full" style={{ backgroundColor: RISK_COLOUR[risk] }} />
-                <p className="text-[13px] font-bold text-right mt-1" style={{ color: '#777' }}>
+                <p className="text-hig-footnote font-semibold text-hig-text mb-1.5">{riskLabels[risk]}</p>
+                {/* Colour bar — dynamic colour kept inline */}
+                <div className="h-2 rounded-full w-full" style={{ backgroundColor: RISK_COLOUR[risk] }} />
+                <p className="text-hig-caption1 font-semibold text-right mt-1 text-hig-text-secondary">
                   {t('protection.totalRequiredCoverage')} {formatRMFull(total)}
                 </p>
               </div>
             ))}
           </div>
 
-          <button onClick={onContinue} className="hig-btn-primary w-full mt-4">
+          <button onClick={onContinue} className="hig-btn-primary w-full mt-5">
             {t('common.continue')}
           </button>
         </div>
       </div>
     </div>
-    </>
   )
 }
 
@@ -554,22 +532,21 @@ function ProtectionExistingCoverage({ plan, setExisting, onBack, onContinue, ins
   const hasInsuranceData = (insuranceTotals.count || 0) > 0
 
   return (
-    <div className="flex flex-col gap-6 pb-24 lg:flex-row">
-      {/* Left: Form */}
+    <div className="flex flex-col gap-5 pb-24 lg:flex-row">
+
+      {/* ── Left: Form ── */}
       <div className="flex-1 space-y-4">
-        <div className="bg-white rounded p-5" style={{ border: '1px solid rgba(0,0,0,0.12)' }}>
-          <h3 className="text-[16px] font-bold text-gray-900 mb-1">{t('protection.existingCoverageHeader')}</h3>
-          <p className="text-[13px] text-gray-500 mb-5">
+        <div className="hig-card p-5">
+          <h3 className="text-hig-callout font-bold text-hig-text mb-1">{t('protection.existingCoverageHeader')}</h3>
+          <p className="text-hig-footnote text-hig-text-secondary mb-5">
             {t('protection.step2ExistingDesc')}
           </p>
 
-          {/* ── Insurance Tab sync banner ── */}
+          {/* Insurance Tab sync banner */}
           {hasInsuranceData && (
             <div className="mb-5 bg-hig-blue/5 border border-hig-blue/20 rounded-hig-sm p-3 flex items-start justify-between gap-3">
               <div className="flex items-start gap-2 min-w-0">
-                <div className="w-6 h-6 rounded-full bg-hig-blue/15 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-hig-blue text-[10px] font-bold">i</span>
-                </div>
+                <Info size={14} className="text-hig-blue shrink-0 mt-0.5" />
                 <div className="min-w-0">
                   <p className="text-hig-caption1 text-hig-blue font-semibold">
                     {insuranceTotals.count === 1
@@ -585,28 +562,26 @@ function ProtectionExistingCoverage({ plan, setExisting, onBack, onContinue, ins
               </div>
               <button
                 onClick={onSyncFromInsurance}
-                className="hig-btn-ghost text-hig-caption1 text-hig-blue whitespace-nowrap shrink-0 border border-hig-blue/30 hover:bg-hig-blue/10"
+                className="hig-btn-ghost text-hig-caption1 whitespace-nowrap shrink-0 border border-hig-blue/30 hover:bg-hig-blue/10"
               >
                 {t('protection.syncInsurance')}
               </button>
             </div>
           )}
 
-          <div className="space-y-4">
+          <div className="space-y-3.5">
             {RISKS.map((risk) => {
               const existing = plan.existing[risk] || 0
               const target = targets[risk] || 0
-              const pct = target > 0 ? Math.min(100, Math.round((existing / target) * 100)) : 0
-              const gap = Math.max(0, target - existing)
 
               return (
-                <div key={risk} className="rounded overflow-hidden bg-white" style={{ border: '1px solid rgba(0,0,0,0.12)' }}>
-                  {/* GoalsMapper-style coloured header band */}
-                  <div className="flex items-center gap-3 px-4 py-3" style={{ backgroundColor: RISK_HEADER_BG[risk] }}>
-                    <span className="w-4 h-4 rounded-full shrink-0" style={{ backgroundColor: RISK_COLOUR[risk], opacity: 0.85 }} />
-                    <h4 className="text-[15px] font-semibold text-gray-900">{riskLabels[risk]}</h4>
+                <div key={risk} className="rounded-hig-sm border border-hig-gray-5 overflow-hidden">
+                  {/* Coloured header band — dynamic colour kept inline */}
+                  <div className="flex items-center gap-3 px-4 py-2.5" style={{ backgroundColor: RISK_HEADER_BG[risk] }}>
+                    <span className="w-3.5 h-3.5 rounded-full shrink-0" style={{ backgroundColor: RISK_COLOUR[risk] }} />
+                    <h4 className="text-hig-subhead font-semibold text-hig-text">{riskLabels[risk]}</h4>
                     {target > 0 && (
-                      <span className="ml-auto text-[13px] text-gray-500">
+                      <span className="ml-auto text-hig-footnote text-hig-text-secondary">
                         {t('protection.targetPrefix')} {formatRMFull(target)}
                       </span>
                     )}
@@ -614,15 +589,15 @@ function ProtectionExistingCoverage({ plan, setExisting, onBack, onContinue, ins
 
                   {/* Input */}
                   <div className="px-4 pt-3 pb-4">
-                    <label className="block text-[13px] font-semibold text-gray-800 mb-1.5">
-                      {t('protection.coverageAmountLabel')} <span className="font-normal text-gray-400">{t('common.required')}</span>
+                    <label className="hig-label">
+                      {t('protection.coverageAmountLabel')} <span className="font-normal text-hig-gray-3">{t('common.required')}</span>
                     </label>
-                    <div className="flex items-center h-10 rounded px-3 bg-white" style={{ border: '1px solid #c4c4c4' }}>
-                      <span className="text-gray-500 text-sm mr-1.5 shrink-0">RM</span>
+                    <div className="flex items-center border border-hig-gray-4 rounded-hig-sm px-3 h-10 bg-white transition-all focus-within:border-hig-blue focus-within:ring-2 focus-within:ring-hig-blue/20">
+                      <span className="text-hig-text-secondary text-hig-footnote mr-1.5 shrink-0">RM</span>
                       <NumberInput
                         value={plan.existing[risk]}
                         onChange={(num) => setExisting(risk, num)}
-                        className="border-0 p-0 flex-1 text-[15px] text-gray-900 bg-transparent focus:outline-none w-full"
+                        className="border-0 p-0 flex-1 text-hig-subhead text-hig-text bg-transparent focus:outline-none w-full"
                         placeholder="0"
                       />
                     </div>
@@ -632,15 +607,14 @@ function ProtectionExistingCoverage({ plan, setExisting, onBack, onContinue, ins
             })}
           </div>
         </div>
-
       </div>
 
-      {/* Right: GoalsMapper Protection Progress panel — Step 2 variant */}
+      {/* ── Right: Protection Progress panel — Step 2 variant ── */}
       <div className="w-full shrink-0 lg:w-72">
-        <div className="bg-white rounded p-5 lg:sticky lg:top-4" style={{ border: '1px solid rgba(0,0,0,0.12)' }}>
-          <h3 className="text-[15px] font-semibold text-gray-900">{t('protection.protectionProgress')}</h3>
-          <p className="text-[13px] text-gray-500 mt-0.5 mb-5">{t('protection.protectionProgressDesc')}</p>
-          <div className="space-y-5">
+        <div className="hig-card p-5 lg:sticky lg:top-4">
+          <h3 className="text-hig-subhead font-semibold text-hig-text">{t('protection.protectionProgress')}</h3>
+          <p className="text-hig-footnote text-hig-text-secondary mt-0.5 mb-5">{t('protection.protectionProgressDesc')}</p>
+          <div className="space-y-4">
             {RISKS.map((risk) => {
               const existing = plan.existing[risk] || 0
               const target = targets[risk] || 0
@@ -649,31 +623,29 @@ function ProtectionExistingCoverage({ plan, setExisting, onBack, onContinue, ins
 
               return (
                 <div key={risk}>
-                  {/* Label row with warning + % */}
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[13px] font-bold text-gray-900">{riskLabels[risk]}</span>
+                    <span className="text-hig-footnote font-semibold text-hig-text">{riskLabels[risk]}</span>
                     <div className="flex items-center gap-1.5">
-                      {isGap && (
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b"><path d="M12 2L1 21h22L12 2zm0 3.5L21 19H3L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg>
-                      )}
-                      <span className="text-[12px] font-bold" style={{ color: isGap ? '#777' : '#16a34a' }}>{pct}%</span>
+                      {isGap && <AlertTriangle size={12} className="text-hig-orange" />}
+                      <span className={`text-hig-caption1 font-semibold ${isGap ? 'text-hig-text-secondary' : 'text-hig-green'}`}>
+                        {pct}%
+                      </span>
                     </div>
                   </div>
-                  {/* Progress bar */}
-                  <div className="h-2.5 rounded-full w-full overflow-hidden" style={{ backgroundColor: 'rgba(0,0,0,0.08)' }}>
+                  {/* Progress bar — dynamic colour kept inline */}
+                  <div className="h-2 rounded-full w-full overflow-hidden bg-hig-gray-5">
                     <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: RISK_COLOUR[risk] }} />
                   </div>
-                  {/* Existing / Total row */}
                   <div className="flex justify-between mt-1">
-                    <span className="text-[12px] text-gray-500">{t('protection.existingCoverageColon')} {formatRMFull(existing)}</span>
-                    <span className="text-[12px] font-bold text-gray-500">{t('protection.totalRequiredCoverage')} {formatRMFull(target)}</span>
+                    <span className="text-hig-caption1 text-hig-text-secondary">{t('protection.existingCoverageColon')} {formatRMFull(existing)}</span>
+                    <span className="text-hig-caption1 font-semibold text-hig-text-secondary">{t('protection.totalRequiredCoverage')} {formatRMFull(target)}</span>
                   </div>
                 </div>
               )
             })}
           </div>
 
-          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between mt-4">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between mt-5">
             <button onClick={onBack} className="hig-btn-ghost gap-1.5">
               <ArrowLeft size={16} /> {t('common.back')}
             </button>

@@ -95,7 +95,7 @@ function AgentContactsDrawer({ agent, onClose }) {
           </button>
           <div className="flex-1 min-w-0">
             <h2 className="text-hig-title3 font-semibold truncate">{agent.name}</h2>
-            <p className="text-hig-caption text-hig-text-tertiary">
+            <p className="text-hig-caption11 text-hig-text-secondary">
               Code {agent.code} · {contacts.length} clients
             </p>
           </div>
@@ -104,7 +104,7 @@ function AgentContactsDrawer({ agent, onClose }) {
         {/* Search */}
         <div className="px-4 py-3 border-b border-hig-gray-5">
           <div className="relative">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-hig-text-tertiary" />
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-hig-text-secondary" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -121,7 +121,7 @@ function AgentContactsDrawer({ agent, onClose }) {
               <div className="w-6 h-6 border-2 border-hig-blue border-t-transparent rounded-full animate-spin" />
             </div>
           ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-32 text-hig-text-tertiary">
+            <div className="flex flex-col items-center justify-center h-32 text-hig-text-secondary">
               <Users size={24} className="mb-2 opacity-40" />
               <p className="text-hig-subhead">
                 {search ? 'No matches' : 'No clients yet'}
@@ -138,13 +138,13 @@ function AgentContactsDrawer({ agent, onClose }) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-hig-subhead font-medium truncate">{c.name}</p>
-                      <p className="text-hig-caption text-hig-text-tertiary truncate">
+                      <p className="text-hig-caption11 text-hig-text-secondary truncate">
                         {c.mobile || '—'} · Age {calcAge(c.dob)} · {c.employment}
                       </p>
                       {tags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1">
                           {tags.slice(0, 3).map(tag => (
-                            <span key={tag} className="hig-tag text-[10px] px-1.5 py-0">{tag}</span>
+                            <span key={tag} className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-hig-blue/10 text-hig-blue">{tag}</span>
                           ))}
                         </div>
                       )}
@@ -207,14 +207,14 @@ function CreateAgentModal({ onClose, onCreate }) {
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           {error && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-hig-sm text-red-600 text-hig-caption">
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-hig-sm text-red-600 text-hig-caption11">
               <AlertTriangle size={14} />
               {error}
             </div>
           )}
 
           <div>
-            <label className="hig-label">Agent Code <span className="text-hig-text-tertiary font-normal">(6 digits)</span></label>
+            <label className="hig-label">Agent Code <span className="text-hig-text-secondary font-normal">(6 digits)</span></label>
             <input
               className="hig-input w-full mt-1 font-mono tracking-wider"
               maxLength={6}
@@ -253,7 +253,7 @@ function CreateAgentModal({ onClose, onCreate }) {
               <button
                 type="button"
                 onClick={() => setShowPw(s => !s)}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-hig-text-tertiary"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-hig-text-secondary"
               >
                 {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -330,11 +330,11 @@ function RenameAgentModal({ agent, onClose, onSave }) {
           </div>
           <h2 className="text-hig-title3 font-semibold">Rename Agent</h2>
         </div>
-        <p className="text-hig-caption text-hig-text-secondary mb-4">
+        <p className="text-hig-caption1 text-hig-text-secondary mb-4">
           Code <span className="font-mono font-medium text-hig-text">{agent.code}</span>
         </p>
         {error && (
-          <p className="text-red-500 text-hig-caption mb-3 flex items-center gap-1">
+          <p className="text-red-500 text-hig-caption1 mb-3 flex items-center gap-1">
             <AlertTriangle size={12} /> {error}
           </p>
         )}
@@ -395,11 +395,11 @@ function ResetPasswordModal({ agent, onClose, onSave }) {
           <Lock size={16} className="text-hig-text-secondary" />
           <h2 className="text-hig-title3 font-semibold">Reset Password</h2>
         </div>
-        <p className="text-hig-caption text-hig-text-secondary mb-4">
+        <p className="text-hig-caption1 text-hig-text-secondary mb-4">
           Setting new password for <span className="font-medium text-hig-text">{agent.name}</span>
         </p>
         {error && (
-          <p className="text-red-500 text-hig-caption mb-3 flex items-center gap-1">
+          <p className="text-red-500 text-hig-caption1 mb-3 flex items-center gap-1">
             <AlertTriangle size={12} /> {error}
           </p>
         )}
@@ -416,7 +416,7 @@ function ResetPasswordModal({ agent, onClose, onSave }) {
             <button
               type="button"
               onClick={() => setShowPw(s => !s)}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-hig-text-tertiary"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-hig-text-secondary"
             >
               {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
@@ -538,7 +538,7 @@ export default function AdminPage() {
         ].map(stat => (
           <div key={stat.label} className="hig-card p-4 text-center">
             <p className="text-hig-title1 font-bold text-hig-text">{stat.value}</p>
-            <p className="text-hig-caption text-hig-text-tertiary mt-0.5">{stat.label}</p>
+            <p className="text-hig-caption1 text-hig-text-secondary mt-0.5">{stat.label}</p>
           </div>
         ))}
       </div>
@@ -561,12 +561,12 @@ export default function AdminPage() {
             <div className="w-7 h-7 border-2 border-hig-blue border-t-transparent rounded-full animate-spin" />
           </div>
         ) : error ? (
-          <div className="flex items-center gap-2 m-5 p-3 bg-red-50 border border-red-100 rounded-hig-sm text-red-600 text-hig-caption">
+          <div className="flex items-center gap-2 m-5 p-3 bg-red-50 border border-red-100 rounded-hig-sm text-red-600 text-hig-caption1">
             <AlertTriangle size={14} />
             {error}
           </div>
         ) : agents.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-40 text-hig-text-tertiary">
+          <div className="flex flex-col items-center justify-center h-40 text-hig-text-secondary">
             <Users size={28} className="mb-2 opacity-30" />
             <p className="text-hig-subhead">No agents yet</p>
           </div>
@@ -575,12 +575,12 @@ export default function AdminPage() {
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-hig-gray-5 bg-hig-gray-6/50">
-                  <th className="px-5 py-2.5 text-hig-caption font-semibold text-hig-text-secondary uppercase tracking-wide">Agent</th>
-                  <th className="px-4 py-2.5 text-hig-caption font-semibold text-hig-text-secondary uppercase tracking-wide">Code</th>
-                  <th className="px-4 py-2.5 text-hig-caption font-semibold text-hig-text-secondary uppercase tracking-wide">Role</th>
-                  <th className="px-4 py-2.5 text-hig-caption font-semibold text-hig-text-secondary uppercase tracking-wide">Status</th>
-                  <th className="px-4 py-2.5 text-hig-caption font-semibold text-hig-text-secondary uppercase tracking-wide text-right">Clients</th>
-                  <th className="px-4 py-2.5 text-hig-caption font-semibold text-hig-text-secondary uppercase tracking-wide text-right">Actions</th>
+                  <th className="px-5 py-2.5 text-hig-caption1 font-semibold text-hig-text-secondary uppercase tracking-wide">Agent</th>
+                  <th className="px-4 py-2.5 text-hig-caption1 font-semibold text-hig-text-secondary uppercase tracking-wide">Code</th>
+                  <th className="px-4 py-2.5 text-hig-caption1 font-semibold text-hig-text-secondary uppercase tracking-wide">Role</th>
+                  <th className="px-4 py-2.5 text-hig-caption1 font-semibold text-hig-text-secondary uppercase tracking-wide">Status</th>
+                  <th className="px-4 py-2.5 text-hig-caption1 font-semibold text-hig-text-secondary uppercase tracking-wide text-right">Clients</th>
+                  <th className="px-4 py-2.5 text-hig-caption1 font-semibold text-hig-text-secondary uppercase tracking-wide text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-hig-gray-5">
@@ -589,7 +589,7 @@ export default function AdminPage() {
                     {/* Name */}
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-hig-caption font-bold shrink-0 ${
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-hig-caption1 font-bold shrink-0 ${
                           agent.role === 'admin'
                             ? 'bg-purple-100 text-purple-600'
                             : 'bg-hig-blue/10 text-hig-blue'
@@ -602,7 +602,7 @@ export default function AdminPage() {
 
                     {/* Code */}
                     <td className="px-4 py-3">
-                      <span className="font-mono text-hig-caption text-hig-text-secondary bg-hig-gray-6 px-2 py-0.5 rounded">
+                      <span className="font-mono text-hig-caption1 text-hig-text-secondary bg-hig-gray-6 px-2 py-0.5 rounded">
                         {agent.code}
                       </span>
                     </td>
@@ -610,22 +610,22 @@ export default function AdminPage() {
                     {/* Role */}
                     <td className="px-4 py-3">
                       {agent.role === 'admin' ? (
-                        <span className="inline-flex items-center gap-1 text-hig-caption font-medium text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">
+                        <span className="inline-flex items-center gap-1 text-hig-caption1 font-medium text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">
                           <Shield size={11} /> Admin
                         </span>
                       ) : (
-                        <span className="text-hig-caption text-hig-text-secondary">Agent</span>
+                        <span className="text-hig-caption1 text-hig-text-secondary">Agent</span>
                       )}
                     </td>
 
                     {/* Status */}
                     <td className="px-4 py-3">
                       {agent.is_active === 1 ? (
-                        <span className="inline-flex items-center gap-1 text-hig-caption font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                        <span className="inline-flex items-center gap-1 text-hig-caption1 font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
                           <UserCheck size={11} /> Active
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-hig-caption font-medium text-hig-text-tertiary bg-hig-gray-5 px-2 py-0.5 rounded-full">
+                        <span className="inline-flex items-center gap-1 text-hig-caption1 font-medium text-hig-text-secondary bg-hig-gray-5 px-2 py-0.5 rounded-full">
                           <UserX size={11} /> Inactive
                         </span>
                       )}
@@ -650,7 +650,7 @@ export default function AdminPage() {
                         <button
                           onClick={() => setRenameAgent(agent)}
                           title="Rename agent"
-                          className="text-hig-caption text-hig-text-secondary hover:text-hig-blue transition-colors px-2 py-1 rounded hover:bg-hig-blue/5"
+                          className="text-hig-caption1 text-hig-text-secondary hover:text-hig-blue transition-colors px-2 py-1 rounded hover:bg-hig-blue/5"
                         >
                           Rename
                         </button>
@@ -659,7 +659,7 @@ export default function AdminPage() {
                         <button
                           onClick={() => setResetAgent(agent)}
                           title="Reset password"
-                          className="text-hig-caption text-hig-text-secondary hover:text-hig-blue transition-colors px-2 py-1 rounded hover:bg-hig-blue/5"
+                          className="text-hig-caption1 text-hig-text-secondary hover:text-hig-blue transition-colors px-2 py-1 rounded hover:bg-hig-blue/5"
                         >
                           Reset PW
                         </button>
@@ -668,7 +668,7 @@ export default function AdminPage() {
                         <button
                           onClick={() => handleToggleActive(agent)}
                           title={agent.is_active === 1 ? 'Deactivate' : 'Reactivate'}
-                          className={`text-hig-caption font-medium px-2 py-1 rounded transition-colors ${
+                          className={`text-hig-caption1 font-medium px-2 py-1 rounded transition-colors ${
                             agent.is_active === 1
                               ? 'text-red-500 hover:bg-red-50'
                               : 'text-green-600 hover:bg-green-50'
@@ -718,7 +718,7 @@ export default function AdminPage() {
 
       {/* Toast */}
       {toastMsg && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-hig-caption font-medium px-4 py-2.5 rounded-full shadow-hig-lg flex items-center gap-2 animate-fade-in">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-hig-caption1 font-medium px-4 py-2.5 rounded-full shadow-hig-lg flex items-center gap-2 animate-fade-in">
           <Check size={13} className="text-green-400" />
           {toastMsg}
         </div>
