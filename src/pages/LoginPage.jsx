@@ -26,245 +26,148 @@ export default function LoginPage() {
   const canSubmit = agentCode.length === 6 && password.length > 0 && !loading
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
-    }}>
-      <style>{`
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          20%       { transform: translateX(-8px); }
-          40%       { transform: translateX(8px);  }
-          60%       { transform: translateX(-5px); }
-          80%       { transform: translateX(5px);  }
-        }
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(16px); }
-          to   { opacity: 1; transform: translateY(0);    }
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .lp-f1 { animation: fadeUp 0.5s ease both; }
-        .lp-f2 { animation: fadeUp 0.5s 0.07s ease both; }
-        .lp-f3 { animation: fadeUp 0.5s 0.14s ease both; }
-        .lp-f4 { animation: fadeUp 0.5s 0.21s ease both; }
-        .lp-f5 { animation: fadeUp 0.5s 0.28s ease both; }
-
-        .lp-field {
-          border: 1.5px solid #E5E5EA;
-          border-radius: 13px;
-          background: #FAFAFA;
-          padding: 13px 16px;
-          transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
-        }
-        .lp-field:focus-within {
-          border-color: #2E96FF;
-          background: white;
-          box-shadow: 0 0 0 3.5px rgba(46,150,255,0.14);
-        }
-        .lp-input {
-          border: none; outline: none; background: transparent;
-          width: 100%; color: #1C1C1E; font-family: inherit;
-        }
-        .lp-input::placeholder { color: #C7C7CC; }
-
-        .lp-btn {
-          transition: transform 0.15s ease, box-shadow 0.15s ease;
-        }
-        .lp-btn:not(:disabled):hover {
-          transform: translateY(-2px);
-          box-shadow: 0 14px 38px rgba(0,100,255,0.42) !important;
-        }
-        .lp-btn:not(:disabled):active {
-          transform: translateY(0px);
-          box-shadow: 0 4px 14px rgba(0,100,255,0.28) !important;
-        }
-
-        .lp-pill {
-          display: flex; align-items: center; gap: 11px;
-          padding: 12px 16px;
-          border-radius: 11px;
-          background: rgba(255,255,255,0.048);
-          border: 1px solid rgba(255,255,255,0.082);
-        }
-      `}</style>
+    <div className="min-h-screen flex font-sans">
 
       {/* ═══ LEFT — Branding ══════════════════════════════════════════════ */}
       <div
-        className="hidden lg:flex"
+        className="hidden lg:flex flex-col relative overflow-hidden"
         style={{
           width: '46%',
-          flexDirection: 'column',
-          position: 'relative',
-          overflow: 'hidden',
           background: 'linear-gradient(158deg, #040E1C 0%, #081828 52%, #0C2244 100%)',
         }}
       >
         {/* Subtle dot-grid */}
-        <div style={{
-          position: 'absolute', inset: 0, pointerEvents: 'none',
-          backgroundImage: `
-            radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)
-          `,
-          backgroundSize: '28px 28px',
-        }} />
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)`,
+            backgroundSize: '28px 28px',
+          }}
+        />
 
         {/* Glow orbs */}
-        <div style={{
-          position: 'absolute', top: '-12%', right: '-14%', pointerEvents: 'none',
-          width: 580, height: 580, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(46,150,255,0.18) 0%, transparent 68%)',
-        }} />
-        <div style={{
-          position: 'absolute', bottom: '-10%', left: '-10%', pointerEvents: 'none',
-          width: 460, height: 460, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(46,150,255,0.09) 0%, transparent 68%)',
-        }} />
+        <div
+          className="absolute pointer-events-none rounded-full"
+          style={{
+            top: '-12%', right: '-14%',
+            width: 580, height: 580,
+            background: 'radial-gradient(circle, rgba(46,150,255,0.18) 0%, transparent 68%)',
+          }}
+        />
+        <div
+          className="absolute pointer-events-none rounded-full"
+          style={{
+            bottom: '-10%', left: '-10%',
+            width: 460, height: 460,
+            background: 'radial-gradient(circle, rgba(46,150,255,0.09) 0%, transparent 68%)',
+          }}
+        />
 
         {/* ── Inner layout ── */}
-        <div style={{
-          position: 'relative', zIndex: 10,
-          display: 'flex', flexDirection: 'column',
-          height: '100%', padding: '48px 52px',
-        }}>
+        <div className="relative z-10 flex flex-col h-full px-[52px] py-12">
 
-          {/* Logo — alignSelf keeps it from stretching full-width */}
-          <div style={{ alignSelf: 'flex-start', marginBottom: 60 }}>
-            <div style={{
-              background: 'white',
-              borderRadius: 14,
-              padding: '12px 18px',
-              boxShadow: '0 8px 36px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.12)',
-            }}>
+          {/* Logo */}
+          <div className="self-start mb-[60px]">
+            <div
+              className="bg-white rounded-[14px] px-[18px] py-3"
+              style={{ boxShadow: '0 8px 36px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.12)' }}
+            >
               <ProtectedImg
                 src="/assets/sora-logo.png"
                 alt="Sora Advisory"
-                style={{ width: 234, height: 'auto', display: 'block' }}
+                className="w-[234px] h-auto block"
               />
             </div>
           </div>
 
           {/* Hero copy — centred vertically */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <div className="flex-1 flex flex-col justify-center">
 
-            <p style={{
-              color: 'rgba(255,255,255,0.36)',
-              fontSize: 11, fontWeight: 700,
-              letterSpacing: '2px', textTransform: 'uppercase',
-              marginBottom: 18,
-            }}>
+            <p className="text-white/[0.36] text-[11px] font-bold tracking-[2px] uppercase mb-[18px]">
               Financial Advisory Platform
             </p>
 
-            <h1 style={{
-              color: 'white',
-              fontSize: 42, fontWeight: 700,
-              lineHeight: 1.15, letterSpacing: -1.2,
-              marginBottom: 20, maxWidth: 340,
-            }}>
+            <h1 className="text-white text-[42px] font-bold leading-[1.15] tracking-[-1.2px] mb-5 max-w-[340px]">
               Every client's<br />future, mapped.
             </h1>
 
-            <p style={{
-              color: 'rgba(255,255,255,0.37)',
-              fontSize: 15, lineHeight: 1.82,
-              maxWidth: 300, marginBottom: 50,
-            }}>
+            <p className="text-white/[0.37] text-[15px] leading-[1.82] max-w-[300px] mb-[50px]">
               Retirement projections, protection analysis, and client management — built for Malaysian advisors.
             </p>
 
             {/* Feature pills */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="flex flex-col gap-2">
               {[
-                { color: '#0A84FF', label: 'Client CRM',          sub: 'Contacts, tasks & activity tracking' },
-                { color: '#30D158', label: 'Retirement Planner',  sub: 'Goal-based projections with EPF' },
-                { color: '#FF9F0A', label: 'Wealth Protection',   sub: 'Death, TPD & CI needs analysis' },
+                { color: '#0A84FF', label: 'Client CRM',         sub: 'Contacts, tasks & activity tracking' },
+                { color: '#30D158', label: 'Retirement Planner', sub: 'Goal-based projections with EPF' },
+                { color: '#FF9F0A', label: 'Wealth Protection',  sub: 'Death, TPD & CI needs analysis' },
               ].map(({ color, label, sub }) => (
-                <div key={label} className="lp-pill">
-                  <span style={{
-                    width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
-                    background: color, boxShadow: `0 0 10px ${color}bb`,
-                  }} />
-                  <span style={{ color: 'rgba(255,255,255,0.82)', fontSize: 13.5, fontWeight: 600 }}>
-                    {label}
-                  </span>
-                  <span style={{ color: 'rgba(255,255,255,0.27)', fontSize: 13 }}>
-                    · {sub}
-                  </span>
+                <div
+                  key={label}
+                  className="flex items-center gap-[11px] px-4 py-3 rounded-[11px] bg-white/[0.048] border border-white/[0.082]"
+                >
+                  <span
+                    className="w-[7px] h-[7px] rounded-full shrink-0"
+                    style={{ background: color, boxShadow: `0 0 10px ${color}bb` }}
+                  />
+                  <span className="text-white/[0.82] text-[13.5px] font-semibold">{label}</span>
+                  <span className="text-white/[0.27] text-[13px]">· {sub}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Copyright */}
-          <p style={{ color: 'rgba(255,255,255,0.13)', fontSize: 12, marginTop: 36 }}>
+          <p className="text-white/[0.13] text-[12px] mt-9">
             © {new Date().getFullYear()} Henry Lee Advisory · Private &amp; Confidential
           </p>
         </div>
       </div>
 
       {/* ═══ RIGHT — Form ═════════════════════════════════════════════════ */}
-      <div style={{
-        flex: 1,
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        background: 'white',
-        padding: '48px 24px',
-      }}>
+      <div className="flex-1 flex flex-col items-center justify-center bg-white px-6 py-12">
 
         {/* Mobile-only logo */}
-        <div className="lg:hidden lp-f1" style={{ textAlign: 'center', marginBottom: 44 }}>
-          <div style={{
-            display: 'inline-block',
-            border: '1px solid #EBEBF0',
-            borderRadius: 16,
-            padding: '14px 24px',
-            boxShadow: '0 2px 20px rgba(0,0,0,0.07)',
-            marginBottom: 14,
-          }}>
+        <div className="lg:hidden animate-fade-up text-center mb-[44px]">
+          <div
+            className="inline-block border border-hig-gray-5 rounded-[16px] px-6 py-[14px] mb-[14px]"
+            style={{ boxShadow: '0 2px 20px rgba(0,0,0,0.07)' }}
+          >
             <ProtectedImg
               src="/assets/sora-logo.png"
               alt="Sora Advisory"
-              style={{ width: 190, height: 'auto', display: 'block' }}
+              className="w-[190px] h-auto block"
             />
           </div>
         </div>
 
         {/* Form area */}
-        <div style={{ width: '100%', maxWidth: 364 }}>
+        <div className="w-full max-w-[364px]">
 
           {/* Heading */}
-          <div className="lp-f1" style={{ marginBottom: 34 }}>
-            <h2 style={{
-              fontSize: 28, fontWeight: 700,
-              color: '#1C1C1E', letterSpacing: -0.7,
-              marginBottom: 8,
-            }}>
+          <div className="animate-fade-up mb-[34px]">
+            <h2 className="text-[28px] font-bold text-hig-text tracking-[-0.7px] mb-2">
               Welcome back
             </h2>
-            <p style={{ fontSize: 15, color: '#8E8E93', lineHeight: 1.55 }}>
+            <p className="text-[15px] text-hig-text-secondary leading-[1.55]">
               Sign in to your agent account
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} style={{ animation: shake ? 'shake 0.45s ease' : undefined }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <form
+            onSubmit={handleSubmit}
+            className={shake ? 'animate-shake' : ''}
+          >
+            <div className="flex flex-col gap-4">
 
               {/* ── Agent Code ── */}
-              <div className="lp-f2">
-                <label style={{
-                  display: 'block', marginBottom: 9,
-                  fontSize: 11, fontWeight: 700,
-                  color: '#8E8E93', letterSpacing: '0.9px',
-                  textTransform: 'uppercase',
-                }}>
+              <div className="animate-fade-up" style={{ animationDelay: '70ms' }}>
+                <label className="block mb-[9px] text-[11px] font-bold text-hig-text-secondary tracking-[0.9px] uppercase">
                   Agent Code
                 </label>
-                <div className="lp-field">
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                <div className="border-[1.5px] border-hig-gray-5 rounded-[13px] bg-[#FAFAFA] px-4 py-[13px] transition-all focus-within:border-hig-blue focus-within:bg-white focus-within:shadow-[0_0_0_3.5px_rgba(46,150,255,0.14)]">
+                  <div className="flex items-center">
                     <input
-                      className="lp-input"
                       type="text"
                       inputMode="numeric"
                       maxLength={6}
@@ -273,16 +176,10 @@ export default function LoginPage() {
                       autoFocus
                       autoComplete="username"
                       placeholder="· · · · · ·"
-                      style={{
-                        flex: 1,
-                        fontSize: 26, fontWeight: 600,
-                        letterSpacing: '0.52em',
-                        fontFamily: 'ui-monospace, "SF Mono", monospace',
-                        caretColor: '#2E96FF',
-                      }}
+                      className="border-none outline-none bg-transparent flex-1 text-hig-text placeholder-hig-gray-3 text-[26px] font-semibold tracking-[0.52em] font-mono caret-hig-blue"
                     />
                     {/* Live fill indicator */}
-                    <div style={{ display: 'flex', gap: 4, paddingLeft: 12, flexShrink: 0 }}>
+                    <div className="flex gap-1 pl-3 shrink-0">
                       {Array.from({ length: 6 }).map((_, i) => (
                         <span key={i} style={{
                           width: 6, height: 6, borderRadius: '50%',
@@ -298,35 +195,24 @@ export default function LoginPage() {
               </div>
 
               {/* ── Password ── */}
-              <div className="lp-f3">
-                <label style={{
-                  display: 'block', marginBottom: 9,
-                  fontSize: 11, fontWeight: 700,
-                  color: '#8E8E93', letterSpacing: '0.9px',
-                  textTransform: 'uppercase',
-                }}>
+              <div className="animate-fade-up" style={{ animationDelay: '140ms' }}>
+                <label className="block mb-[9px] text-[11px] font-bold text-hig-text-secondary tracking-[0.9px] uppercase">
                   Password
                 </label>
-                <div className="lp-field" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div className="border-[1.5px] border-hig-gray-5 rounded-[13px] bg-[#FAFAFA] px-4 py-[13px] flex items-center gap-[10px] transition-all focus-within:border-hig-blue focus-within:bg-white focus-within:shadow-[0_0_0_3.5px_rgba(46,150,255,0.14)]">
                   <input
-                    className="lp-input"
                     type={showPw ? 'text' : 'password'}
                     placeholder="Enter your password"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     autoComplete="current-password"
-                    style={{ fontSize: 16 }}
+                    className="border-none outline-none bg-transparent w-full text-hig-text placeholder-hig-gray-3 text-[16px]"
                   />
                   <button
                     type="button"
                     tabIndex={-1}
                     onClick={() => setShowPw(s => !s)}
-                    style={{
-                      background: 'none', border: 'none',
-                      padding: 4, cursor: 'pointer', flexShrink: 0,
-                      color: '#AEAEB2', display: 'flex',
-                      transition: 'color 0.15s',
-                    }}
+                    className="bg-transparent border-none p-1 cursor-pointer shrink-0 text-hig-gray-2 flex hover:text-hig-text transition-colors"
                   >
                     {showPw ? <EyeOff size={17} /> : <Eye size={17} />}
                   </button>
@@ -335,41 +221,30 @@ export default function LoginPage() {
 
               {/* ── Error ── */}
               {authError && (
-                <div style={{
-                  display: 'flex', alignItems: 'flex-start', gap: 10,
-                  background: '#FFF1F0',
-                  border: '1.5px solid rgba(255,59,48,0.22)',
-                  borderRadius: 12, padding: '12px 15px',
-                }}>
-                  <span style={{ fontSize: 15, flexShrink: 0 }}>⚠️</span>
-                  <span style={{ fontSize: 13.5, color: '#C0000A', lineHeight: 1.5 }}>{authError}</span>
+                <div className="flex items-start gap-[10px] bg-red-50 border-[1.5px] border-hig-red/[0.22] rounded-[12px] px-[15px] py-3">
+                  <span className="text-[15px] shrink-0">⚠️</span>
+                  <span className="text-[13.5px] text-[#C0000A] leading-[1.5]">{authError}</span>
                 </div>
               )}
 
               {/* ── Sign In ── */}
-              <div className="lp-f4">
+              <div className="animate-fade-up" style={{ animationDelay: '210ms' }}>
                 <button
                   type="submit"
                   disabled={!canSubmit}
-                  className="lp-btn"
+                  className="lp-btn mt-1 w-full h-[52px] rounded-[13px] border-none text-[16px] font-semibold flex items-center justify-center gap-2 tracking-[-0.2px]"
                   style={{
-                    marginTop: 4,
-                    width: '100%', height: 52,
-                    borderRadius: 13, border: 'none',
+                    cursor: canSubmit ? 'pointer' : 'not-allowed',
                     background: canSubmit
                       ? 'linear-gradient(135deg, #2E96FF 0%, #1060D0 100%)'
                       : '#F2F2F7',
                     color: canSubmit ? 'white' : '#AEAEB2',
-                    fontSize: 16, fontWeight: 600,
-                    cursor: canSubmit ? 'pointer' : 'not-allowed',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                     boxShadow: canSubmit ? '0 4px 22px rgba(0,100,255,0.32)' : 'none',
-                    letterSpacing: -0.2,
                   }}
                 >
                   {loading ? (
                     <>
-                      <Loader2 size={18} style={{ animation: 'spin 0.7s linear infinite' }} />
+                      <Loader2 size={18} className="animate-spin" />
                       Signing in…
                     </>
                   ) : (
@@ -384,22 +259,15 @@ export default function LoginPage() {
           </form>
 
           {/* ── Footer ── */}
-          <div className="lp-f5" style={{ marginTop: 36 }}>
-            <p style={{ fontSize: 13, color: '#C7C7CC', textAlign: 'center', marginBottom: 24 }}>
+          <div className="animate-fade-up mt-9" style={{ animationDelay: '280ms' }}>
+            <p className="text-[13px] text-hig-gray-3 text-center mb-6">
               Forgotten your credentials?{' '}
-              <span style={{ color: '#8E8E93' }}>Contact your administrator.</span>
+              <span className="text-hig-text-secondary">Contact your administrator.</span>
             </p>
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              paddingTop: 20, borderTop: '1px solid #F2F2F7',
-            }}>
-              <span style={{ fontSize: 12, color: '#D1D1D6' }}>Powered by</span>
-              <div style={{
-                display: 'inline-flex', alignItems: 'center',
-                background: '#F5F5FA', border: '1px solid #EAEAF0',
-                borderRadius: 8, padding: '4px 10px',
-              }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: '#3A3A3C', letterSpacing: 0.2 }}>
+            <div className="flex items-center justify-center gap-2 pt-5 border-t border-hig-gray-6">
+              <span className="text-[12px] text-hig-gray-4">Powered by</span>
+              <div className="inline-flex items-center bg-[#F5F5FA] border border-[#EAEAF0] rounded-[8px] px-[10px] py-1">
+                <span className="text-[12px] font-bold text-[#3A3A3C] tracking-[0.2px]">
                   LLH Group
                 </span>
               </div>
