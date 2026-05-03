@@ -7,17 +7,16 @@ import { useLanguage } from '../hooks/useLanguage'
 // ─── Section card ──────────────────────────────────────────────────────────────
 function SectionCard({ icon: Icon, iconColor, iconBg, title, children }) {
   return (
-    <div className="hig-card" style={{ padding: 24, marginBottom: 16 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+    <div className="hig-card p-6 mb-4">
+      <div className="flex items-center gap-3 mb-5">
         <div style={{
           width: 32, height: 32, borderRadius: 9,
-          background: iconBg,
+          background: iconBg, flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0,
         }}>
           <Icon size={16} style={{ color: iconColor }} />
         </div>
-        <h2 style={{ fontSize: 17, fontWeight: 600, color: '#1C1C1E' }}>{title}</h2>
+        <h2 className="text-hig-headline font-semibold text-hig-text">{title}</h2>
       </div>
       {children}
     </div>
@@ -122,12 +121,12 @@ export default function SettingsPage() {
     : '??'
 
   return (
-    <div style={{ maxWidth: 680, margin: '0 auto' }}>
+    <div className="max-w-[680px] mx-auto">
 
       {/* Header */}
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 700, color: '#1C1C1E', lineHeight: 1.2 }}>{t('settings.title')}</h1>
-        <p style={{ fontSize: 14, color: '#8E8E93', marginTop: 4 }}>{t('settings.subtitle')}</p>
+      <div className="mb-7">
+        <h1 className="text-[26px] font-bold text-hig-text leading-tight">{t('settings.title')}</h1>
+        <p className="text-hig-subhead text-hig-text-secondary mt-1">{t('settings.subtitle')}</p>
       </div>
 
       {/* ── Profile ───────────────────────────────────────────────────────────── */}
@@ -138,30 +137,25 @@ export default function SettingsPage() {
         title={t('settings.profile')}
       >
         {/* Avatar */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: '50%',
-            background: 'rgba(46,150,255,0.1)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 20, fontWeight: 700, color: '#2E96FF', flexShrink: 0,
-          }}>
+        <div className="flex items-center gap-4 mb-5">
+          <div className="w-14 h-14 rounded-full bg-hig-blue/10 flex items-center justify-center
+                          text-hig-title3 font-bold text-hig-blue shrink-0">
             {initials}
           </div>
           <div>
-            <p style={{ fontSize: 16, fontWeight: 600, color: '#1C1C1E' }}>{agent?.name || '—'}</p>
-            <p style={{ fontSize: 13, color: '#8E8E93', marginTop: 2 }}>Agent Code: {agent?.code || '—'}</p>
+            <p className="text-hig-callout font-semibold text-hig-text">{agent?.name || '—'}</p>
+            <p className="text-hig-footnote text-hig-text-secondary mt-0.5">Agent Code: {agent?.code || '—'}</p>
           </div>
         </div>
 
         {/* Read-only fields */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <div className="grid grid-cols-2 gap-3.5">
           <div>
             <label className="hig-label">{t('settings.agentCode')}</label>
             <input
               value={agent?.code || '—'}
               readOnly
-              className="hig-input"
-              style={{ background: '#F2F2F7', color: '#8E8E93', cursor: 'default' }}
+              className="hig-input bg-hig-gray-5 text-hig-text-secondary cursor-default"
             />
           </div>
           <div>
@@ -169,12 +163,11 @@ export default function SettingsPage() {
             <input
               value={agent?.name || '—'}
               readOnly
-              className="hig-input"
-              style={{ background: '#F2F2F7', color: '#8E8E93', cursor: 'default' }}
+              className="hig-input bg-hig-gray-5 text-hig-text-secondary cursor-default"
             />
           </div>
         </div>
-        <p style={{ fontSize: 12, color: '#C7C7CC', marginTop: 10 }}>
+        <p className="text-hig-caption1 text-hig-gray-3 mt-2.5">
           {t('settings.adminNote')}
         </p>
       </SectionCard>
@@ -186,11 +179,11 @@ export default function SettingsPage() {
         iconBg="rgba(255,149,0,0.1)"
         title={t('settings.contactInfoTitle')}
       >
-        <p style={{ fontSize: 13, color: '#8E8E93', marginBottom: 16, lineHeight: 1.5 }}>
+        <p className="text-hig-footnote text-hig-text-secondary mb-4 leading-relaxed">
           {t('settings.contactInfoDesc')}
         </p>
-        <form onSubmit={handleContactSave} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <form onSubmit={handleContactSave} className="flex flex-col gap-3.5">
+          <div className="grid grid-cols-2 gap-3.5">
             <div>
               <label className="hig-label">{t('settings.mobileNumber')}</label>
               <div className="relative">
@@ -224,18 +217,13 @@ export default function SettingsPage() {
           </div>
 
           {contactError && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              background: 'rgba(255,59,48,0.06)',
-              border: '1px solid rgba(255,59,48,0.18)',
-              borderRadius: 8, padding: '10px 14px',
-            }}>
-              <AlertCircle size={14} style={{ color: '#FF3B30', flexShrink: 0 }} />
-              <p style={{ fontSize: 13, color: '#FF3B30' }}>{contactError}</p>
+            <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-hig-sm px-3.5 py-2.5">
+              <AlertCircle size={14} className="text-hig-red shrink-0" />
+              <p className="text-hig-footnote text-hig-red">{contactError}</p>
             </div>
           )}
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 4 }}>
+          <div className="flex justify-end pt-1">
             <button
               type="submit"
               className="hig-btn-primary"
@@ -255,7 +243,7 @@ export default function SettingsPage() {
         iconBg="rgba(52,199,89,0.1)"
         title={t('settings.changePassword')}
       >
-        <form onSubmit={handlePasswordChange} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <form onSubmit={handlePasswordChange} className="flex flex-col gap-3.5">
           <div>
             <label className="hig-label">{t('settings.currentPassword')}</label>
             <div className="relative">
@@ -279,7 +267,7 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div className="grid grid-cols-2 gap-3.5">
             <div>
               <label className="hig-label">{t('settings.newPassword')}</label>
               <div className="relative">
@@ -327,18 +315,13 @@ export default function SettingsPage() {
           </div>
 
           {pwError && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              background: 'rgba(255,59,48,0.06)',
-              border: '1px solid rgba(255,59,48,0.18)',
-              borderRadius: 8, padding: '10px 14px',
-            }}>
-              <AlertCircle size={14} style={{ color: '#FF3B30', flexShrink: 0 }} />
-              <p style={{ fontSize: 13, color: '#FF3B30' }}>{pwError}</p>
+            <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-hig-sm px-3.5 py-2.5">
+              <AlertCircle size={14} className="text-hig-red shrink-0" />
+              <p className="text-hig-footnote text-hig-red">{pwError}</p>
             </div>
           )}
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 4 }}>
+          <div className="flex justify-end pt-1">
             <button
               type="submit"
               className="hig-btn-primary"
@@ -352,16 +335,12 @@ export default function SettingsPage() {
       </SectionCard>
 
       {/* ── App info ──────────────────────────────────────────────────────────── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '14px 18px',
-        background: 'rgba(0,0,0,0.03)', borderRadius: 12,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Shield size={13} style={{ color: '#C7C7CC' }} />
-          <p style={{ fontSize: 12, fontWeight: 500, color: '#8E8E93' }}>{t('settings.appLabel')}</p>
+      <div className="flex items-center justify-between px-[18px] py-3.5 bg-black/[0.03] rounded-hig-sm">
+        <div className="flex items-center gap-2">
+          <Shield size={13} className="text-hig-gray-3" />
+          <p className="text-hig-caption1 font-medium text-hig-text-secondary">{t('settings.appLabel')}</p>
         </div>
-        <p style={{ fontSize: 11, color: '#C7C7CC' }}>V1.0 · LLH Group</p>
+        <p className="text-hig-caption2 text-hig-gray-3">V1.0 · LLH Group</p>
       </div>
 
     </div>
